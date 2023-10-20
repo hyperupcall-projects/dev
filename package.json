@@ -1,13 +1,13 @@
 {
   "name": "@hyperupcall/repository-lint",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-	"bin": "./bin/repository-lint",
+  "bin": "./bin/repository-lint",
   "keywords": [],
   "author": "Edwin Kofler <edwin@kofler.dev> (https://edwinkofler.com/)",
   "license": "MPL-2.0",
