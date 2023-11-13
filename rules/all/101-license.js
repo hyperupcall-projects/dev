@@ -25,7 +25,7 @@ export async function rule() {
 		},
 		async () => {
 			const licenseFile = path.join(pkgRoot(), 'assets/LICENSE-MPL-2.0')
-			await fs.writeFile('LICENSE', licenseFile)
+			await fs.writeFile('LICENSE', await fs.readFile(licenseFile, 'utf-8'))
 		},
 	)
 }

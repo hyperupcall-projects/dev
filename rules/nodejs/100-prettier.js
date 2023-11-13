@@ -4,6 +4,7 @@ import * as path from 'node:path'
 import detectIndent from 'detect-indent'
 
 import { makeRule, pkgRoot } from '../../util/util.js'
+import { execa } from 'execa'
 
 export async function rule() {
 	const prettierFile = path.join(pkgRoot('@hyperupcall/configs'), '.prettierrc.json')
@@ -35,21 +36,42 @@ export async function rule() {
 	const packageJsonText = await fs.readFile('package.json', 'utf-8')
 	/** @type {import('type-fest').PackageJson} */
 	const packageJson = JSON.parse(packageJsonText)
+	const latestVersionsRaw = await Promise.all([
+		await execa('npm', ['view', '--json', 'prettier']),
+		await execa('npm', ['view', '--json', 'prettier-plugin-pkg']),
+		await execa('npm', ['view', '--json', '@hyperupcall/prettier-config'])
+	])
+	const latestVersions = latestVersionsRaw.map((item) => {
+		if (item.exitCode !== 0) {
+			console.error(item.stderr)
+			return 'UNKNOWN'
+		}
+
+		const obj = JSON.parse(item.stdout)
+		return obj['dist-tags'].latest
+	})
 	await makeRule(
 		'package.json missing dependencies for: prettier',
 		async () => {
-			const prettierDeps = ['prettier', '@hyperupcall/prettier-config', 'prettier-plugin-pkg']
-			const devDependencies = Object.keys(packageJson.devDependencies)
+			if (!packageJson.devDependencies.prettier || !packageJson.devDependencies['prettier-plugin-pkg'] || !packageJson.devDependencies['@hyperupcall/prettier-config']) {
+				return true
+			}
 
-			return devDependencies.length !== devDependencies.concat(prettierDeps).length
+			if (
+				packageJson.devDependencies.prettier.slice(1) !== latestVersions[0] ||
+				packageJson.devDependencies['prettier-plugin-pkg'].slice(1) !== latestVersions[1] ||
+				packageJson.devDependencies['@hyperupcall/prettier-config'].slice(1) !== latestVersions[2]
+			) {
+				return true
+			}
 		},
 		async () => {
 			const packageJsonModified = structuredClone(packageJson)
 			packageJsonModified.devDependencies = {
 				...packageJsonModified.devDependencies,
-				prettier: '^3.0.3',
-				'@hyperupcall/prettier-config': '^0.7.0',
-				'prettier-plugin-pkg': '^0.18.0'
+				prettier: `^${latestVersions[0]}`,
+				'prettier-plugin-pkg': `^${latestVersions[1]}`,
+				'@hyperupcall/prettier-config': `^${latestVersions[2]}`
 			}
 			await fs.writeFile(
 				'package.json',
