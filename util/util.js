@@ -15,22 +15,23 @@ export function pkgRoot(packageName) {
 }
 
 /**
- * @param {string} description
- * @param {() => Promise<boolean>} shouldFixFn
- * @param {() => Promise<void>} fixerFn
+ * @param {() => Promise<{ description: string, shouldFix: () => Promise<boolean>, fix: () => Promise<void>}>} ruleMaker
  */
-export async function makeRule(description, shouldFixFn, fixerFn) {
-    const shouldFix = await shouldFixFn()
-    if (shouldFix) {
+export async function makeRule(ruleMaker) {
+	const { description, shouldFix, fix } = await ruleMaker()
+	if (!description) throw new TypeError(`Parameter not passed: description`)
+	if (!shouldFix) throw new TypeError(`Parameter not passed: shouldFix`)
+	if (!fix) throw new TypeError(`Parameter not passed: fix`)
+
+	if (await shouldFix()) {
 		console.info(`ASSERTION FAILED: ${description}`)
-        const rl = readline.createInterface({
+		const rl = readline.createInterface({
 			input: process.stdin,
 			output: process.stdout,
 		})
-        const input = await rl.question(`Would you like to fix this? `)
-        if (yn(input)) {
-            await fixerFn()
-        }
-    }
-
+		const input = await rl.question(`Would you like to fix this? `)
+		if (yn(input)) {
+			await fix()
+		}
+	}
 }
