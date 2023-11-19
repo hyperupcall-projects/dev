@@ -1,10 +1,10 @@
 import path from 'node:path'
+import { existsSync } from 'node:fs'
 import fs from 'node:fs/promises'
 import util from 'node:util'
 import chalk from 'chalk'
 
 import { pkgRoot } from './util/util.js'
-import { existsSync } from 'node:fs'
 
 async function runRules(/** @type {string} */ ruleDirname) {
     const rulesDir = path.join(pkgRoot(), './rules', ruleDirname)
