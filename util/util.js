@@ -1,6 +1,7 @@
 import * as readline from 'node:readline/promises'
 import * as path from 'node:path'
 import yn from 'yn'
+import chalk from 'chalk'
 
 /**
  * @param {string} packageName
@@ -21,7 +22,6 @@ export async function makeRule(ruleMaker) {
 	const { description, shouldFix, fix } = await ruleMaker()
 	if (!description) throw new TypeError(`Parameter not passed: description`)
 	if (!shouldFix) throw new TypeError(`Parameter not passed: shouldFix`)
-	if (!fix) throw new TypeError(`Parameter not passed: fix`)
 
 	if (await shouldFix()) {
 		console.info(`ASSERTION FAILED: ${description}`)
@@ -31,7 +31,12 @@ export async function makeRule(ruleMaker) {
 		})
 		const input = await rl.question(`Would you like to fix this? `)
 		if (yn(input)) {
-			await fix()
+			if (typeof fix === 'function') {
+				await fix()
+			} else {
+				console.log(chalk.red(`No fix available`))
+			}
+
 		}
 	}
 }
