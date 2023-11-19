@@ -18,6 +18,7 @@ export async function rule({ github }) {
 		return {
 			description: 'Repository description must end with a period',
 			async shouldFix() {
+				if (typeof data.description === 'undefined' || data.description === null) return true
 				return !data.description.endsWith('.')
 			},
 			// TODO:  use gh repo edit --description
