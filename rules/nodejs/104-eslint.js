@@ -36,4 +36,55 @@ export async function rule() {
 			}
 		}
 	})
+
+	await makeRule(async () => {
+		const packageJsonText = await fs.readFile('package.json', 'utf-8')
+		/** @type {import('type-fest').PackageJson} */
+		const packageJson = JSON.parse(packageJsonText)
+		const latestVersionsRaw = await Promise.all([
+			await execa('npm', ['view', '--json', 'eslint']),
+			await execa('npm', ['view', '--json', 'eslint-config-prettier']),
+			await execa('npm', ['view', '--json', '@hyperupcall/eslint-config'])
+		])
+		const latestVersions = latestVersionsRaw.map((item) => {
+			if (item.exitCode !== 0) {
+				console.error(item.stderr)
+				return 'UNKNOWN'
+			}
+
+			const obj = JSON.parse(item.stdout)
+			return obj['dist-tags'].latest
+		})
+
+		return {
+			description: 'package.json missing dependencies for: eslint',
+			async shouldFix() {
+				if (!packageJson.devDependencies.eslint || !packageJson.devDependencies['eslint-config-prettier'] || !packageJson.devDependencies['@hyperupcall/eslint-config']) {
+					return true
+				}
+
+				if (
+					packageJson.devDependencies.eslint.slice(1) !== latestVersions[0] ||
+					packageJson.devDependencies['eslint-config-prettier'].slice(1) !== latestVersions[1] ||
+					packageJson.devDependencies['@hyperupcall/eslint-config'].slice(1) !== latestVersions[2]
+				) {
+					return true
+				}
+			},
+			async fix() {
+				const packageJsonModified = structuredClone(packageJson)
+				packageJsonModified.devDependencies = {
+					...packageJsonModified.devDependencies,
+					eslint: `^${latestVersions[0]}`,
+					'eslint-config-prettier': `^${latestVersions[1]}`,
+					'@hyperupcall/eslint-config': `^${latestVersions[2]}`
+				}
+				await fs.writeFile(
+					'package.json',
+					JSON.stringify(packageJsonModified, null, detectIndent(packageJsonText).indent || '\t')
+				)
+				console.log(`Now, run: 'npm i`)
+			}
+		}
+	})
 }
