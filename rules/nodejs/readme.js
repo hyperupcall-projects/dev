@@ -3,7 +3,8 @@ import path from 'node:path';
 
 import { makeRule, pkgRoot } from "../../util/util.js";
 
-export async function rule({ github }) {
+/** @type {import('../../util/util.js').RuleMaker} */
+export async function rule({ project }) {
 	await makeRule(() => {
 		return {
 			description: 'README.md must exist',
@@ -14,7 +15,7 @@ export async function rule({ github }) {
 					.catch(() => true)
 			},
 			async fix() {
-				await fs.writeFile('README.md', `# ${github.repo}\n`)
+				await fs.writeFile('README.md', `# ${project.name}\n`)
 			}
 		}
 	})
@@ -23,7 +24,7 @@ export async function rule({ github }) {
 		return {
 			description: 'README.md must begin with # $repo',
 			async shouldFix() {
-				return !(await fs.readFile('README.md', 'utf-8')).match(`^# ${github.repo}`)
+				return !(await fs.readFile('README.md', 'utf-8')).match(`^# ${project.name}`)
 			}
 		}
 	})

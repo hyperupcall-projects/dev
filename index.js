@@ -4,12 +4,7 @@ import fs from 'node:fs/promises'
 import util from 'node:util'
 import chalk from 'chalk'
 import toml from '@ltd/j-toml'
-import { pkgRoot } from './util/util.js'
-
-const github = {
-	owner: path.basename(path.dirname(process.cwd())),
-	repo: path.basename(process.cwd()),
-}
+import { getProjectInfo, pkgRoot } from './util/util.js'
 
 const projectConfig = {
 	ignoredChecks: [],
@@ -27,6 +22,8 @@ const projectConfig = {
 	})())
 }
 
+const project = await getProjectInfo()
+
 async function runRules(/** @type {string} */ ruleDirname) {
 	const rulesDir = path.join(pkgRoot(), './rules', ruleDirname)
 	for (const ruleFile of await fs.readdir(rulesDir)) {
@@ -39,7 +36,7 @@ async function runRules(/** @type {string} */ ruleDirname) {
 				console.info(`${chalk.cyan(`Ignoring:`)} ${longId}`)
 			} else {
 				console.info(`${chalk.magenta(`Executing:`)} ${longId}`)
-				await module.rule({ github, projectConfig })
+				await module.rule({ project, projectConfig })
 			}
 		} else {
 			console.warn(chalk.warn(`No rule export found in file: ${ruleFile}`))
@@ -49,6 +46,10 @@ async function runRules(/** @type {string} */ ruleDirname) {
 
 const { values, positionals } = util.parseArgs({
 	options: {
+		help: {
+			type: "boolean",
+			short: 'h'
+		},
 		all: {
 			type: 'boolean',
 			short: 'a',
@@ -56,7 +57,14 @@ const { values, positionals } = util.parseArgs({
 	}
 })
 
-console.log(`${chalk.yellow(`Repository:`)} ${github.owner}/${github.repo}`)
+if (values.help) {
+	console.log(`repository-lint:
+
+Flags:
+  --all
+  --help`)
+}
+console.log(`${chalk.yellow(`Repository:`)} https://github.com/${project.owner}/${project.name}`)
 await runRules('any')
 await runRules('git')
 await runRules('github')

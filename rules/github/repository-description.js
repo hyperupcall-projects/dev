@@ -7,10 +7,11 @@ import { execa } from 'execa'
 import { makeRule, pkgRoot } from '../../util/util.js'
 import { octokit } from '../../util/octokit.js'
 
-export async function rule({ github }) {
+/** @type {import('../../util/util.js').RuleMaker} */
+export async function rule({ project }) {
 	const { data } = await octokit.rest.repos.get({
-		owner: github.owner,
-		repo: github.repo,
+		owner: project.owner,
+		repo: project.name,
 	})
 
 	await makeRule(() => {

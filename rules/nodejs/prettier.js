@@ -6,6 +6,7 @@ import detectIndent from 'detect-indent'
 import { makeRule, pkgRoot } from '../../util/util.js'
 import { execa } from 'execa'
 
+/** @type {import('../../util/util.js').RuleMaker} */
 export async function rule() {
 	const prettierFile = path.join(pkgRoot('@hyperupcall/configs'), '.prettierrc.json')
 	const prettierConfig = await fs.readFile(prettierFile, 'utf-8')

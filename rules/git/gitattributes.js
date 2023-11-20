@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { makeRule, pkgRoot } from "../../util/util.js";
 
+/** @type {import('../../util/util.js').RuleMaker} */
 export async function rule() {
 	await makeRule(() => {
 		return {

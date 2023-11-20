@@ -6,10 +6,11 @@ import detectIndent from 'detect-indent'
 import { makeRule, pkgRoot } from "../../util/util.js";
 import { octokit } from '../../util/octokit.js';
 
-export async function rule({ github }) {
+/** @type {import('../../util/util.js').RuleMaker} */
+export async function rule({ project }) {
 	const { data } = await octokit.rest.repos.get({
-		owner: github.owner,
-		repo: github.repo,
+		owner: project.owner,
+		repo: project.name,
 	})
 
 	await makeRule(async () => {
@@ -77,7 +78,7 @@ export async function rule({ github }) {
 		const packageJsonText = await fs.readFile('package.json', 'utf-8')
 		/** @type {import('type-fest').PackageJson} */
 		const packageJson = JSON.parse(packageJsonText)
-		const bugsUrl = `https://github.com/${github.owner}/${github.repo}/issues`
+		const bugsUrl = `https://github.com/${project.owner}/${project.name}/issues`
 
 		return {
 			description: 'package.json must have accurate: bugs.url',
@@ -103,7 +104,7 @@ export async function rule({ github }) {
 		const packageJsonText = await fs.readFile('package.json', 'utf-8')
 		/** @type {import('type-fest').PackageJson} */
 		const packageJson = JSON.parse(packageJsonText)
-		const gitUrl = `https://github.com/${github.owner}/${github.repo}.git`
+		const gitUrl = `https://github.com/${project.owner}/${project.name}.git`
 
 		return {
 			description: 'package.json must have accurate: repository',

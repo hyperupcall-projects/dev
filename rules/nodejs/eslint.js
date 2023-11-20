@@ -6,6 +6,7 @@ import detectIndent from 'detect-indent'
 import { makeRule, pkgRoot } from '../../util/util.js'
 import { execa } from 'execa'
 
+/** @type {import('../../util/util.js').RuleMaker} */
 export async function rule() {
 	const eslintFile = path.join(pkgRoot('@hyperupcall/configs'), '.eslintrc.json')
 	const eslintConfig = await fs.readFile(eslintFile, 'utf-8')

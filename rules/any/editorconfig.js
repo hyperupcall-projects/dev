@@ -3,6 +3,7 @@ import * as path from 'node:path'
 
 import { makeRule, pkgRoot } from '../../util/util.js'
 
+/** @type {import('../../util/util.js').RuleMaker} */
 export async function rule() {
 	const editorconfigFile = path.join(pkgRoot('@hyperupcall/configs'), '.editorconfig')
 	const editorconfigConfig = await fs.readFile(editorconfigFile, 'utf-8')
