@@ -9,6 +9,8 @@ import { octokit } from '../../util/octokit.js'
 
 /** @type {import('../../util/util.js').RuleMaker} */
 export async function rule({ project }) {
+	return
+
 	const { data } = await octokit.rest.repos.get({
 		owner: project.owner,
 		repo: project.name,

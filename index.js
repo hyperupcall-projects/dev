@@ -71,5 +71,8 @@ await runRules('github')
 if (existsSync('package.json')) {
 	await runRules('nodejs')
 }
+if (existsSync(path.join(pkgRoot(), `rules/org-${project.owner}`))) {
+	await runRules(`org-${project.owner}`)
+}
 console.log('Done.')
 process.exit(1) // Workaround for experimental --experimental-import-meta-resolve issues
