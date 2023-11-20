@@ -58,6 +58,7 @@ const { values, positionals } = util.parseArgs({
 
 console.log(`${chalk.yellow(`Repository:`)} ${github.owner}/${github.repo}`)
 await runRules('any')
+await runRules('git')
 await runRules('github')
 if (existsSync('package.json')) {
 	await runRules('nodejs')

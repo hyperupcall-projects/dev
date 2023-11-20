@@ -25,18 +25,18 @@ export async function makeRule(ruleMaker) {
 
 	if (await shouldFix()) {
 		console.info(`ASSERTION FAILED: ${description}`)
-		const rl = readline.createInterface({
-			input: process.stdin,
-			output: process.stdout,
-		})
-		const input = await rl.question(`Would you like to fix this? `)
-		if (yn(input)) {
-			if (typeof fix === 'function') {
-				await fix()
-			} else {
-				console.log(chalk.red(`No fix available`))
-			}
 
+		if (typeof fix === 'function') {
+			const rl = readline.createInterface({
+				input: process.stdin,
+				output: process.stdout,
+			})
+			const input = await rl.question(`Would you like to fix this? `)
+			if (yn(input)) {
+			await fix()
+			}
+		} else {
+			console.log(chalk.red(`No fix available`))
 		}
 	}
 }

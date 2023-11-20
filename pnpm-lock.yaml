@@ -17,6 +17,9 @@ dependencies:
   detect-indent:
     specifier: ^7.0.1
     version: 7.0.1
+  diff:
+    specifier: ^5.1.0
+    version: 5.1.0
   execa:
     specifier: ^8.0.1
     version: 8.0.1
@@ -29,8 +32,8 @@ dependencies:
 
 devDependencies:
   '@hyperupcall/eslint-config':
-    specifier: ^0.3.0
-    version: 0.3.0(eslint-config-prettier@9.0.0)(eslint@8.54.0)
+    specifier: ^0.5.0
+    version: 0.5.0(eslint-config-prettier@9.0.0)(eslint@8.54.0)
   '@hyperupcall/prettier-config':
     specifier: ^0.7.0
     version: 0.7.0
@@ -118,11 +121,11 @@ packages:
     resolution: {integrity: sha512-xHUNt1P1XVynZXeTeFvhwcmR0xstdbNujjCal+d+XAZ0FWsq+mQiM2qdQMQTEal2q9Ck5WRseXC6h18lAdhyYA==}
     dev: false
 
-  /@hyperupcall/eslint-config@0.3.0(eslint-config-prettier@9.0.0)(eslint@8.54.0):
-    resolution: {integrity: sha512-qkVutEJbNN9egpTA3bFZddbYap7Z8EU4sNp7zC6mFnUJMhUWC8jZpVfAgu0y3Qqx634TRMW8GEJnlbVY6XyPiA==}
+  /@hyperupcall/eslint-config@0.5.0(eslint-config-prettier@9.0.0)(eslint@8.54.0):
+    resolution: {integrity: sha512-DC6J05zC2o2DQOR8F1eIj2ep4EBm9pnk/VNmPdTbFyTs7Jv+1OWwm1PpRUCtCSBoFpkFHF/7pIBiALArgsQjug==}
     peerDependencies:
       eslint: '>=8.0.0'
-      eslint-config-prettier: ^8.5.0
+      eslint-config-prettier: '>=8.0.0'
     dependencies:
       eslint: 8.54.0
       eslint-config-prettier: 9.0.0(eslint@8.54.0)
@@ -562,6 +565,11 @@ packages:
   /detect-indent@7.0.1:
     resolution: {integrity: sha512-Mc7QhQ8s+cLrnUfU/Ji94vG/r8M26m8f++vyres4ZoojaRDpZ1eSIh/EpzLNwlWuvzSZ3UbDFspjFvTDXe6e/g==}
     engines: {node: '>=12.20'}
+    dev: false
+
+  /diff@5.1.0:
+    resolution: {integrity: sha512-D+mk+qE8VC/PAUrlAU34N+VfXev0ghe5ywmpqrawphmVZc1bEfn56uo9qpyGp1p4xpzOHkSW4ztBd6L7Xx4ACw==}
+    engines: {node: '>=0.3.1'}
     dev: false
 
   /doctrine@3.0.0:
