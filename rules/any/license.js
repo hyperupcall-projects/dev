@@ -1,8 +1,7 @@
 import * as fs from 'node:fs/promises'
 import path from 'node:path'
 
-import { makeRule, pkgRoot } from '../../util/util.js'
-
+import { pkgRoot } from '../../util/util.js'
 
 /** @type {import('../../util/util.js').CreateRules} */
 export async function createRules() {
@@ -20,14 +19,22 @@ export async function createRules() {
 	return [
 		{
 			id: 'license-exists',
-			shouldFix: async () => !(await fileExists(configFile)),
-			fix: () => fs.writeFile(configFile, configContent)
+			async shouldFix() {
+				return !(await fileExists(configFile))
+			},
+			async fix() {
+				return await fs.writeFile(configFile, configContent)
+			}
 		},
 		{
 			id: 'license-is-not-empty',
 			deps: [() => fileExists(configFile)],
-			shouldFix: async () => (await fs.readFile(configFile, 'utf-8')).length === 0,
-			fix: () => fs.writeFile(configFile, configContent)
+			async shouldFix() {
+				return (await fs.readFile(configFile, 'utf-8')).length === 0
+			},
+			async fix() {
+				return await fs.writeFile(configFile, configContent)
+			}
 		}
 	]
 }

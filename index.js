@@ -4,7 +4,7 @@ import fs from 'node:fs/promises'
 import util from 'node:util'
 import chalk from 'chalk'
 import toml from '@ltd/j-toml'
-import { projectInfo, pkgRoot, makeRule } from './util/util.js'
+import { projectInfo, pkgRoot } from './util/util.js'
 import * as readline from 'node:readline/promises'
 import yn from 'yn'
 
@@ -27,6 +27,11 @@ const projectConfig = {
 	})()),
 }
 
+
+/**
+ * @typedef {(arg1: { project: ProjectInfo }) => Promise<{ description: string, shouldFix: () => Promise<boolean>, fix: () => Promise<void>}>} RuleMaker
+ */
+// TODO: types
 async function runRule(rule, longId) {
 	const { id, deps, shouldFix, fix } = rule
 	if (!shouldFix) throw new TypeError(`Rule '${id}' does not have property: shouldFix`)
@@ -96,10 +101,14 @@ async function runRules(/** @type {string} */ ruleDirname) {
 		if (module.createRules) {
 			let rules
 			try {
-				rules = await module.createRules()
+				rules = await module.createRules({ project: projectInfo, projectConfig })
 			} catch (err) {
 				console.info(`${chalk.red(`Caught createRules Error:`)} ruleset: ${longId}`)
 				console.info(err)
+				console.info(`${chalk.cyan(`Skipping:`)} ruleset: ${longId}`)
+				continue
+			}
+			if (!Array.isArray(rules)) {
 				console.info(`${chalk.cyan(`Skipping:`)} ruleset: ${longId}`)
 				continue
 			}
@@ -111,13 +120,6 @@ async function runRules(/** @type {string} */ ruleDirname) {
 				}
 
 				await runRule(rule, longId)
-			}
-		} else if (module.rule) {
-			if (projectConfig.ignoredChecks.includes(longId)) {
-				console.info(`${chalk.cyan(`Ignoring:`)} ${longId}`)
-			} else {
-				console.info(`${chalk.magenta(`Executing:`)} ${longId}`)
-				await module.rule({ project: projectInfo, projectConfig })
 			}
 		} else {
 			console.warn(chalk.warn(`No rule export found in file: ${ruleFile}`))

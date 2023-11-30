@@ -4,20 +4,28 @@ import * as path from 'node:path'
 import detectIndent from 'detect-indent'
 import { execa } from 'execa'
 
-import { makeRule, pkgRoot } from '../../util/util.js'
+import { pkgRoot } from '../../util/util.js'
 import { octokit } from '../../util/octokit.js'
 
-/** @type {import('../../util/util.js').RuleMaker} */
-export async function rule({ project }) {
+/** @type {import('../../util/util.js').CreateRules} */
+export async function createRules({ project }) {
+	const configFile = '.gitattributes'
 	return
+
+	function fileExists(file) {
+		return fs
+			.stat(file)
+			.then(() => true)
+			.catch(() => false)
+	}
 
 	const { data } = await octokit.rest.repos.get({
 		owner: project.owner,
 		repo: project.name,
 	})
 
-	await makeRule(() => {
-		return {
+	return [
+		{
 			description: 'Repository description must end with punctuation',
 			async shouldFix() {
 				if (typeof data.description === 'undefined' || data.description === null)
@@ -30,5 +38,7 @@ export async function rule({ project }) {
 			},
 			// TODO:  use gh repo edit --description
 		}
-	})
+	]
+
+
 }

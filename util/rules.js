@@ -26,7 +26,7 @@ export async function ruleFileMustExistAndHaveContent({ file, content: shouldCon
 export async function ruleCheckPackageJsonDependencies({ mainPackageName, packages }) {
 	async function packageJsonExists() {
 		return await fs
-			.stat('packagejson.json')
+			.stat('package.json')
 			.then(() => true)
 			.catch(() => false)
 	}
@@ -53,7 +53,7 @@ export async function ruleCheckPackageJsonDependencies({ mainPackageName, packag
 		deps: [packageJsonExists],
 		shouldFix() {
 			for (const packageName of packages) {
-				if (!packageJson?.devDependencies[packageName]) {
+				if (!packageJson?.devDependencies?.[packageName]) {
 					return true
 				}
 			}
@@ -61,7 +61,7 @@ export async function ruleCheckPackageJsonDependencies({ mainPackageName, packag
 			for (let i = 0; i < packages.length; ++i) {
 				const packageName = packages[i]
 				// TODO: ^, etc. is not always guaranteed
-				if (packageJson?.devDependencies[packageName].slice(1) !== latestVersions[i]) {
+				if (packageJson?.devDependencies?.[packageName].slice(1) !== latestVersions[i]) {
 					return true
 				}
 			}

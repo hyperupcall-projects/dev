@@ -1,51 +1,53 @@
 import * as fs from 'node:fs/promises'
+import { existsSync } from 'node:fs'
 import path from 'node:path'
 
-import { makeRule, pkgRoot } from '../../util/util.js'
+import { pkgRoot } from '../../util/util.js'
 
-/** @type {import('../../util/util.js').RuleMaker} */
-export async function rule() {
-	await makeRule(() => {
-		return {
-			description: 'File must exist: .gitattributes',
+
+/** @type {import('../../util/util.js').CreateRules} */
+export async function createRules({ project }) {
+	const configFile = '.gitattributes'
+
+	function fileExists(file) {
+		return fs
+			.stat(file)
+			.then(() => true)
+			.catch(() => false)
+	}
+
+	return [
+		{
+			id: 'gitattributes-exists',
 			async shouldFix() {
-				return fs
-					.stat('.gitattributes')
-					.then(() => false)
-					.catch(() => true)
+				return !(await fileExists(configFile))
 			},
 			async fix() {
 				await fs.writeFile(
-					'.gitattributes',
+					configFile,
 					`# foxxo start
 * text=auto eol=lf
 bake linguist-generated
 # foxxo end
 `,
 				)
-			},
-		}
-	})
-
-	await makeRule(() => {
-		return {
-			description: 'gitattributes must include: * text=auto eol=lf',
+			}
+		},
+		{
+			id: 'gitattributes-has-text-auto',
 			async shouldFix() {
 				return !(await fs.readFile('.gitattributes', 'utf-8')).includes(
 					'* text=auto eol=lf\n',
 				)
-			},
-		}
-	})
-
-	await makeRule(() => {
-		return {
-			description: 'gitattributes must include: bake linguist-generated',
+			}
+		},
+		{
+			id: 'gitattributes-has-bake-linguist-generated',
 			async shouldFix() {
 				return !(await fs.readFile('.gitattributes', 'utf-8')).includes(
 					'bake linguist-generated\n',
 				)
-			},
+			}
 		}
-	})
+	]
 }
