@@ -6,7 +6,6 @@ Personal repository linting tool.
 
 - `npm-package-json-lint`
 
-
 ```json
 
 ```
@@ -19,3 +18,7 @@ Personal repository linting tool.
 - private npm repositories run less rules (do not popular packageJson)
 - check for unecessary files github
 - np (sindresorhus)
+- .github for organizations (including funding.yml)
+- CODE_OF_CONDUCT etc. does not start with newline (copy paste error?)
+- lefthook
+- check that "private" field exists packageJson

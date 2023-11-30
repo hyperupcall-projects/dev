@@ -1,7 +1,7 @@
 import * as fs from 'node:fs/promises'
-import path from 'node:path';
+import path from 'node:path'
 
-import { makeRule, pkgRoot } from "../../util/util.js";
+import { makeRule, pkgRoot } from '../../util/util.js'
 
 /** @type {import('../../util/util.js').RuleMaker} */
 export async function rule() {
@@ -17,7 +17,7 @@ export async function rule() {
 			async fix() {
 				const licenseFile = path.join(pkgRoot(), 'assets/LICENSE-MPL-2.0')
 				await fs.writeFile('LICENSE', await fs.readFile(licenseFile, 'utf-8'))
-			}
+			},
 		}
 	})
 
@@ -30,7 +30,7 @@ export async function rule() {
 			async fix() {
 				const licenseFile = path.join(pkgRoot(), 'assets/LICENSE-MPL-2.0')
 				await fs.writeFile('LICENSE', await fs.readFile(licenseFile, 'utf-8'))
-			}
+			},
 		}
 	})
 }

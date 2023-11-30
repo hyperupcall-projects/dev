@@ -1,13 +1,13 @@
 import * as fs from 'node:fs/promises'
-import path from 'node:path';
+import path from 'node:path'
 
-import { makeRule, pkgRoot } from "../../util/util.js";
-import { execa } from 'execa';
+import { makeRule, pkgRoot } from '../../util/util.js'
+import { execa } from 'execa'
 
 /** @type {import('../../util/util.js').RuleMaker} */
 export async function rule() {
 	await makeRule(async () => {
-		const {stdout, stderr, exitCode } = await execa('npx', ['publint'])
+		const { stdout, stderr, exitCode } = await execa('npx', ['publint'])
 		if (!stdout.includes('All good!')) {
 			console.log(stdout)
 		}
@@ -19,7 +19,7 @@ export async function rule() {
 			},
 			async fix() {
 				console.log(console.log(stdout))
-			}
+			},
 		}
 	})
 }

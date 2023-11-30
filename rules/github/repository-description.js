@@ -20,8 +20,13 @@ export async function rule({ project }) {
 		return {
 			description: 'Repository description must end with punctuation',
 			async shouldFix() {
-				if (typeof data.description === 'undefined' || data.description === null) return true
-				return !(data.description.endsWith('.') || data.description.endsWith('?') || data.description.endsWith('!'))
+				if (typeof data.description === 'undefined' || data.description === null)
+					return true
+				return !(
+					data.description.endsWith('.') ||
+					data.description.endsWith('?') ||
+					data.description.endsWith('!')
+				)
 			},
 			// TODO:  use gh repo edit --description
 		}

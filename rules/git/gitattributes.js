@@ -1,7 +1,7 @@
 import * as fs from 'node:fs/promises'
-import path from 'node:path';
+import path from 'node:path'
 
-import { makeRule, pkgRoot } from "../../util/util.js";
+import { makeRule, pkgRoot } from '../../util/util.js'
 
 /** @type {import('../../util/util.js').RuleMaker} */
 export async function rule() {
@@ -15,12 +15,15 @@ export async function rule() {
 					.catch(() => true)
 			},
 			async fix() {
-				await fs.writeFile('.gitattributes', `# foxxo start
+				await fs.writeFile(
+					'.gitattributes',
+					`# foxxo start
 * text=auto eol=lf
 bake linguist-generated
 # foxxo end
-`)
-			}
+`,
+				)
+			},
 		}
 	})
 
@@ -28,8 +31,10 @@ bake linguist-generated
 		return {
 			description: 'gitattributes must include: * text=auto eol=lf',
 			async shouldFix() {
-				return !(await fs.readFile('.gitattributes', 'utf-8')).includes('* text=auto eol=lf\n')
-			}
+				return !(await fs.readFile('.gitattributes', 'utf-8')).includes(
+					'* text=auto eol=lf\n',
+				)
+			},
 		}
 	})
 
@@ -37,8 +42,10 @@ bake linguist-generated
 		return {
 			description: 'gitattributes must include: bake linguist-generated',
 			async shouldFix() {
-				return !(await fs.readFile('.gitattributes', 'utf-8')).includes('bake linguist-generated\n')
-			}
+				return !(await fs.readFile('.gitattributes', 'utf-8')).includes(
+					'bake linguist-generated\n',
+				)
+			},
 		}
 	})
 }

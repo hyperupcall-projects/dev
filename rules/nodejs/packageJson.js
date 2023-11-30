@@ -1,13 +1,80 @@
 import * as fs from 'node:fs/promises'
-import path from 'node:path';
+import path from 'node:path'
 
 import detectIndent from 'detect-indent'
 
-import { makeRule, pkgRoot } from "../../util/util.js";
-import { octokit } from '../../util/octokit.js';
+import { makeRule, pkgRoot } from '../../util/util.js'
+import { octokit } from '../../util/octokit.js'
 
 /** @type {import('../../util/util.js').RuleMaker} */
 export async function rule({ project }) {
+	await makeRule(async () => {
+		let packageJsonText = await fs.readFile('./package.json', 'utf-8')
+		/** @type {import('type-fest').PackageJson} */
+		let packageJson = JSON.parse(packageJsonText)
+
+		const formatString = 'prettier --check .'
+		return {
+			description: 'package.json must have accurate: scripts.format',
+			async shouldFix() {
+				return packageJson?.scripts?.format !== formatString
+			},
+			async fix() {
+				let packageJsonText = await fs.readFile('./package.json', 'utf-8')
+				let packageJson = JSON.parse(packageJsonText)
+
+				let packageJsonModified = {
+					...packageJson,
+					scripts: {
+						...packageJson.scripts,
+						format: formatString,
+					},
+				}
+				await fs.writeFile(
+					'package.json',
+					JSON.stringify(
+						packageJsonModified,
+						null,
+						detectIndent(packageJsonText).indent || '\t',
+					),
+				)
+			},
+		}
+	})
+
+	await makeRule(async () => {
+		let packageJsonText = await fs.readFile('./package.json', 'utf-8')
+		/** @type {import('type-fest').PackageJson} */
+		let packageJson = JSON.parse(packageJsonText)
+
+		const formatString = 'eslint .'
+		return {
+			description: 'package.json must have accurate: scripts.lint',
+			async shouldFix() {
+				return packageJson?.scripts?.lint !== formatString
+			},
+			async fix() {
+				let packageJsonText = await fs.readFile('./package.json', 'utf-8')
+				let packageJson = JSON.parse(packageJsonText)
+
+				let packageJsonModified = {
+					...packageJson,
+					scripts: {
+						...packageJson.scripts,
+						lint: formatString,
+					},
+				}
+				await fs.writeFile(
+					'package.json',
+					JSON.stringify(
+						packageJsonModified,
+						null,
+						detectIndent(packageJsonText).indent || '\t',
+					),
+				)
+			},
+		}
+	})
 	return
 	const { data } = await octokit.rest.repos.get({
 		owner: project.owner,
@@ -27,13 +94,17 @@ export async function rule({ project }) {
 			async fix() {
 				let packageJsonModified = {
 					...packageJson,
-					description: data.description
+					description: data.description,
 				}
 				await fs.writeFile(
 					'package.json',
-					JSON.stringify(packageJsonModified, null, detectIndent(packageJsonText).indent || '\t')
+					JSON.stringify(
+						packageJsonModified,
+						null,
+						detectIndent(packageJsonText).indent || '\t',
+					),
 				)
-			}
+			},
 		}
 	})
 
@@ -51,13 +122,17 @@ export async function rule({ project }) {
 			async fix() {
 				let packageJsonModified = {
 					...packageJson,
-					author
+					author,
 				}
 				await fs.writeFile(
 					'package.json',
-					JSON.stringify(packageJsonModified, null, detectIndent(packageJsonText).indent || '\t')
+					JSON.stringify(
+						packageJsonModified,
+						null,
+						detectIndent(packageJsonText).indent || '\t',
+					),
 				)
-			}
+			},
 		}
 	})
 
@@ -71,7 +146,7 @@ export async function rule({ project }) {
 			description: 'package.json must have accurate: license',
 			async shouldFix() {
 				return !packageJson.license
-			}
+			},
 		}
 	})
 
@@ -90,14 +165,18 @@ export async function rule({ project }) {
 				let packageJsonModified = {
 					...packageJson,
 					bugs: {
-						url: bugsUrl
-					}
+						url: bugsUrl,
+					},
 				}
 				await fs.writeFile(
 					'package.json',
-					JSON.stringify(packageJsonModified, null, detectIndent(packageJsonText).indent || '\t')
+					JSON.stringify(
+						packageJsonModified,
+						null,
+						detectIndent(packageJsonText).indent || '\t',
+					),
 				)
-			}
+			},
 		}
 	})
 
@@ -117,14 +196,18 @@ export async function rule({ project }) {
 					...packageJson,
 					repository: {
 						type: 'git',
-						url: gitUrl
-					}
+						url: gitUrl,
+					},
 				}
 				await fs.writeFile(
 					'package.json',
-					JSON.stringify(packageJsonModified, null, detectIndent(packageJsonText).indent || '\t')
+					JSON.stringify(
+						packageJsonModified,
+						null,
+						detectIndent(packageJsonText).indent || '\t',
+					),
 				)
-			}
+			},
 		}
 	})
 
@@ -136,8 +219,8 @@ export async function rule({ project }) {
 		return {
 			description: 'package.json must not have empty: keywords',
 			async shouldFix() {
-				return (!Array.isArray(packageJson.keywords) || packageJson.keywords.length === 0)
-			}
+				return !Array.isArray(packageJson.keywords) || packageJson.keywords.length === 0
+			},
 		}
 	})
 }

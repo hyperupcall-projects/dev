@@ -19,7 +19,7 @@ export async function rule() {
 			},
 			async fix() {
 				await fs.writeFile('.editorconfig', editorconfigConfig)
-			}
+			},
 		}
 	})
 
@@ -31,7 +31,7 @@ export async function rule() {
 			},
 			async fix() {
 				await fs.writeFile('.editorconfig', editorconfigConfig)
-			}
+			},
 		}
 	})
 }

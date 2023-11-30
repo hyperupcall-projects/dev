@@ -11,7 +11,10 @@ const projectConfig = {
 	...(await (async () => {
 		let projectTomlText
 		try {
-			projectTomlText = await fs.readFile(path.join(process.cwd(), 'project.toml'), 'utf-8')
+			projectTomlText = await fs.readFile(
+				path.join(process.cwd(), 'project.toml'),
+				'utf-8',
+			)
 		} catch (err) {
 			return {}
 		}
@@ -19,7 +22,7 @@ const projectConfig = {
 		const projectToml = toml.parse(projectTomlText)
 		const repositoryLint = projectToml['repository-lint'] || {}
 		return repositoryLint
-	})())
+	})()),
 }
 
 const project = await getProjectInfo()
@@ -47,14 +50,14 @@ async function runRules(/** @type {string} */ ruleDirname) {
 const { values, positionals } = util.parseArgs({
 	options: {
 		help: {
-			type: "boolean",
-			short: 'h'
+			type: 'boolean',
+			short: 'h',
 		},
 		all: {
 			type: 'boolean',
 			short: 'a',
 		},
-	}
+	},
 })
 
 if (values.help) {
@@ -64,7 +67,9 @@ Flags:
   --all
   --help`)
 }
-console.log(`${chalk.yellow(`Repository:`)} https://github.com/${project.owner}/${project.name}`)
+console.log(
+	`${chalk.yellow(`Repository:`)} https://github.com/${project.owner}/${project.name}`,
+)
 await runRules('any')
 await runRules('git')
 await runRules('github')
