@@ -27,7 +27,7 @@ export async function rule() {
 		async () =>
 			await checkPackageJsonDependencies({
 				mainPackageName: 'eslint',
-				packages: ['eslint', 'eslint-config-prettier', '@hyperupcall/eslint-config'],
+				packages: ['eslint', 'eslint-config-prettier', 'eslint-plugin-import', '@hyperupcall/eslint-config'],
 			}),
 	)
 }

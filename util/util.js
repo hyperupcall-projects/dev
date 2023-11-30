@@ -157,7 +157,7 @@ export async function checkPackageJsonDependencies({ mainPackageName, packages }
 				const packageName = packages[i]
 
 				// TODO: ^, etc. should not always be done
-				packageJsonModified?.devDependencies = {
+				packageJsonModified.devDependencies = {
 					...packageJsonModified?.devDependencies,
 					[packageName]: `^${latestVersions[i]}`,
 				}
