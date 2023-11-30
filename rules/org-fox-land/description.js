@@ -14,6 +14,8 @@ import { octokit } from '../../util/octokit.js'
 
 /** @type {import('../../util/util.js').RuleMaker} */
 export async function rule({ project }) {
+	return
+
 	await makeRule(async () => {
 		const readmeText = await fs.readFile('README.md', 'utf-8')
 		/**

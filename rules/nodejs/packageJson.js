@@ -5,6 +5,10 @@ import detectIndent from 'detect-indent'
 
 import { makeRule, pkgRoot } from '../../util/util.js'
 import { octokit } from '../../util/octokit.js'
+import {
+	ruleCheckPackageJsonDependencies,
+	ruleFileMustExistAndHaveContent,
+} from '../../util/rules.js'
 
 /** @type {import('../../util/util.js').RuleMaker} */
 export async function rule({ project }) {

@@ -5,6 +5,7 @@ import detectIndent from 'detect-indent'
 import yn from 'yn'
 import chalk from 'chalk'
 import { execa } from 'execa'
+import { existsSync } from 'node:fs'
 
 /**
  * @param {string} packageName
@@ -31,8 +32,17 @@ export function pkgRoot(packageName) {
  * @returns {Promise<ProjectInfo>}
  */
 export async function getProjectInfo() {
-	const { stdout: branchName } = await execa('git', ['branch', '--show-current'])
+	if (!existsSync('.git')) {
+		return {
+			branchName: null,
+			remoteName: null,
+			remoteUrl: null,
+			owner: null,
+			name: null
+		}
+	}
 
+	const { stdout: branchName } = await execa('git', ['branch', '--show-current'])
 	const { stdout: remoteName } = await (async () => {
 		if (branchName) {
 			return await execa('git', ['config', '--get', `branch.${branchName}.remote`])
@@ -50,8 +60,7 @@ export async function getProjectInfo() {
 			])
 		}
 	})()
-
-	const { stdout: remoteUrl } = await execa('git', ['remote', 'get-url', `${remoteName}`])
+	const { stdout: remoteUrl } = await execa('git', ['remote', 'get-url', remoteName])
 
 	const {
 		groups: { owner, name },
@@ -66,7 +75,7 @@ export async function getProjectInfo() {
 	}
 }
 
-const projectInfo = await getProjectInfo()
+export const projectInfo = await getProjectInfo()
 
 /**
  * @typedef {(arg1: { project: ProjectInfo }) => Promise<{ description: string, shouldFix: () => Promise<boolean>, fix: () => Promise<void>}>} RuleMaker
@@ -74,11 +83,19 @@ const projectInfo = await getProjectInfo()
 
 /**
  * @param {RuleMaker} ruleMaker
+ * @returns {Promise<{ applied: boolean }>}
  */
 export async function makeRule(ruleMaker) {
-	const { description, shouldFix, fix } = await ruleMaker({ project: projectInfo })
-	if (!description) throw new TypeError(`Parameter not passed: description`)
-	if (!shouldFix) throw new TypeError(`Parameter not passed: shouldFix`)
+	// if (typeof ruleMaker !== 'function') {
+	// 	ruleMaker = ruleMaker.fn
+	// 	for (const dep of (deps ?? [])) {
+	// 		if (!dep.applied) {
+	// 			console.info(`DEPENDENCY FAILED: ${dep.description}`)
+	// 		}
+	// 	}
+	// }
+	const { id, description, shouldFix, fix } = await ruleMaker({ project: projectInfo })
+
 
 	if (await shouldFix()) {
 		console.info(`ASSERTION FAILED: ${description}`)
@@ -91,87 +108,16 @@ export async function makeRule(ruleMaker) {
 			const input = await rl.question(`Would you like to fix this? `)
 			if (yn(input)) {
 				await fix()
+
+				return { applied: true, description }
 			}
 			rl.close()
 		} else {
 			console.log(chalk.red(`No fix available`))
 		}
+
+		return { applied: false, description }
 	}
-}
 
-export async function fileMustExistAndHaveContent({ file, content: shouldContent }) {
-	let content
-	try {
-		content = await fs.readFile(file, 'utf-8')
-	} catch {}
-
-	return {
-		description: `File '${file}' must have content: '${shouldContent}'`,
-		shouldFix() {
-			return content !== shouldContent
-		},
-		async fix() {
-			await fs.writeFile(file, shouldContent)
-		},
-	}
-}
-
-export async function checkPackageJsonDependencies({ mainPackageName, packages }) {
-	const packageJsonText = await fs.readFile('package.json', 'utf-8')
-	/** @type {import('type-fest').PackageJson} */
-	const packageJson = JSON.parse(packageJsonText)
-
-	const latestVersionsObjects = await Promise.all(
-		packages.map((packageName) => execa('npm', ['view', '--json', packageName])),
-	)
-	const latestVersions = latestVersionsObjects.map((result) => {
-		if (result.exitCode !== 0) {
-			console.log(result.stderr)
-			throw new Error(result)
-		}
-
-		const obj = JSON.parse(result.stdout)
-		return obj['dist-tags'].latest
-	})
-
-	return {
-		description: `File 'package.json' is missing dependencies for package: ${mainPackageName}`,
-		shouldFix() {
-			for (const packageName of packages) {
-				if (!packageJson?.devDependencies[packageName]) {
-					return true
-				}
-			}
-
-			for (let i = 0; i < packages.length; ++i) {
-				const packageName = packages[i]
-				// TODO: ^, etc. is not always guaranteed
-				if (packageJson?.devDependencies[packageName].slice(1) !== latestVersions[i]) {
-					return true
-				}
-			}
-		},
-		async fix() {
-			const packageJsonModified = structuredClone(packageJson)
-			for (let i = 0; i < packages.length; ++i) {
-				const packageName = packages[i]
-
-				// TODO: ^, etc. should not always be done
-				packageJsonModified.devDependencies = {
-					...packageJsonModified?.devDependencies,
-					[packageName]: `^${latestVersions[i]}`,
-				}
-			}
-
-			await fs.writeFile(
-				'package.json',
-				JSON.stringify(
-					packageJsonModified,
-					null,
-					detectIndent(packageJsonText).indent || '\t',
-				),
-			)
-			console.log(`Now, run: 'npm i`)
-		},
-	}
+	return { applied: true, description }
 }

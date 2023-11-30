@@ -4,11 +4,13 @@ import * as path from 'node:path'
 import detectIndent from 'detect-indent'
 
 import {
-	fileMustExistAndHaveContent,
-	checkPackageJsonDependencies,
 	makeRule,
 	pkgRoot,
 } from '../../util/util.js'
+import {
+	ruleCheckPackageJsonDependencies,
+	ruleFileMustExistAndHaveContent,
+} from '../../util/rules.js'
 import { execa } from 'execa'
 
 /** @type {import('../../util/util.js').RuleMaker} */
@@ -17,7 +19,7 @@ export async function rule() {
 		const configFile = path.join(pkgRoot('@hyperupcall/configs'), '.markdownlint.json')
 		const configContent = await fs.readFile(configFile, 'utf-8')
 
-		return await fileMustExistAndHaveContent({
+		return await ruleFileMustExistAndHaveContent({
 			file: '.markdownlint.json',
 			content: configContent,
 		})
@@ -25,7 +27,7 @@ export async function rule() {
 
 	await makeRule(
 		async () =>
-			await checkPackageJsonDependencies({
+			await ruleCheckPackageJsonDependencies({
 				mainPackageName: 'markdownlint',
 				packages: ['markdownlint', '@hyperupcall/markdownlint-config'],
 			}),

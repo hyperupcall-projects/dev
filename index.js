@@ -4,7 +4,9 @@ import fs from 'node:fs/promises'
 import util from 'node:util'
 import chalk from 'chalk'
 import toml from '@ltd/j-toml'
-import { getProjectInfo, pkgRoot } from './util/util.js'
+import { projectInfo, pkgRoot, makeRule } from './util/util.js'
+import * as readline from 'node:readline/promises'
+import yn from 'yn'
 
 const projectConfig = {
 	ignoredChecks: [],
@@ -25,7 +27,64 @@ const projectConfig = {
 	})()),
 }
 
-const project = await getProjectInfo()
+async function runRule(rule, longId) {
+	const { id, deps, shouldFix, fix } = rule
+	if (!shouldFix) throw new TypeError(`Rule '${id}' does not have property: shouldFix`)
+
+	console.info(`${chalk.blue('Rule:')} ${longId}/${id}`)
+	for (const dep of (deps ?? [])) {
+		try {
+			let result = await dep()
+			if (!result) {
+				console.info(`${chalk.cyan(`Skipping:`)} dependencies not satisfied`)
+				return
+			}
+		} catch (err) {
+			console.info(`${chalk.red(`Caught dep Error:`)} ruleset: ${longId}`)
+			console.info(err)
+			console.info(`${chalk.cyan(`Skipping:`)} ruleset: ${longId}`)
+			return
+		}
+	}
+
+	let willFix
+	try {
+		willFix = await shouldFix() ?? false
+	} catch (err) {
+		console.info(err) // TODO
+		return { applied: false }
+	}
+	if (!willFix) {
+		// TODO
+		return { applied: false }
+	}
+	if (typeof fix !== 'function') {
+		// TODO
+		return { applied: false }
+	}
+
+
+
+	const rl = readline.createInterface({
+		input: process.stdin,
+		output: process.stdout,
+	})
+	const input = await rl.question(`Would you like to fix this? `)
+	if (yn(input)) {
+		rl.close()
+		try {
+			await fix()
+		} catch (err) {
+			console.error(err)
+			return { applied: false }
+		}
+
+		return { applied: true }
+	}
+	rl.close()
+
+	return { applied: false }
+}
 
 async function runRules(/** @type {string} */ ruleDirname) {
 	const rulesDir = path.join(pkgRoot(), './rules', ruleDirname)
@@ -34,12 +93,31 @@ async function runRules(/** @type {string} */ ruleDirname) {
 		const module = await import(rulesFile)
 		const longId = `${ruleDirname}/${ruleFile}`.slice(0, -3)
 
-		if (module.rule) {
+		if (module.createRules) {
+			let rules
+			try {
+				rules = await module.createRules()
+			} catch (err) {
+				console.info(`${chalk.red(`Caught createRules Error:`)} ruleset: ${longId}`)
+				console.info(err)
+				console.info(`${chalk.cyan(`Skipping:`)} ruleset: ${longId}`)
+				continue
+			}
+
+			for (const rule of rules) {
+				if (projectConfig.ignoredChecks.includes(longId)) {
+					console.info(`${chalk.cyan(`Ignoring:`)} ${longId}`)
+					continue
+				}
+
+				await runRule(rule, longId)
+			}
+		} else if (module.rule) {
 			if (projectConfig.ignoredChecks.includes(longId)) {
 				console.info(`${chalk.cyan(`Ignoring:`)} ${longId}`)
 			} else {
 				console.info(`${chalk.magenta(`Executing:`)} ${longId}`)
-				await module.rule({ project, projectConfig })
+				await module.rule({ project: projectInfo, projectConfig })
 			}
 		} else {
 			console.warn(chalk.warn(`No rule export found in file: ${ruleFile}`))
@@ -68,7 +146,7 @@ Flags:
   --help`)
 }
 console.log(
-	`${chalk.yellow(`Repository:`)} https://github.com/${project.owner}/${project.name}`,
+	`${chalk.yellow(`Repository:`)} https://github.com/${projectInfo.owner}/${projectInfo.name}`,
 )
 await runRules('any')
 await runRules('git')
@@ -76,8 +154,8 @@ await runRules('github')
 if (existsSync('package.json')) {
 	await runRules('nodejs')
 }
-if (existsSync(path.join(pkgRoot(), `rules/org-${project.owner}`))) {
-	await runRules(`org-${project.owner}`)
+if (existsSync(path.join(pkgRoot(), `rules/org-${projectInfo.owner}`))) {
+	await runRules(`org-${projectInfo.owner}`)
 }
 console.log('Done.')
 process.exit(1) // Workaround for experimental --experimental-import-meta-resolve issues

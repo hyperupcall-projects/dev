@@ -4,12 +4,13 @@ import * as path from 'node:path'
 import detectIndent from 'detect-indent'
 
 import {
-	fileMustExistAndHaveContent,
-	checkPackageJsonDependencies,
 	makeRule,
 	pkgRoot,
 } from '../../util/util.js'
-import { execa } from 'execa'
+import {
+	ruleCheckPackageJsonDependencies,
+	ruleFileMustExistAndHaveContent,
+} from '../../util/rules.js'
 
 /** @type {import('../../util/util.js').RuleMaker} */
 export async function rule() {
@@ -17,7 +18,7 @@ export async function rule() {
 	// 	await makeRule(async () => {
 	// 		const configContent = `assert_lefthook_installed = true
 	// `
-	// 	return await fileMustExistAndHaveContent({
+	// 	return await ruleFileMustExistAndHaveContent({
 	// 			file: '.lefthook.toml',
 	// 			content: configContent
 	// 		})

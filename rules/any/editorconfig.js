@@ -3,35 +3,30 @@ import * as path from 'node:path'
 
 import { makeRule, pkgRoot } from '../../util/util.js'
 
-/** @type {import('../../util/util.js').RuleMaker} */
-export async function rule() {
-	const editorconfigFile = path.join(pkgRoot('@hyperupcall/configs'), '.editorconfig')
-	const editorconfigConfig = await fs.readFile(editorconfigFile, 'utf-8')
+/** @type {import('../../util/util.js').CreateRules} */
+export async function createRules() {
+	const configFile = '.editorconfig'
+	const configPath = path.join(pkgRoot('@hyperupcall/configs'), configFile)
+	const configContent = await fs.readFile(configPath, 'utf-8')
 
-	await makeRule(() => {
-		return {
-			description: 'File must exist: .editorconfig',
-			async shouldFix() {
-				return fs
-					.stat('.editorconfig')
-					.then(() => false)
-					.catch(() => true)
-			},
-			async fix() {
-				await fs.writeFile('.editorconfig', editorconfigConfig)
-			},
-		}
-	})
+	function fileExists(file) {
+		return fs
+			.stat(file)
+			.then(() => true)
+			.catch(() => false)
+	}
 
-	await makeRule(() => {
-		return {
-			description: 'File must not be empty: .editorconfig',
-			async shouldFix() {
-				return (await fs.readFile('.editorconfig', 'utf-8')).length === 0
-			},
-			async fix() {
-				await fs.writeFile('.editorconfig', editorconfigConfig)
-			},
+	return [
+		{
+			id: 'editorconfig-exists',
+			shouldFix: async () => !(await fileExists(configFile)),
+			fix: () => fs.writeFile(configFile, configContent)
+		},
+		{
+			id: 'editorconfig-is-not-empty',
+			deps: [() => fileExists(configFile)],
+			shouldFix: async () => (await fs.readFile(configFile, 'utf-8')).length === 0,
+			fix: () => fs.writeFile(configFile, configContent)
 		}
-	})
+	]
 }

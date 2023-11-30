@@ -4,9 +4,11 @@ import * as path from 'node:path'
 import {
 	makeRule,
 	pkgRoot,
-	checkPackageJsonDependencies,
-	fileMustExistAndHaveContent,
 } from '../../util/util.js'
+import {
+	ruleCheckPackageJsonDependencies,
+	ruleFileMustExistAndHaveContent,
+} from '../../util/rules.js'
 
 /** @type {import('../../util/util.js').RuleMaker} */
 export async function rule() {
@@ -14,7 +16,7 @@ export async function rule() {
 		const configFile = path.join(pkgRoot('@hyperupcall/configs'), '.prettierrc.json')
 		const configContent = await fs.readFile(configFile, 'utf-8')
 
-		return await fileMustExistAndHaveContent({
+		return await ruleFileMustExistAndHaveContent({
 			file: '.prettierrc.json',
 			content: configContent,
 		})
@@ -22,7 +24,7 @@ export async function rule() {
 
 	await makeRule(
 		async () =>
-			await checkPackageJsonDependencies({
+			await ruleCheckPackageJsonDependencies({
 				mainPackageName: 'prettier',
 				packages: ['prettier', 'prettier-plugin-pkg', '@hyperupcall/prettier-config'],
 			}),

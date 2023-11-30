@@ -3,6 +3,10 @@ import path from 'node:path'
 
 import { makeRule, pkgRoot } from '../../util/util.js'
 import { execa } from 'execa'
+import {
+	ruleCheckPackageJsonDependencies,
+	ruleFileMustExistAndHaveContent,
+} from '../../util/rules.js'
 
 /** @type {import('../../util/util.js').RuleMaker} */
 export async function rule() {
