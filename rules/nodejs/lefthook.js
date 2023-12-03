@@ -3,9 +3,7 @@ import * as path from 'node:path'
 
 import detectIndent from 'detect-indent'
 
-import {
-	pkgRoot,
-} from '../../util/util.js'
+import { pkgRoot } from '../../util/util.js'
 import {
 	ruleCheckPackageJsonDependencies,
 	ruleFileMustExistAndHaveContent,
@@ -18,9 +16,7 @@ export async function createRules() {
 	return [
 		{
 			fix: 'lefthook-config-exists',
-			async shouldFix() {
-
-			}
-		}
+			async shouldFix() {},
+		},
 	]
 }

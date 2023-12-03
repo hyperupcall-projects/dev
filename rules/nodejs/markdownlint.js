@@ -3,9 +3,7 @@ import * as path from 'node:path'
 
 import detectIndent from 'detect-indent'
 
-import {
-	pkgRoot,
-} from '../../util/util.js'
+import { pkgRoot } from '../../util/util.js'
 import {
 	ruleCheckPackageJsonDependencies,
 	ruleFileMustExistAndHaveContent,
@@ -17,23 +15,25 @@ export async function createRules() {
 	return [
 		{
 			id: 'markdownlint-config-exists',
-			...await (async () => {
-				const configFile = path.join(pkgRoot('@hyperupcall/configs'), '.markdownlint.json')
-		const configContent = await fs.readFile(configFile, 'utf-8')
+			...(await (async () => {
+				const configFile = path.join(
+					pkgRoot('@hyperupcall/configs'),
+					'.markdownlint.json',
+				)
+				const configContent = await fs.readFile(configFile, 'utf-8')
 
 				return await ruleFileMustExistAndHaveContent({
 					file: '.markdownlint.json',
 					content: configContent,
 				})
-			})()
+			})()),
 		},
 		{
 			id: 'markdownlint-has-dependencies',
-			...await ruleCheckPackageJsonDependencies({
+			...(await ruleCheckPackageJsonDependencies({
 				mainPackageName: 'markdownlint',
 				packages: ['markdownlint', '@hyperupcall/markdownlint-config'],
-			})
+			})),
 		},
 	]
 }
-

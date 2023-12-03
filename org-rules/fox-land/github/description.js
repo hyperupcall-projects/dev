@@ -9,10 +9,10 @@ import { reporter } from 'vfile-reporter'
 import { lintRule } from 'unified-lint-rule'
 import { visit } from 'unist-util-visit'
 
-import { pkgRoot } from '../../util/util.js'
-import { octokit } from '../../util/octokit.js'
+import { pkgRoot } from '../../../util/util.js'
+import { octokit } from '../../../util/octokit.js'
 
-/** @type {import('../../util/util.js').CreateRules} */
+/** @type {import('../../../util/util.js').CreateRules} */
 export async function createRules() {
 	return []
 
@@ -81,8 +81,10 @@ export async function createRules() {
 
 	console.log(reporter(file))
 
-	return [{
-		id: 'readme-description-consistent',
-		async shouldFix() {},
-	}]
+	return [
+		{
+			id: 'readme-description-consistent',
+			async shouldFix() {},
+		},
+	]
 }

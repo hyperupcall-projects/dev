@@ -1,20 +1,11 @@
 import * as fs from 'node:fs/promises'
-import { existsSync } from 'node:fs'
 import path from 'node:path'
 
-import { pkgRoot } from '../../util/util.js'
-
+import { fileExists, pkgRoot } from '../../util/util.js'
 
 /** @type {import('../../util/util.js').CreateRules} */
 export async function createRules({ project }) {
 	const configFile = '.gitattributes'
-
-	function fileExists(file) {
-		return fs
-			.stat(file)
-			.then(() => true)
-			.catch(() => false)
-	}
 
 	return [
 		{
@@ -31,7 +22,7 @@ bake linguist-generated
 # foxxo end
 `,
 				)
-			}
+			},
 		},
 		{
 			id: 'gitattributes-has-text-auto',
@@ -39,7 +30,7 @@ bake linguist-generated
 				return !(await fs.readFile('.gitattributes', 'utf-8')).includes(
 					'* text=auto eol=lf\n',
 				)
-			}
+			},
 		},
 		{
 			id: 'gitattributes-has-bake-linguist-generated',
@@ -47,7 +38,7 @@ bake linguist-generated
 				return !(await fs.readFile('.gitattributes', 'utf-8')).includes(
 					'bake linguist-generated\n',
 				)
-			}
-		}
+			},
+		},
 	]
 }

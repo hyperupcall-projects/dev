@@ -1,5 +1,11 @@
 {
 	"compilerOptions": {
-		"strict": true
+		"strict": true,
+		"checkJs": true,
+		"module": "Node16",
+		"moduleResolution": "node16",
+		// Let the linter take care of this
+		"noUnusedLocals": false,
+		"noUnusedParameters": false
 	}
 }

@@ -4,23 +4,26 @@ Personal repository linting tool.
 
 ## TODO
 
-- `npm-package-json-lint`
+### Checks
 
-```json
-
-```
-
-- .github check for errors
-
-
+- .github repo specific errors
+- github test if org has all files archived (fox-archived)
+- .github/funding.yml and all file checks for orgs
 - nodejs: check for .format, .lint properties and .eslint, .prettier props in package.json. make sure they are consistent (decide)
-- nodejs: funding
-- rules-org/fox-land remark readme.md
-- diff function when changing files
 - private npm repositories run less rules (do not popular packageJson)
 - check for unecessary files github
 - np (sindresorhus)
-- .github for organizations (including funding.yml)
 - CODE_OF_CONDUCT etc. does not start with newline (copy paste error?)
-- lefthook
 - check that "private" field exists packageJson
+- lefthook
+- `npm-package-json-lint`
+
+### Features
+
+- diff function mechanism
+- flag to enable-disable certain checks
+- flag to disable connecting internet (speed w/ broadband)
+
+### Later
+
+- migrate from 'np' to custom cross solution

@@ -25,6 +25,6 @@ export async function createRules() {
 			async fix() {
 				console.log(console.log(stdout))
 			},
-		}
+		},
 	]
 }

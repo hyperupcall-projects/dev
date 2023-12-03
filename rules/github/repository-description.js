@@ -4,20 +4,13 @@ import * as path from 'node:path'
 import detectIndent from 'detect-indent'
 import { execa } from 'execa'
 
-import { pkgRoot } from '../../util/util.js'
+import { fileExists, pkgRoot } from '../../util/util.js'
 import { octokit } from '../../util/octokit.js'
 
 /** @type {import('../../util/util.js').CreateRules} */
 export async function createRules({ project }) {
 	const configFile = '.gitattributes'
 	return
-
-	function fileExists(file) {
-		return fs
-			.stat(file)
-			.then(() => true)
-			.catch(() => false)
-	}
 
 	const { data } = await octokit.rest.repos.get({
 		owner: project.owner,
@@ -37,8 +30,6 @@ export async function createRules({ project }) {
 				)
 			},
 			// TODO:  use gh repo edit --description
-		}
+		},
 	]
-
-
 }

@@ -9,15 +9,17 @@ import { reporter } from 'vfile-reporter'
 import { lintRule } from 'unified-lint-rule'
 import { visit } from 'unist-util-visit'
 
-import { pkgRoot } from '../../util/util.js'
-import { octokit } from '../../util/octokit.js'
+import { pkgRoot } from '../../../util/util.js'
+import { octokit } from '../../../util/octokit.js'
 import {
 	ruleCheckPackageJsonDependencies,
 	ruleFileMustExistAndHaveContent,
-} from '../../util/rules.js'
+} from '../../../util/rules.js'
 
-/** @type {import('../../util/util.js').CreateRules} */
+/** @type {import('../../../../util/util.js').CreateRules} */
 export async function createRules() {
+	return
+
 	// TODO: conditional rules, dependent rules
 	if (project.owner !== 'fox-land' && project.name !== '.github') {
 		console.log('dot-github matches')
@@ -27,7 +29,7 @@ export async function createRules() {
 	const links = []
 	const orgRepos = await octokit.rest.repos.listForOrg({
 		org: project.owner,
-		per_page: 100
+		per_page: 100,
 	})
 	if (orgRepos.data.length >= 100) throw new Error('should not be 100')
 
@@ -36,21 +38,17 @@ export async function createRules() {
 	 * @typedef {import('mdast').Root} Root
 	 */
 	const file = await remark()
-		.use(
-			function myRemarkPlugin(options) {
-				return function (tree, file) {
-					visit(tree, 'link', function (node, index, parent) {
-						links.push({
-							text: node?.children?.[0]?.value,
-							url: node.url,
-						})
+		.use(function myRemarkPlugin(options) {
+			return function (tree, file) {
+				visit(tree, 'link', function (node, index, parent) {
+					links.push({
+						text: node?.children?.[0]?.value,
+						url: node.url,
 					})
-				}
+				})
 			}
-		)
+		})
 		.process(readmeText)
-
-
 
 	for (const orgRepo of orgRepos.data) {
 		if (orgRepo.html_url.includes('.github')) {
@@ -72,7 +70,7 @@ export async function createRules() {
 
 	return [
 		{
-			id: 'dot-github'
-		}
+			id: 'dot-github',
+		},
 	]
 }

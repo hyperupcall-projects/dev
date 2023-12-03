@@ -13,7 +13,7 @@ import {
 /** @type {import('../../util/util.js').CreateRules} */
 export async function createRules() {
 	let packageJsonText = await fs.readFile('./package.json', 'utf-8')
-		/** @type {import('type-fest').PackageJson} */
+	/** @type {import('type-fest').PackageJson} */
 	let packageJson = JSON.parse(packageJsonText)
 
 	const formatString1 = 'prettier --check .'
@@ -71,7 +71,7 @@ export async function createRules() {
 					),
 				)
 			},
-		}
+		},
 	]
 }
 

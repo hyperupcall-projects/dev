@@ -19,7 +19,7 @@ export async function createRules() {
 	return [
 		{
 			id: 'eslint-config-exists',
-			...await (async () => {
+			...(await (async () => {
 				const configFile = path.join(pkgRoot('@hyperupcall/configs'), '.eslintrc.json')
 				const configContent = await fs.readFile(configFile, 'utf-8')
 
@@ -27,19 +27,20 @@ export async function createRules() {
 					file: '.eslintrc.json',
 					content: configContent,
 				})
-			})()
+			})()),
 		},
 		{
 			id: 'eslint-has-dependencies',
-			...await ruleCheckPackageJsonDependencies({
+			...(await ruleCheckPackageJsonDependencies({
 				mainPackageName: 'eslint',
 				packages: [
 					'eslint',
 					'eslint-config-prettier',
 					'eslint-plugin-import',
+					'eslint-plugin-markdown',
 					'@hyperupcall/eslint-config',
 				],
-			})
+			})),
 		},
 	]
 }

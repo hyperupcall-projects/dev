@@ -1,20 +1,13 @@
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 
-import { pkgRoot } from '../../util/util.js'
+import { fileExists, pkgRoot } from '../../util/util.js'
 
 /** @type {import('../../util/util.js').CreateRules} */
 export async function createRules() {
 	const configFile = '.editorconfig'
 	const configPath = path.join(pkgRoot('@hyperupcall/configs'), configFile)
 	const configContent = await fs.readFile(configPath, 'utf-8')
-
-	function fileExists(file) {
-		return fs
-			.stat(file)
-			.then(() => true)
-			.catch(() => false)
-	}
 
 	return [
 		{
@@ -24,7 +17,7 @@ export async function createRules() {
 			},
 			async fix() {
 				return await fs.writeFile(configFile, configContent)
-			}
+			},
 		},
 		{
 			id: 'editorconfig-is-not-empty',
@@ -34,7 +27,7 @@ export async function createRules() {
 			},
 			async fix() {
 				return await fs.writeFile(configFile, configContent)
-			}
-		}
+			},
+		},
 	]
 }

@@ -1,9 +1,7 @@
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 
-import {
-	pkgRoot,
-} from '../../util/util.js'
+import { pkgRoot } from '../../util/util.js'
 import {
 	ruleCheckPackageJsonDependencies,
 	ruleFileMustExistAndHaveContent,
@@ -14,7 +12,7 @@ export async function createRules() {
 	return [
 		{
 			id: 'prettier-config-exists',
-			...await (async () => {
+			...(await (async () => {
 				const configFile = path.join(pkgRoot('@hyperupcall/configs'), '.prettierrc.json')
 				const configContent = await fs.readFile(configFile, 'utf-8')
 
@@ -22,15 +20,14 @@ export async function createRules() {
 					file: '.prettierrc.json',
 					content: configContent,
 				})
-			})()
+			})()),
 		},
 		{
 			id: 'prettier-has-dependencies',
-			...await ruleCheckPackageJsonDependencies({
+			...(await ruleCheckPackageJsonDependencies({
 				mainPackageName: 'prettier',
 				packages: ['prettier', 'prettier-plugin-pkg', '@hyperupcall/prettier-config'],
-			})
+			})),
 		},
 	]
 }
-
