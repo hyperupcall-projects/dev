@@ -5,7 +5,7 @@ import fs from 'node:fs/promises'
 import util from 'node:util'
 import chalk from 'chalk'
 import toml from '@ltd/j-toml'
-import { projectInfo, pkgRoot, fileExists } from './util/util.js'
+import { projectInfo, pkgRoot, fileExists, print } from './util/util.js'
 import * as readline from 'node:readline/promises'
 import yn from 'yn'
 
@@ -82,32 +82,35 @@ if (projectInfo?.gitHasRemote) {
 	}
 
 	const rulesDir = path.join(pkgRoot(), 'rules')
-	for (const ruleName of await fs.readdir(rulesDir)) {
-		for (const subRuleName of await fs.readdir(path.join(rulesDir, ruleName))) {
-			const finalDirpath = path.join(rulesDir, ruleName, subRuleName)
-			await runRules(finalDirpath, {
-				ruleName,
-				subRuleName,
+	for (const group of await fs.readdir(rulesDir)) {
+		for (const ruleSetFile of await fs.readdir(path.join(rulesDir, group))) {
+			const ruleSetPath = path.join(rulesDir, group, ruleSetFile)
+			const ruleSet = ruleSetFile.slice(0, -3)
+			await runRuleSet(ruleSetPath, {
+				group,
+				ruleSet,
+				id: `${group}/${ruleSet}`,
 				filter: filterFn,
 			})
 		}
 	}
-
 	if (projectInfo?.gitHasRemote) {
-		const orgRulesDir = path.join(pkgRoot(), 'org-rules')
-		for (const orgName of await fs.readdir(orgRulesDir)) {
+		const orgsDir = path.join(pkgRoot(), 'org-rules')
+		for (const orgName of await fs.readdir(orgsDir)) {
 			if (orgName !== projectInfo.owner) {
 				continue
 			}
 
-			for (const ruleName of await fs.readdir(path.join(orgRulesDir, orgName))) {
-				for (const subRuleName of await fs.readdir(
-					path.join(orgRulesDir, orgName, ruleName),
+			for (const group of await fs.readdir(path.join(orgsDir, orgName))) {
+				for (const ruleSetFile of await fs.readdir(
+					path.join(orgsDir, orgName, group),
 				)) {
-					const finalDirpath = path.join(orgRulesDir, orgName, ruleName, subRuleName)
-					await runRules(finalDirpath, {
-						ruleName,
-						subRuleName,
+					const ruleSetPath = path.join(orgsDir, orgName, group, ruleSetFile)
+					const ruleSet = ruleSetFile.slice(0, -3)
+					await runRuleSet(ruleSetPath, {
+						group,
+						ruleSet,
+						id: `${group}/${ruleSet}`,
 						filter: filterFn,
 					})
 				}
@@ -120,49 +123,94 @@ if (projectInfo?.gitHasRemote) {
 }
 
 /**
- * @typedef {(arg1: { project: typeof projectInfo }) => Promise<{ description: string, shouldFix: () => Promise<boolean>, fix: () => Promise<void>}>} RuleMaker
+ * @param {string} ruleFile
+ * @param {import('./index.js').RuleSetInfo} info
  */
-async function runRule(rule, longId) {
+async function runRuleSet(ruleFile, info) {
+	const module = await import(ruleFile)
+
+	if (info.filter(info.id)) {
+		print('skip-auto', info.id, 'Filtered out')
+		return
+	}
+
+	if (!module.createRules) {
+		print('skip-error', info.id, "ruleSet missing 'createRules' function")
+	}
+
+	let rules
+	try {
+		rules = await module.createRules({ project: projectInfo, projectConfig })
+	} catch (err) {
+		print('skip-error', info.id, 'Caught error')
+		console.info(err)
+		return
+	}
+	if (!Array.isArray(rules)) {
+		print('skip-error', info.id, "ruleSet's 'createRules' function did not return an array")
+		return
+	}
+
+	for (const rule of rules) {
+		if (projectConfig.ignoredChecks.includes(info.id)) {
+			print('skip-auto', info.id, 'Included in ignoredChecks')
+			continue
+		}
+
+		await runRule(rule, {
+			group: info.group,
+			ruleSet: info.ruleSet,
+			rule,
+			id: `${info.id}/${rule.id}`
+		})
+	}
+}
+
+/**
+ * @param {import('./index.js').Rule} rule
+ * @param {import('./index.js').RuleInfo} info
+ */
+async function runRule(rule, info) {
 	const { id, deps, shouldFix, fix } = rule
+
 	if (!shouldFix) throw new TypeError(`Rule '${id}' does not have property: shouldFix`)
 
-	console.info(`${chalk.blue('Rule:')} ${longId}/${id}`)
 	for (const dep of deps ?? []) {
 		try {
 			let result = await dep()
 			if (!result) {
-				console.info(`${chalk.cyan(`Skipping:`)} dependencies not satisfied`)
+				print('skip-auto', info.id, 'Dependencies not satisfied')
 				return
 			}
 		} catch (err) {
-			console.info(`${chalk.red(`Caught dep Error:`)} ruleset: ${longId}`)
+			print('skip-error', info.id, "Caught error from rule dependency check")
 			console.info(err)
-			console.info(`${chalk.cyan(`Skipping:`)} ruleset: ${longId}`)
 			return
 		}
 	}
 
-	let willFix
+	let shouldFixRule
 	try {
-		willFix = (await shouldFix()) ?? false
+		shouldFixRule = await shouldFix()
 	} catch (err) {
-		console.info(err) // TODO
-		return { applied: false }
+		print('skip-error', info.id, "Caught error from shouldFix()")
+		console.info(err)
+		return
 	}
-	if (!willFix) {
-		// TODO
-		return { applied: false }
+	if (!shouldFixRule) {
+		print('done', info.id, '')
+		return
 	}
 	if (typeof fix !== 'function') {
-		// TODO
-		return { applied: false }
+		print('skip-error', info.id, "Function 'fix' is not a function")
+		return
 	}
 
 	const rl = readline.createInterface({
 		input: process.stdin,
 		output: process.stdout,
 	})
-	const input = await rl.question(`Would you like to fix this? `)
+	const input = await rl.question(`${info.id}: Fix? `)
 	if (yn(input)) {
 		rl.close()
 		try {
@@ -179,41 +227,3 @@ async function runRule(rule, longId) {
 	return { applied: false }
 }
 
-/**
- * @param {string} ruleFile
- * @param {{ ruleName: string, subRuleName: string, filter: (longId: string) => boolean }} options
- */
-async function runRules(ruleFile, options) {
-	const module = await import(ruleFile)
-	const longId = `${options.ruleName}/${options.subRuleName}`.slice(0, -3)
-	if (options.filter(longId)) {
-		console.log(`${chalk.red('Filtering out:')} ${longId}`)
-		return
-	}
-
-	if (!module.createRules) {
-		console.warn(chalk.red(`No rule export found in file: ${ruleFile}`))
-	}
-	let rules
-	try {
-		rules = await module.createRules({ project: projectInfo, projectConfig })
-	} catch (err) {
-		console.info(`${chalk.red(`Caught createRules Error:`)} ruleset: ${longId}`)
-		console.info(err)
-		console.info(`${chalk.cyan(`Skipping:`)} ruleset: ${longId}`)
-		return
-	}
-	if (!Array.isArray(rules)) {
-		console.info(`${chalk.cyan(`Skipping:`)} ruleset: ${longId}`)
-		return
-	}
-
-	for (const rule of rules) {
-		if (projectConfig.ignoredChecks.includes(longId)) {
-			console.info(`${chalk.cyan(`Ignoring:`)} ${longId}`)
-			continue
-		}
-
-		await runRule(rule, longId)
-	}
-}

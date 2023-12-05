@@ -1,6 +1,6 @@
-# repository-lint
+# fix
 
-Personal repository linting tool.
+A repository fixer.
 
 ## TODO
 

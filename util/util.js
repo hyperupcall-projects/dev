@@ -28,6 +28,28 @@ export function pkgRoot(packageName) {
 	}
 }
 
+
+/**
+ * @param {'done' | 'skip-auto' | 'skip-manual' | 'skip-error'} variant
+ * @param {string} id
+ * @param {string} text
+ */
+export function print(variant, id, text) {
+	switch (variant) {
+		case 'done':
+			console.log(`${chalk.green('DONE:')} ${chalk.bold(id)}: ${text}`)
+			break
+		case 'skip-auto':
+			console.log(`${chalk.cyan('SKIP:')} ${chalk.bold(id)}: ${text}`)
+			break;
+		case 'skip-manual':
+			console.log(`${chalk.yellow('SKIP:')} ${chalk.bold(id)}: ${text}`)
+			break
+		case 'skip-error':
+			console.log(`${chalk.red('ERROR:')} ${chalk.bold(id)}: ${text}`)
+	}
+}
+
 /**
  * @typedef {object} ProjectInfoPartial1
  * @property {false} gitHasRemote

@@ -10,7 +10,7 @@ import {
 	ruleFileMustExistAndHaveContent,
 } from '../../util/rules.js'
 
-/** @type {import('../../util/util.js').CreateRules} */
+/** @type {import('../../index.js').CreateRules} */
 export async function createRules() {
 	let packageJsonText = await fs.readFile('./package.json', 'utf-8')
 	/** @type {import('type-fest').PackageJson} */

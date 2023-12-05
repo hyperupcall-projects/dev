@@ -1,3 +1,6 @@
 {
-	"extends": ["@hyperupcall/eslint-config"]
+	"extends": ["@hyperupcall/eslint-config"],
+	"env": {
+		"node": true
+	}
 }

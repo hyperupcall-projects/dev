@@ -3,7 +3,7 @@ import * as path from 'node:path'
 
 import { fileExists, pkgRoot } from '../../util/util.js'
 
-/** @type {import('../../util/util.js').CreateRules} */
+/** @type {import('../../index.js').CreateRules} */
 export async function createRules() {
 	const configFile = '.editorconfig'
 	const configPath = path.join(pkgRoot('@hyperupcall/configs'), configFile)

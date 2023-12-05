@@ -9,7 +9,7 @@ import {
 	ruleFileMustExistAndHaveContent,
 } from '../../util/rules.js'
 
-/** @type {import('../../util/util.js').CreateRules} */
+/** @type {import('../../index.js').CreateRules} */
 export async function createRules() {
 	const configContent = `assert_lefthook_installed = true\n`
 

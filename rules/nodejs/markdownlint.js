@@ -10,7 +10,7 @@ import {
 } from '../../util/rules.js'
 import { execa } from 'execa'
 
-/** @type {import('../../util/util.js').CreateRules} */
+/** @type {import('../../index.js').CreateRules} */
 export async function createRules() {
 	return [
 		{

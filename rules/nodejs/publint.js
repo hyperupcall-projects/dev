@@ -8,8 +8,7 @@ import {
 	ruleFileMustExistAndHaveContent,
 } from '../../util/rules.js'
 
-/** @type {import('../../util/util.js').RuleMaker} */
-/** @type {import('../../util/util.js').CreateRules} */
+/** @type {import('../../index.js').CreateRules} */
 export async function createRules() {
 	const { stdout, stderr, exitCode } = await execa('npx', ['publint'])
 	if (!stdout.includes('All good!')) {

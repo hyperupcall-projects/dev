@@ -16,9 +16,9 @@ import {
 	ruleFileMustExistAndHaveContent,
 } from '../../../util/rules.js'
 
-/** @type {import('../../../../util/util.js').CreateRules} */
+/** @type {import('../../../util/util.js').CreateRules} */
 export async function createRules() {
-	return
+	return []
 
 	// TODO: conditional rules, dependent rules
 	if (project.owner !== 'fox-land' && project.name !== '.github') {

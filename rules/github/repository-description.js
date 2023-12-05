@@ -7,7 +7,7 @@ import { execa } from 'execa'
 import { fileExists, pkgRoot } from '../../util/util.js'
 import { octokit } from '../../util/octokit.js'
 
-/** @type {import('../../util/util.js').CreateRules} */
+/** @type {import('../../index.js').CreateRules} */
 export async function createRules({ project }) {
 	const configFile = '.gitattributes'
 	return
