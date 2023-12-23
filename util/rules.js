@@ -1,12 +1,10 @@
 import * as fs from 'node:fs/promises'
-import * as readline from 'node:readline/promises'
-import * as path from 'node:path'
 import detectIndent from 'detect-indent'
-import yn from 'yn'
-import chalk from 'chalk'
 import { execa } from 'execa'
+import _ from 'lodash'
 
 export async function ruleFileMustExistAndHaveContent({ file, content: shouldContent }) {
+	/** @type {string} */
 	let content
 	try {
 		content = await fs.readFile(file, 'utf-8')
@@ -23,6 +21,50 @@ export async function ruleFileMustExistAndHaveContent({ file, content: shouldCon
 	}
 }
 
+/**
+ * @typedef ruleJsonFileMustHaveHierarchyParam
+ * @property {string} file
+ * @property {Record<string, unknown>} hierarchy
+ */
+
+/**
+ * @param {ruleJsonFileMustHaveHierarchyParam} param0
+ */
+export async function ruleJsonFileMustHaveHierarchy({ file, hierarchy }) {
+	return {
+		id: 'must-have-hierarchy',
+		async shouldFix() {
+			const oldJson = JSON.parse(await fs.readFile(file, 'utf-8'))
+			const newJson = _.merge(_.cloneDeep(oldJson), hierarchy)
+
+			return !_.isEqual(oldJson, newJson)
+		},
+		async fix() {
+			const content = await fs.readFile(file, 'utf-8')
+			const newJson = _.merge(JSON.parse(content), hierarchy)
+
+			await fs.writeFile(
+				file,
+				JSON.stringify(
+					newJson,
+					null,
+					detectIndent(content).indent || '\t',
+				),
+			)
+		}
+	}
+}
+
+
+/**
+ * @typedef ruleCheckPackageJsonDependenciesParam
+ * @property {string} mainPackageName
+ * @property {string[]} packages
+ */
+
+/**
+ * @param {ruleCheckPackageJsonDependenciesParam} param0
+ */
 export async function ruleCheckPackageJsonDependencies({ mainPackageName, packages }) {
 	async function packageJsonExists() {
 		return await fs

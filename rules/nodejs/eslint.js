@@ -9,13 +9,6 @@ import {
 
 /** @type {import('../../index.js').CreateRules} */
 export async function createRules() {
-	async function eslintConfigExists() {
-		return await fs
-			.stat('.eslintrc.json')
-			.then(() => true)
-			.catch(() => false)
-	}
-
 	return [
 		{
 			id: 'eslint-config-exists',
@@ -38,6 +31,11 @@ export async function createRules() {
 					'eslint-config-prettier',
 					'eslint-plugin-import',
 					'eslint-plugin-markdown',
+					'eslint-plugin-promise',
+					'eslint-plugin-n',
+					'eslint-plugin-unicorn',
+					'eslint-plugin-security',
+					'@eslint-community/eslint-plugin-eslint-comments',
 					'@hyperupcall/eslint-config',
 				],
 			})),

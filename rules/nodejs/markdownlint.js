@@ -1,14 +1,12 @@
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 
-import detectIndent from 'detect-indent'
 
 import { pkgRoot } from '../../util/util.js'
 import {
 	ruleCheckPackageJsonDependencies,
 	ruleFileMustExistAndHaveContent,
 } from '../../util/rules.js'
-import { execa } from 'execa'
 
 /** @type {import('../../index.js').CreateRules} */
 export async function createRules() {

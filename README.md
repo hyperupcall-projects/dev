@@ -6,17 +6,19 @@ A repository fixer.
 
 ### Checks
 
-- .github repo specific errors
-- github test if org has all files archived (fox-archived)
-- .github/funding.yml and all file checks for orgs
-- nodejs: check for .format, .lint properties and .eslint, .prettier props in package.json. make sure they are consistent (decide)
+- org: .github repo specific errors
+- org: github test if org has all files archived (fox-archived)
+- org: .github/funding.yml and all file checks for orgs
 - private npm repositories run less rules (do not popular packageJson)
-- check for unecessary files github
 - np (sindresorhus)
-- CODE_OF_CONDUCT etc. does not start with newline (copy paste error?)
 - check that "private" field exists packageJson
 - lefthook
 - `npm-package-json-lint`
+- general
+  - CODE_OF_CONDUCT must not begin with newline (copy paste error)
+- packageJson
+  - accurate license (read file system)
+  - accurate description (read from github?)
 
 ### Features
 

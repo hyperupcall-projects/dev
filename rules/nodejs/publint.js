@@ -1,7 +1,3 @@
-import * as fs from 'node:fs/promises'
-import path from 'node:path'
-
-import { pkgRoot } from '../../util/util.js'
 import { execa } from 'execa'
 import {
 	ruleCheckPackageJsonDependencies,

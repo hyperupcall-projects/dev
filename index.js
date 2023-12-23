@@ -43,10 +43,11 @@ const { values, positionals } = util.parseArgs({
 	},
 })
 if (values.help) {
-	console.log(`repository-lint <DIR>:
+	console.log(`repository-lint --filter-out= --only-run= <DIR>:
 
 Flags:
   --help`)
+  process.exit(0)
 }
 
 if (positionals.length > 0) {

@@ -1,10 +1,10 @@
 import * as fs from 'node:fs/promises'
-import * as readline from 'node:readline/promises'
 import * as path from 'node:path'
-import detectIndent from 'detect-indent'
-import yn from 'yn'
 import chalk from 'chalk'
 import { execa } from 'execa'
+import { createRequire } from 'node:module'
+
+const require = createRequire(import.meta.url)
 
 /**
  * @param {string} filepath
@@ -24,10 +24,9 @@ export function pkgRoot(packageName) {
 	if (packageName === void 0) {
 		return path.dirname(path.dirname(new URL(import.meta.url).pathname))
 	} else {
-		return path.dirname(new URL(import.meta.resolve(packageName)).pathname)
+		return path.dirname(require.resolve(packageName))
 	}
 }
-
 
 /**
  * @param {'done' | 'skip-auto' | 'skip-manual' | 'skip-error'} variant
@@ -41,7 +40,7 @@ export function print(variant, id, text) {
 			break
 		case 'skip-auto':
 			console.log(`${chalk.cyan('SKIP:')} ${chalk.bold(id)}: ${text}`)
-			break;
+			break
 		case 'skip-manual':
 			console.log(`${chalk.yellow('SKIP:')} ${chalk.bold(id)}: ${text}`)
 			break
