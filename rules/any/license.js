@@ -4,7 +4,7 @@ import path from 'node:path'
 import { fileExists, pkgRoot } from '../../util/util.js'
 
 /** @type {import('../../index.js').CreateRules} */
-export async function createRules() {
+export const createRules = async function createRules() {
 	const configFile = 'LICENSE'
 	const configPath = path.join(pkgRoot(), 'assets/LICENSE-MPL-2.0')
 	const configContent = await fs.readFile(configPath, 'utf-8')

@@ -8,7 +8,7 @@ import {
 } from '../../util/rules.js'
 
 /** @type {import('../../index.js').CreateRules} */
-export async function createRules() {
+export const createRules = async function createRules() {
 	return [
 		{
 			id: 'eslint-config-exists',
@@ -29,6 +29,7 @@ export async function createRules() {
 				packages: [
 					'eslint',
 					'eslint-config-prettier',
+					'@hyperupcall/eslint-config',
 					'eslint-plugin-import',
 					'eslint-plugin-markdown',
 					'eslint-plugin-promise',
@@ -36,7 +37,10 @@ export async function createRules() {
 					'eslint-plugin-unicorn',
 					'eslint-plugin-security',
 					'@eslint-community/eslint-plugin-eslint-comments',
-					'@hyperupcall/eslint-config',
+					'eslint-plugin-regexp',
+					'eslint-plugin-perfectionist',
+					'eslint-plugin-no-unsanitized',
+					'eslint-plugin-mdx',
 				],
 			})),
 		},

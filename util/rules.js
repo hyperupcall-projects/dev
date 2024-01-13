@@ -1,7 +1,8 @@
 import * as fs from 'node:fs/promises'
 import detectIndent from 'detect-indent'
 import { execa } from 'execa'
-import _ from 'lodash'
+import * as util from 'node:util'
+import merge from 'lodash/merge.js'
 
 export async function ruleFileMustExistAndHaveContent({ file, content: shouldContent }) {
 	/** @type {string} */
@@ -22,39 +23,37 @@ export async function ruleFileMustExistAndHaveContent({ file, content: shouldCon
 }
 
 /**
- * @typedef ruleJsonFileMustHaveHierarchyParam
+ * @typedef ruleJsonFileMustHaveShapeParam
  * @property {string} file
- * @property {Record<string, unknown>} hierarchy
+ * @property {Record<string, unknown>} shape
  */
 
 /**
- * @param {ruleJsonFileMustHaveHierarchyParam} param0
+ * @param {ruleJsonFileMustHaveShapeParam} param0
  */
-export async function ruleJsonFileMustHaveHierarchy({ file, hierarchy }) {
+export async function ruleJsonFileMustHaveShape({ file, shape }) {
+	if (file.slice(0, 2) === './') {
+		file = file.slice(2)
+	}
 	return {
-		id: 'must-have-hierarchy',
+		id: `file-${file}-has-shape`,
 		async shouldFix() {
 			const oldJson = JSON.parse(await fs.readFile(file, 'utf-8'))
-			const newJson = _.merge(_.cloneDeep(oldJson), hierarchy)
+			const newJson = merge(structuredClone(oldJson), shape)
 
-			return !_.isEqual(oldJson, newJson)
+			return !util.isDeepStrictEqual(oldJson, newJson)
 		},
 		async fix() {
 			const content = await fs.readFile(file, 'utf-8')
-			const newJson = _.merge(JSON.parse(content), hierarchy)
+			const newJson = merge(JSON.parse(content), shape)
 
 			await fs.writeFile(
 				file,
-				JSON.stringify(
-					newJson,
-					null,
-					detectIndent(content).indent || '\t',
-				),
+				JSON.stringify(newJson, null, detectIndent(content).indent || '\t'),
 			)
-		}
+		},
 	}
 }
-
 
 /**
  * @typedef ruleCheckPackageJsonDependenciesParam
@@ -122,11 +121,7 @@ export async function ruleCheckPackageJsonDependencies({ mainPackageName, packag
 
 			await fs.writeFile(
 				'package.json',
-				JSON.stringify(
-					packageJsonModified,
-					null,
-					detectIndent(packageJsonText).indent || '\t',
-				),
+				JSON.stringify(packageJsonModified, null, detectIndent(packageJsonText).indent),
 			)
 			console.log(`Now, run: 'npm i`)
 		},

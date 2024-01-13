@@ -12,6 +12,7 @@
 	},
 	"author": "Edwin Kofler <edwin@kofler.dev> (https://edwinkofler.com)",
 	"license": "MPL-2.0",
+	"private": false,
 	"bin": "./bin/repository-lint.js",
 	"exports": "./index.js",
 	"keywords": [],

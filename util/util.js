@@ -29,7 +29,7 @@ export function pkgRoot(packageName) {
 }
 
 /**
- * @param {'done' | 'skip-auto' | 'skip-manual' | 'skip-error'} variant
+ * @param {'done' | 'info' | 'skip-good' | 'skip-bad' | 'error'} variant
  * @param {string} id
  * @param {string} text
  */
@@ -38,39 +38,22 @@ export function print(variant, id, text) {
 		case 'done':
 			console.log(`${chalk.green('DONE:')} ${chalk.bold(id)}: ${text}`)
 			break
-		case 'skip-auto':
+		case 'info':
+			console.log(`${chalk.magenta('DONE:')} ${chalk.bold(id)}: ${text}`)
+			break
+		case 'skip-good':
 			console.log(`${chalk.cyan('SKIP:')} ${chalk.bold(id)}: ${text}`)
 			break
-		case 'skip-manual':
+		case 'skip-bad':
 			console.log(`${chalk.yellow('SKIP:')} ${chalk.bold(id)}: ${text}`)
 			break
-		case 'skip-error':
+		case 'error':
 			console.log(`${chalk.red('ERROR:')} ${chalk.bold(id)}: ${text}`)
 	}
 }
 
 /**
- * @typedef {object} ProjectInfoPartial1
- * @property {false} gitHasRemote
- * @property {string} branchName
- */
-
-/**
- * @typedef {object} ProjectInfoPartial2
- * @property {true} gitHasRemote
- * @property {string} branchName
- * @property {string} remoteName
- * @property {string} remoteUrl
- * @property {string} owner
- * @property {string} name
- */
-
-/**
- * @typedef {ProjectInfoPartial1 | ProjectInfoPartial2} ProjectInfo
- */
-
-/**
- * @returns {Promise<ProjectInfo | null>}
+ * @returns {Promise<import('../index.d.ts').ProjectInfo | null>}
  */
 export async function getProjectInfo() {
 	if (!(await fileExists('.git'))) {

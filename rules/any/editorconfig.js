@@ -1,10 +1,11 @@
+// SPDX-License-Identifier: MPL-2.0
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 
 import { fileExists, pkgRoot } from '../../util/util.js'
 
 /** @type {import('../../index.js').CreateRules} */
-export async function createRules() {
+export const createRules = async function createRules() {
 	const configFile = '.editorconfig'
 	const configPath = path.join(pkgRoot('@hyperupcall/configs'), configFile)
 	const configContent = await fs.readFile(configPath, 'utf-8')

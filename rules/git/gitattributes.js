@@ -4,7 +4,7 @@ import path from 'node:path'
 import { fileExists, pkgRoot } from '../../util/util.js'
 
 /** @type {import('../../index.js').CreateRules} */
-export async function createRules({ project }) {
+export function createRules({ project }) {
 	const configFile = '.gitattributes'
 
 	return [

@@ -13,7 +13,7 @@ import { pkgRoot } from '../../../util/util.js'
 import { octokit } from '../../../util/octokit.js'
 
 /** @type {import('../../../index.js').CreateRules} */
-export async function createRules() {
+export const createRules = async function createRules() {
 	return []
 
 	const readmeText = await fs.readFile('README.md', 'utf-8')

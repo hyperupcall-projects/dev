@@ -5,7 +5,7 @@ import fs from 'node:fs/promises'
 import util from 'node:util'
 import chalk from 'chalk'
 import toml from '@ltd/j-toml'
-import { projectInfo, pkgRoot, fileExists, print } from './util/util.js'
+import { projectInfo, pkgRoot, print } from './util/util.js'
 import * as readline from 'node:readline/promises'
 import yn from 'yn'
 
@@ -43,14 +43,15 @@ const { values, positionals } = util.parseArgs({
 	},
 })
 if (values.help) {
-	console.log(`repository-lint --filter-out= --only-run= <DIR>:
+	console.log(`repository-lint --filterOut= --onlyRun= <DIR>:
 
 Flags:
   --help`)
-  process.exit(0)
+	process.exit(0)
 }
 
 if (positionals.length > 0) {
+	// @ts-expect-error
 	process.chdir(positionals[0] || '.')
 }
 
@@ -103,9 +104,7 @@ if (projectInfo?.gitHasRemote) {
 			}
 
 			for (const group of await fs.readdir(path.join(orgsDir, orgName))) {
-				for (const ruleSetFile of await fs.readdir(
-					path.join(orgsDir, orgName, group),
-				)) {
+				for (const ruleSetFile of await fs.readdir(path.join(orgsDir, orgName, group))) {
 					const ruleSetPath = path.join(orgsDir, orgName, group, ruleSetFile)
 					const ruleSet = ruleSetFile.slice(0, -3)
 					await runRuleSet(ruleSetPath, {
@@ -131,30 +130,30 @@ async function runRuleSet(ruleFile, info) {
 	const module = await import(ruleFile)
 
 	if (info.filter(info.id)) {
-		print('skip-auto', info.id, 'Filtered out')
+		print('skip-good', info.id, 'Filtered out')
 		return
 	}
 
 	if (!module.createRules) {
-		print('skip-error', info.id, "ruleSet missing 'createRules' function")
+		print('error', info.id, "ruleSet missing 'createRules' function")
 	}
 
 	let rules
 	try {
 		rules = await module.createRules({ project: projectInfo, projectConfig })
 	} catch (err) {
-		print('skip-error', info.id, 'Caught error')
+		print('error', info.id, 'Caught error')
 		console.info(err)
 		return
 	}
 	if (!Array.isArray(rules)) {
-		print('skip-error', info.id, "ruleSet's 'createRules' function did not return an array")
+		print('error', info.id, "ruleSet's 'createRules' function did not return an array")
 		return
 	}
 
 	for (const rule of rules) {
 		if (projectConfig.ignoredChecks.includes(info.id)) {
-			print('skip-auto', info.id, 'Included in ignoredChecks')
+			print('skip-good', info.id, 'Included in ignoredChecks')
 			continue
 		}
 
@@ -162,7 +161,7 @@ async function runRuleSet(ruleFile, info) {
 			group: info.group,
 			ruleSet: info.ruleSet,
 			rule,
-			id: `${info.id}/${rule.id}`
+			id: `${info.id}/${rule.id}`,
 		})
 	}
 }
@@ -174,17 +173,19 @@ async function runRuleSet(ruleFile, info) {
 async function runRule(rule, info) {
 	const { id, deps, shouldFix, fix } = rule
 
-	if (!shouldFix) throw new TypeError(`Rule '${id}' does not have property: shouldFix`)
+	if (!shouldFix) {
+		throw new TypeError(`Rule '${id}' does not have property: shouldFix`)
+	}
 
 	for (const dep of deps ?? []) {
 		try {
 			let result = await dep()
 			if (!result) {
-				print('skip-auto', info.id, 'Dependencies not satisfied')
+				print('skip-good', info.id, 'Dependencies not satisfied')
 				return
 			}
 		} catch (err) {
-			print('skip-error', info.id, "Caught error from rule dependency check")
+			print('error', info.id, 'Caught error from rule dependency check')
 			console.info(err)
 			return
 		}
@@ -194,7 +195,7 @@ async function runRule(rule, info) {
 	try {
 		shouldFixRule = await shouldFix()
 	} catch (err) {
-		print('skip-error', info.id, "Caught error from shouldFix()")
+		print('error', info.id, 'Caught error from shouldFix()')
 		console.info(err)
 		return
 	}
@@ -202,8 +203,9 @@ async function runRule(rule, info) {
 		print('done', info.id, '')
 		return
 	}
+
 	if (typeof fix !== 'function') {
-		print('skip-error', info.id, "Function 'fix' is not a function")
+		print('info', info.id, 'No fix function found')
 		return
 	}
 
@@ -212,8 +214,8 @@ async function runRule(rule, info) {
 		output: process.stdout,
 	})
 	const input = await rl.question(`${info.id}: Fix? `)
+	rl.close()
 	if (yn(input)) {
-		rl.close()
 		try {
 			await fix()
 		} catch (err) {
@@ -223,8 +225,6 @@ async function runRule(rule, info) {
 
 		return { applied: true }
 	}
-	rl.close()
 
 	return { applied: false }
 }
-

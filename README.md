@@ -11,7 +11,6 @@ A repository fixer.
 - org: .github/funding.yml and all file checks for orgs
 - private npm repositories run less rules (do not popular packageJson)
 - np (sindresorhus)
-- check that "private" field exists packageJson
 - lefthook
 - `npm-package-json-lint`
 - general

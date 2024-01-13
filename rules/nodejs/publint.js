@@ -5,7 +5,7 @@ import {
 } from '../../util/rules.js'
 
 /** @type {import('../../index.js').CreateRules} */
-export async function createRules() {
+export const createRules = async function createRules() {
 	const { stdout, stderr, exitCode } = await execa('npx', ['publint'])
 	if (!stdout.includes('All good!')) {
 		console.log(stdout)
