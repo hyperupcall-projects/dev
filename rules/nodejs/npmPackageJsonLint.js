@@ -11,38 +11,34 @@ import {
 
 /** @type {import('../../index.js').CreateRules} */
 export const createRules = async function createRules() {
-	const markdownlintConfig = {
-		extends: './node_modules/@hyperupcall/markdownlint-config/.markdownlint.json',
+	const npmPackageJsonLintConfig = {
+		extends:
+			'./node_modules/@hyperupcall/npm-package-json-lint-config/npmpackagejsonlintrc.json',
 	}
 
 	return [
 		await ruleJsonFileMustHaveShape({
 			file: 'package.json',
 			shape: {
-				'markdownlint-cli2': markdownlintConfig,
+				npmpackagejsonlint: {
+					extends: 'npm-package-json-lint-config-default',
+				},
 			},
 		}),
 		await filesMustNotExist({
 			id: 'markdownlint-files-must-not-exist',
-			// https://github.com/DavidAnson/markdownlint-cli2#configuration
+			// https://npmpackagejsonlint.org/docs/configuration#config-sources
 			files: [
-				'.markdownlint-cli2.jsonc',
-				'.markdownlint-cli2.yaml',
-				'.markdownlint-cli2.cjs',
-				'.markdownlint-cli2.mjs',
-				'.markdownlint.jsonc',
-				'.markdownlint.json',
-				'.markdownlint.yaml',
-				'.markdownlint.yml',
-				'.markdownlint.cjs',
-				'.markdownlint.mjs',
+				'.npmpackagejsonlintrc',
+				'.npmpackagejsonlintrc.json',
+				'npmpackagejsonlint.config.js',
 			],
 		}),
 		{
-			id: 'markdownlint-has-dependencies',
+			id: 'npm-package-json-lint-has-dependencies',
 			...(await ruleCheckPackageJsonDependencies({
-				mainPackageName: 'markdownlint',
-				packages: ['markdownlint', '@hyperupcall/markdownlint-config'],
+				mainPackageName: 'npm-package-json-lint',
+				packages: ['npm-package-json-lint', 'npm-package-json-lint-config-hyperupcall'],
 			})),
 		},
 	]

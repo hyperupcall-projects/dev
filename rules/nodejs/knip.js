@@ -11,38 +11,34 @@ import {
 
 /** @type {import('../../index.js').CreateRules} */
 export const createRules = async function createRules() {
-	const markdownlintConfig = {
-		extends: './node_modules/@hyperupcall/markdownlint-config/.markdownlint.json',
-	}
+	const knipConfig = {
+		entry: [],
+	},
 
 	return [
 		await ruleJsonFileMustHaveShape({
 			file: 'package.json',
 			shape: {
-				'markdownlint-cli2': markdownlintConfig,
+				knip: knipConfig
 			},
 		}),
 		await filesMustNotExist({
 			id: 'markdownlint-files-must-not-exist',
 			// https://github.com/DavidAnson/markdownlint-cli2#configuration
 			files: [
-				'.markdownlint-cli2.jsonc',
-				'.markdownlint-cli2.yaml',
-				'.markdownlint-cli2.cjs',
-				'.markdownlint-cli2.mjs',
-				'.markdownlint.jsonc',
-				'.markdownlint.json',
-				'.markdownlint.yaml',
-				'.markdownlint.yml',
-				'.markdownlint.cjs',
-				'.markdownlint.mjs',
+				'knip.json',
+				'knip.jsonc',
+				'.knip.json',
+				'.knip.jsonc',
+				'knip.ts',
+				'knip.js'
 			],
 		}),
 		{
-			id: 'markdownlint-has-dependencies',
+			id: 'knip-has-dependencies',
 			...(await ruleCheckPackageJsonDependencies({
-				mainPackageName: 'markdownlint',
-				packages: ['markdownlint', '@hyperupcall/markdownlint-config'],
+				mainPackageName: 'knip',
+				packages: ['knip'],
 			})),
 		},
 	]

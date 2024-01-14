@@ -33,7 +33,7 @@ export type Rule = {
 	deps?: Array<(() => boolean) | (() => Promise<boolean>)>
 	shouldFix: (() => boolean) | (() => Promise<boolean>)
 	fix?: (() => void) | (() => Promise<void>)
-} | null
+}
 
 export type CreateRules = (arg0: {
 	project: ProjectInfo

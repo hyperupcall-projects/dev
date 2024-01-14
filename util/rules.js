@@ -3,6 +3,38 @@ import detectIndent from 'detect-indent'
 import { execa } from 'execa'
 import * as util from 'node:util'
 import merge from 'lodash/merge.js'
+import { fileExists } from './util.js'
+import { NOTFOUND } from 'node:dns'
+
+export async function filesMustNotExist({ id, files }) {
+	return {
+		id,
+		async shouldFix() {
+			return (
+				await Promise.all(
+					files.map((file) => {
+						return fs
+							.stat(file)
+							.then(() => true)
+							.catch(() => false)
+					}),
+				)
+			).some((item) => item)
+		},
+		async fix() {
+			return await Promise.all(
+				files.map((file) => {
+					return fs.rm(file)
+				}),
+			).catch((err) => {
+				if (err.code === 'ENOENT') {
+					return
+				}
+				throw err
+			})
+		},
+	}
+}
 
 export async function ruleFileMustExistAndHaveContent({ file, content: shouldContent }) {
 	/** @type {string} */
@@ -28,6 +60,7 @@ export async function ruleFileMustExistAndHaveContent({ file, content: shouldCon
  * @property {Record<string, unknown>} shape
  */
 
+// TODO: figure out which point of hierarchy going from merge to overwrite
 /**
  * @param {ruleJsonFileMustHaveShapeParam} param0
  */

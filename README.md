@@ -10,8 +10,8 @@ A repository fixer.
 - org: github test if org has all files archived (fox-archived)
 - org: .github/funding.yml and all file checks for orgs
 - private npm repositories run less rules (do not popular packageJson)
-- np (sindresorhus)
 - lefthook
+- validate licenses
 - `npm-package-json-lint`
 - general
   - CODE_OF_CONDUCT must not begin with newline (copy paste error)
@@ -24,7 +24,3 @@ A repository fixer.
 - diff function mechanism
 - flag to enable-disable certain checks
 - flag to disable connecting internet (speed w/ broadband)
-
-### Later
-
-- migrate from 'np' to custom cross solution

@@ -8,6 +8,7 @@ const require = createRequire(import.meta.url)
 
 /**
  * @param {string} filepath
+ * @returns {Promise<boolean>}
  */
 export function fileExists(filepath) {
 	return fs

@@ -31,28 +31,28 @@ export const createRules = async function createRules({ project }) {
 				)
 			},
 		},
-		!JSON.parse(await fs.readFile('package.json', 'utf-8')).private
-			? {
-					deps: [() => true],
-					...(await ruleJsonFileMustHaveShape({
-						file: 'package.json',
-						shape: {
-							author: 'Edwin Kofler <edwin@kofler.dev> (https://edwinkofler.com)',
-							scripts: {
-								format: 'prettier --check .',
-								lint: 'eslint .',
-							},
-							bugs: {
-								url: bugsUrl,
-							},
-							repository: {
-								type: 'git',
-								url: gitUrl,
-							},
-						},
-					})),
-			  }
-			: null,
+		// !JSON.parse(await fs.readFile('package.json', 'utf-8')).private ?
+		{
+			deps: [() => true],
+			...(await ruleJsonFileMustHaveShape({
+				file: 'package.json',
+				shape: {
+					author: 'Edwin Kofler <edwin@kofler.dev> (https://edwinkofler.com)',
+					scripts: {
+						format: 'prettier --check .',
+						lint: 'eslint .',
+					},
+					bugs: {
+						url: bugsUrl,
+					},
+					repository: {
+						type: 'git',
+						url: gitUrl,
+					},
+				},
+			})),
+		},
+		// : null,
 		{
 			id: 'must-not-have-empty-keywords-if-public',
 			async shouldFix() {
