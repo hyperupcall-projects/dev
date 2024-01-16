@@ -9,7 +9,7 @@ import { projectInfo, pkgRoot, print } from './util/util.js'
 import * as readline from 'node:readline/promises'
 import yn from 'yn'
 
-const projectConfig = {
+const metadata = {
 	ignoredChecks: [],
 	...(await (async () => {
 		let projectTomlText
@@ -30,6 +30,9 @@ const projectConfig = {
 
 const { values, positionals } = util.parseArgs({
 	options: {
+		yes: {
+			type: 'boolean',
+		},
 		filterOut: {
 			type: 'string',
 		},
@@ -140,7 +143,7 @@ async function runRuleSet(ruleFile, info) {
 
 	let rules
 	try {
-		rules = await module.createRules({ project: projectInfo, projectConfig })
+		rules = await module.createRules({ project: projectInfo, metadata })
 	} catch (err) {
 		print('error', info.id, 'Caught error')
 		console.info(err)
@@ -152,7 +155,7 @@ async function runRuleSet(ruleFile, info) {
 	}
 
 	for (const rule of rules) {
-		if (projectConfig.ignoredChecks.includes(info.id)) {
+		if (metadata.ignoredChecks.includes(info.id)) {
 			print('skip-good', info.id, 'Included in ignoredChecks')
 			continue
 		}
@@ -209,21 +212,28 @@ async function runRule(rule, info) {
 		return
 	}
 
-	const rl = readline.createInterface({
-		input: process.stdin,
-		output: process.stdout,
-	})
-	const input = await rl.question(`${info.id}: Fix? `)
-	rl.close()
-	if (yn(input)) {
+	async function runFix() {
 		try {
 			await fix()
+			return { applied: true }
 		} catch (err) {
 			console.error(err)
 			return { applied: false }
 		}
+	}
 
-		return { applied: true }
+	if (values.yes) {
+		return await runFix()
+	} else {
+		const rl = readline.createInterface({
+			input: process.stdin,
+			output: process.stdout,
+		})
+		const input = await rl.question(`${info.id}: Fix? `)
+		rl.close()
+		if (yn(input)) {
+			return await runFix()
+		}
 	}
 
 	return { applied: false }

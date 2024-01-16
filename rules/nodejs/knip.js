@@ -10,16 +10,20 @@ import {
 } from '../../util/rules.js'
 
 /** @type {import('../../index.js').CreateRules} */
-export const createRules = async function createRules() {
+export const createRules = async function createRules({ metadata }) {
+	if (metadata.projectSize === 'small') {
+		return []
+	}
+
 	const knipConfig = {
 		entry: [],
-	},
+	}
 
 	return [
 		await ruleJsonFileMustHaveShape({
 			file: 'package.json',
 			shape: {
-				knip: knipConfig
+				knip: knipConfig,
 			},
 		}),
 		await filesMustNotExist({
@@ -31,7 +35,7 @@ export const createRules = async function createRules() {
 				'.knip.json',
 				'.knip.jsonc',
 				'knip.ts',
-				'knip.js'
+				'knip.js',
 			],
 		}),
 		{

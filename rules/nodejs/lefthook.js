@@ -9,7 +9,7 @@ export const createRules = async function createRules() {
 
 	return [
 		{
-			fix: 'lefthook-config-exists',
+			id: 'lefthook-config-exists',
 			async shouldFix() {},
 		},
 	]

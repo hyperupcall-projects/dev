@@ -10,7 +10,8 @@ import { octokit } from '../../util/octokit.js'
 /** @type {import('../../index.js').CreateRules} */
 export const createRules = async function createRules({ project }) {
 	const configFile = '.gitattributes'
-	return
+
+	return []
 
 	const { data } = await octokit.rest.repos.get({
 		owner: project.owner,

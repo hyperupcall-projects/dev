@@ -1,6 +1,6 @@
-import type { ProjectInfo } from './util/util.js'
+import type { Project as Project } from './util/util.js'
 
-export type ProjectInfo =
+export type Project =
 	| {
 			gitHasRemote: false
 			branchName: string
@@ -36,6 +36,9 @@ export type Rule = {
 }
 
 export type CreateRules = (arg0: {
-	project: ProjectInfo
-	projectConfig: unknown
+	project: Project
+	metadata: {
+		projectSize: 'small' | 'large'
+		ignoredChecks: string[]
+	}
 }) => Rule[] | Promise<Rule[]>

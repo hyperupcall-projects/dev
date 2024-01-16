@@ -2,9 +2,8 @@ import * as fs from 'node:fs/promises'
 import detectIndent from 'detect-indent'
 import { execa } from 'execa'
 import * as util from 'node:util'
-import merge from 'lodash/merge.js'
+import _ from 'lodash'
 import { fileExists } from './util.js'
-import { NOTFOUND } from 'node:dns'
 
 export async function filesMustNotExist({ id, files }) {
 	return {
@@ -58,27 +57,25 @@ export async function ruleFileMustExistAndHaveContent({ file, content: shouldCon
  * @typedef ruleJsonFileMustHaveShapeParam
  * @property {string} file
  * @property {Record<string, unknown>} shape
- */
-
-// TODO: figure out which point of hierarchy going from merge to overwrite
-/**
+ *
  * @param {ruleJsonFileMustHaveShapeParam} param0
  */
 export async function ruleJsonFileMustHaveShape({ file, shape }) {
 	if (file.slice(0, 2) === './') {
 		file = file.slice(2)
 	}
+
 	return {
 		id: `file-${file}-has-shape`,
 		async shouldFix() {
 			const oldJson = JSON.parse(await fs.readFile(file, 'utf-8'))
-			const newJson = merge(structuredClone(oldJson), shape)
+			const newJson = _.merge(structuredClone(oldJson), shape)
 
 			return !util.isDeepStrictEqual(oldJson, newJson)
 		},
 		async fix() {
 			const content = await fs.readFile(file, 'utf-8')
-			const newJson = merge(JSON.parse(content), shape)
+			const newJson = _.merge(JSON.parse(content), shape)
 
 			await fs.writeFile(
 				file,
@@ -89,12 +86,65 @@ export async function ruleJsonFileMustHaveShape({ file, shape }) {
 }
 
 /**
+ * @typedef ruleJsonFileMustHaveShape2Param
+ * @property {string} file
+ * @property {Record<string, Record<string, unknown>>} shape
+ *
+ * @param {ruleJsonFileMustHaveShape2Param} param0
+ */
+export async function ruleJsonFileMustHaveShape2({ file, shape }) {
+	if (file.slice(0, 2) === './') {
+		file = file.slice(2)
+	}
+
+	/**
+	 * @param {Record<string, Record<string, unknown>>} object
+	 * @param {Record<string, Record<string, unknown>>} shape
+	 * @returns {Record<string, unknown>}
+	 */
+	function merge(object, shape) {
+		for (const [propChain, propValue] of Object.entries(shape)) {
+			if (Object.hasOwn(propValue, '__delete')) {
+				object = _.omit(object, propChain)
+			} else if (Object.hasOwn(propValue, '__replace')) {
+				_.set(object, propChain, propValue)
+			} else {
+				// __merge, the default.
+				const obj = _.get(object, propChain)
+				if (obj === undefined) {
+					_.set(object, propChain, propValue)
+				} else {
+					_.merge(obj, propValue)
+				}
+			}
+		}
+
+		return object
+	}
+
+	const content = await fs.readFile(file, 'utf-8')
+	const actualObject = JSON.parse(content)
+	const expectedObject = merge(structuredClone(actualObject), shape)
+
+	return {
+		id: `file-${file}-has-shape2`,
+		async shouldFix() {
+			return !util.isDeepStrictEqual(expectedObject, actualObject)
+		},
+		async fix() {
+			await fs.writeFile(
+				file,
+				JSON.stringify(expectedObject, null, detectIndent(content).indent || '\t'),
+			)
+		},
+	}
+}
+
+/**
  * @typedef ruleCheckPackageJsonDependenciesParam
  * @property {string} mainPackageName
  * @property {string[]} packages
- */
-
-/**
+ *
  * @param {ruleCheckPackageJsonDependenciesParam} param0
  */
 export async function ruleCheckPackageJsonDependencies({ mainPackageName, packages }) {

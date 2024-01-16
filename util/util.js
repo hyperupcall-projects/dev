@@ -54,9 +54,9 @@ export function print(variant, id, text) {
 }
 
 /**
- * @returns {Promise<import('../index.d.ts').ProjectInfo | null>}
+ * @returns {Promise<import('../index.d.ts').Project | null>}
  */
-export async function getProjectInfo() {
+export async function getProject() {
 	if (!(await fileExists('.git'))) {
 		return null
 	}
@@ -112,4 +112,4 @@ export async function getProjectInfo() {
 	}
 }
 
-export const projectInfo = await getProjectInfo()
+export const projectInfo = await getProject()

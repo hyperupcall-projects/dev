@@ -2,7 +2,10 @@ import * as fs from 'node:fs/promises'
 
 import { octokit } from '../../util/octokit.js'
 import detectIndent from 'detect-indent'
-import { ruleJsonFileMustHaveShape } from '../../util/rules.js'
+import {
+	ruleJsonFileMustHaveShape,
+	ruleJsonFileMustHaveShape2,
+} from '../../util/rules.js'
 
 /** @type {import('../../index.js').CreateRules} */
 export const createRules = async function createRules({ project }) {
@@ -31,28 +34,45 @@ export const createRules = async function createRules({ project }) {
 				)
 			},
 		},
-		// !JSON.parse(await fs.readFile('package.json', 'utf-8')).private ?
 		{
 			deps: [() => true],
-			...(await ruleJsonFileMustHaveShape({
-				file: 'package.json',
-				shape: {
-					author: 'Edwin Kofler <edwin@kofler.dev> (https://edwinkofler.com)',
-					scripts: {
-						format: 'prettier --check .',
-						lint: 'eslint .',
+			...(await (async () => {
+				/** @type {import('type-fest').PackageJson} */
+				const packageJson = JSON.parse(await fs.readFile('package.json', 'utf-8'))
+				if (packageJson.private === true) {
+					return await ruleJsonFileMustHaveShape2({
+						file: 'package.json',
+						shape: {
+							author: { __delete: null },
+							scripts: {
+								format: 'prettier --check .',
+								lint: 'eslint .',
+							},
+							bugs: { __delete: null },
+							repository: { __delete: null },
+						},
+					})
+				}
+
+				return await ruleJsonFileMustHaveShape({
+					file: 'package.json',
+					shape: {
+						author: 'Edwin Kofler <edwin@kofler.dev> (https://edwinkofler.com)',
+						scripts: {
+							format: 'prettier --check .',
+							lint: 'eslint .',
+						},
+						bugs: {
+							url: bugsUrl,
+						},
+						repository: {
+							type: 'git',
+							url: gitUrl,
+						},
 					},
-					bugs: {
-						url: bugsUrl,
-					},
-					repository: {
-						type: 'git',
-						url: gitUrl,
-					},
-				},
-			})),
+				})
+			})()),
 		},
-		// : null,
 		{
 			id: 'must-not-have-empty-keywords-if-public',
 			async shouldFix() {
