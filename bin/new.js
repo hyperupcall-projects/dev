@@ -1,3 +1,3 @@
 #!/usr/bin/env node
 
-await import('../inits/index.js')
+await import('../new/new.js')

@@ -1,0 +1,12 @@
+{
+	"extends": "@tsconfig/node18/tsconfig.json",
+	"include": ["src"],
+	"compilerOptions": {
+		"module": "Node16",
+		"moduleResolution": "node16",
+		"outDir": "dist",
+		"noImplicitAny": false,
+		"strict": false,
+		"forceConsistentCasingInFileNames": true
+	}
+}

@@ -1,3 +1,3 @@
 #!/usr/bin/env node
 
-await import('../index.js')
+await import('../fix/fix.js')

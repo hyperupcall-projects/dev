@@ -14,10 +14,11 @@
 	"license": "MPL-2.0",
 	"private": false,
 	"bin": {
+		"dev": "./bin/dev.js",
 		"fix": "./bin/fix.js",
-		"new": "./bin/new.js"
+		"new": "./bin/new.js",
+		"script": "./bin/script.js"
 	},
-	"exports": "./index.js",
 	"keywords": [],
 	"scripts": {
 		"format": "prettier --check .",
@@ -26,19 +27,28 @@
 	"dependencies": {
 		"@hyperupcall/configs": "^0.2.3",
 		"@ltd/j-toml": "^1.38.0",
+		"@octokit/rest": "^20.0.2",
 		"chalk": "^5.3.0",
 		"dedent": "^1.5.1",
 		"detect-indent": "^7.0.1",
+		"detect-newline": "^4.0.1",
 		"diff": "^5.1.0",
+		"ejs": "^3.1.9",
 		"enquirer": "^2.4.1",
 		"execa": "^8.0.1",
+		"globby": "^14.0.0",
+		"ignore-walk": "^6.0.4",
+		"jsonc-parser": "^3.2.1",
 		"lodash": "^4.17.21",
+		"micromatch": "^4.0.5",
+		"minimatch": "^9.0.3",
 		"octokit": "^3.1.2",
 		"remark": "^15.0.1",
 		"remark-parse": "^11.0.0",
 		"unified": "^11.0.4",
 		"unified-lint-rule": "^2.1.2",
 		"unist-util-visit": "^5.0.0",
+		"untildify": "^5.0.0",
 		"vfile-reporter": "^8.1.0",
 		"yn": "^5.0.0"
 	},

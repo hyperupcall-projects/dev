@@ -1,4 +1,4 @@
-import type { Project as Project } from './util/util.js'
+import type { Project as Project } from './fix/util/util.js'
 
 export type Project =
 	| {
