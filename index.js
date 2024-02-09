@@ -23,7 +23,8 @@ const metadata = {
 		}
 
 		const projectToml = toml.parse(projectTomlText)
-		const repositoryLint = projectToml['repository-lint'] || {}
+		// TODO: deprecated
+		const repositoryLint = projectToml['repository-lint'] || projectToml['dev'] || {}
 		return repositoryLint
 	})()),
 }
@@ -33,10 +34,13 @@ const { values, positionals } = util.parseArgs({
 		yes: {
 			type: 'boolean',
 		},
-		filterOut: {
+		matchers: {
 			type: 'string',
 		},
-		onlyRun: {
+		'filter-out': {
+			type: 'string',
+		},
+		'only-run': {
 			type: 'string',
 		},
 		help: {
@@ -46,7 +50,7 @@ const { values, positionals } = util.parseArgs({
 	},
 })
 if (values.help) {
-	console.log(`repository-lint --filterOut= --onlyRun= <DIR>:
+	console.info(`fix --filter-out=<FILTER> --matcher=<MATCHER> --only-run<FILTER>= <DIR>:
 
 Flags:
   --help`)
@@ -66,10 +70,19 @@ if (projectInfo?.gitHasRemote) {
 	)
 }
 
+const allMatchers = ['ecosystem', 'name', 'organization', 'project']
+const matchers = values['matchers']?.split(',') ?? allMatchers
+for (const matcher of matchers) {
+	if (!allMatchers.includes(matcher)) {
+		console.error(`Matcher '${matcher}' not valid`)
+		process.exit(1)
+	}
+}
+
 {
 	const filterFn = (/** @type {string} */ longId) => {
-		if (values.onlyRun) {
-			for (const value of values.onlyRun?.split(',') ?? []) {
+		if (values['only-run']) {
+			for (const value of values['only-run']?.split(',') ?? []) {
 				if (value === longId) {
 					return false
 				}
@@ -77,7 +90,7 @@ if (projectInfo?.gitHasRemote) {
 			return true
 		}
 
-		for (const value of values.filterOut?.split(',') ?? []) {
+		for (const value of values['filter-out']?.split(',') ?? []) {
 			if (value === longId) {
 				return true
 			}
@@ -86,43 +99,78 @@ if (projectInfo?.gitHasRemote) {
 		return false
 	}
 
-	const rulesDir = path.join(pkgRoot(), 'rules')
-	for (const group of await fs.readdir(rulesDir)) {
-		for (const ruleSetFile of await fs.readdir(path.join(rulesDir, group))) {
-			const ruleSetPath = path.join(rulesDir, group, ruleSetFile)
-			const ruleSet = ruleSetFile.slice(0, -3)
-			await runRuleSet(ruleSetPath, {
-				group,
-				ruleSet,
-				id: `${group}/${ruleSet}`,
-				filter: filterFn,
-			})
+	if (matchers.includes('ecosystem')) {
+		const rulesDir = path.join(pkgRoot(), 'rules/by-ecosystem')
+		for (const group of await fs.readdir(rulesDir)) {
+			for (const ruleSetFile of await fs.readdir(path.join(rulesDir, group))) {
+				const ruleSetPath = path.join(rulesDir, group, ruleSetFile)
+				const ruleSet = ruleSetFile.slice(0, -3)
+				await runRuleSet(ruleSetPath, {
+					group,
+					ruleSet,
+					id: `${group}/${ruleSet}`,
+					filter: filterFn,
+				})
+			}
 		}
 	}
-	if (projectInfo?.gitHasRemote) {
-		const orgsDir = path.join(pkgRoot(), 'org-rules')
-		for (const orgName of await fs.readdir(orgsDir)) {
-			if (orgName !== projectInfo.owner) {
-				continue
-			}
 
-			for (const group of await fs.readdir(path.join(orgsDir, orgName))) {
-				for (const ruleSetFile of await fs.readdir(path.join(orgsDir, orgName, group))) {
-					const ruleSetPath = path.join(orgsDir, orgName, group, ruleSetFile)
-					const ruleSet = ruleSetFile.slice(0, -3)
-					await runRuleSet(ruleSetPath, {
-						group,
-						ruleSet,
-						id: `${group}/${ruleSet}`,
-						filter: filterFn,
-					})
+	if (matchers.includes('name')) {
+	}
+
+	if (matchers.includes('organizations')) {
+		if (projectInfo?.gitHasRemote) {
+			const orgsDir = path.join(pkgRoot(), 'rules/by-organization')
+			for (const orgName of await fs.readdir(orgsDir)) {
+				if (orgName !== projectInfo.owner) {
+					continue
+				}
+
+				for (const group of await fs.readdir(path.join(orgsDir, orgName))) {
+					for (const ruleSetFile of await fs.readdir(
+						path.join(orgsDir, orgName, group),
+					)) {
+						const ruleSetPath = path.join(orgsDir, orgName, group, ruleSetFile)
+						const ruleSet = ruleSetFile.slice(0, -3)
+						await runRuleSet(ruleSetPath, {
+							group,
+							ruleSet,
+							id: `${group}/${ruleSet}`,
+							filter: filterFn,
+						})
+					}
 				}
 			}
 		}
 	}
 
+	if (matchers.includes('url')) {
+		await runMatcher('by-url')
+	}
+
 	console.log('Done.')
 	process.exit(1) // Workaround for experimental --experimental-import-meta-resolve issues
+}
+
+/**
+ * @param {string} matcher
+ */
+async function runMatcher(matcher) {
+	const matchDir = path.join(pkgRoot(), `rules/${matcher}`)
+	for (const groupName of await fs.readdir(matchDir)) {
+		for (const group of await fs.readdir(path.join(matchDir, groupName))) {
+			for (const ruleSetFile of await fs.readdir(path.join(matchDir, groupName, group))) {
+				const ruleSetPath = path.join(matchDir, groupName, group, ruleSetFile)
+				const ruleSet = ruleSetFile.slice(0, -3)
+				await runRuleSet(ruleSetPath, {
+					group,
+					ruleSet,
+					id: `${group}/${ruleSet}`,
+					filter: filterFn,
+				})
+			}
+		}
+	}
 }
 
 /**

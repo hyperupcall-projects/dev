@@ -1,9 +1,9 @@
 import {
 	ruleCheckPackageJsonDependencies,
 	ruleFileMustExistAndHaveContent,
-} from '../../util/rules.js'
+} from '../../../util/rules.js'
 
-/** @type {import('../../index.js').CreateRules} */
+/** @type {import('../../../index.js').CreateRules} */
 export const createRules = async function createRules() {
 	const configContent = `assert_lefthook_installed = true\n`
 

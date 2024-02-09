@@ -1,4 +1,4 @@
-# repository-lint
+# dev
 
 Tools like [EditorConfig](https://editorconfig.org), [ESLint](https://eslint.org), and [Stylelint](https://stylelint.io) require configuration. Managing configuration by hand can be time consuming and error-prone.
 
@@ -10,9 +10,9 @@ Repository called 'fix'
 
 Has:
 
+- Matchers
 - Group
-- RuleSet
-- Rule
+- Rules
 
 - green: already fixed or fixed
 - yellow: manually skip

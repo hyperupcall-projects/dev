@@ -2,9 +2,9 @@ import { execa } from 'execa'
 import {
 	ruleCheckPackageJsonDependencies,
 	ruleFileMustExistAndHaveContent,
-} from '../../util/rules.js'
+} from '../../../util/rules.js'
 
-/** @type {import('../../index.js').CreateRules} */
+/** @type {import('../../../index.js').CreateRules} */
 export const createRules = async function createRules() {
 	const { stdout, stderr, exitCode } = await execa('npx', ['publint'])
 	if (!stdout.includes('All good!')) {

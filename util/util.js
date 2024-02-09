@@ -3,6 +3,7 @@ import * as path from 'node:path'
 import chalk from 'chalk'
 import { execa } from 'execa'
 import { createRequire } from 'node:module'
+import { existsSync } from 'node:fs'
 
 const require = createRequire(import.meta.url)
 
@@ -26,6 +27,35 @@ export function pkgRoot(packageName) {
 		return path.dirname(path.dirname(new URL(import.meta.url).pathname))
 	} else {
 		return path.dirname(require.resolve(packageName))
+	}
+}
+
+/**
+ * @param {string} configFileName
+ */
+export function getConfigPath(configFileName) {
+	const thisLocation = path.join(pkgRoot(), configFileName)
+	if (existsSync(thisLocation)) {
+		return thisLocation
+	}
+
+	const thatLocation = path.join(pkgRoot('@hyperupcall/configs'), '.eslintrc.json')
+	if (existsSync(thatLocation)) {
+		return thatLocation
+	}
+
+	throw new Error(`Failed to find config file with name: ${configFileName}`)
+}
+
+/**
+ * @param {Record<string, any>[]} trees
+ */
+export async function writeTrees(trees) {
+	for (const tree of trees) {
+		for (const [filepath, content] of Object.entries(tree)) {
+			await fs.mkdir(path.dirname(filepath), { recursive: true })
+			await fs.writeFile(filepath, content)
+		}
 	}
 }
 

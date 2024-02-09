@@ -1,13 +1,13 @@
 import * as fs from 'node:fs/promises'
 
-import { octokit } from '../../util/octokit.js'
+import { octokit } from '../../../util/octokit.js'
 import detectIndent from 'detect-indent'
 import {
 	ruleJsonFileMustHaveShape,
 	ruleJsonFileMustHaveShape2,
-} from '../../util/rules.js'
+} from '../../../util/rules.js'
 
-/** @type {import('../../index.js').CreateRules} */
+/** @type {import('../../../index.js').CreateRules} */
 export const createRules = async function createRules({ project }) {
 	const bugsUrl = `https://github.com/${project.owner}/${project.name}/issues`
 	const gitUrl = `https://github.com/${project.owner}/${project.name}.git`

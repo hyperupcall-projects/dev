@@ -1,6 +1,6 @@
-# fix
+# dev
 
-A repository fixer.
+A development tool.
 
 ## TODO
 

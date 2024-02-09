@@ -6,7 +6,7 @@ import * as fs from 'fs/promises'
  */
 export async function dependsOnFileExistence(filename) {
 	return await fs
-			.stat(filename)
-			.then(() => true)
-			.catch(() => false)
+		.stat(filename)
+		.then(() => true)
+		.catch(() => false)
 }

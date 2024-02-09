@@ -9,10 +9,10 @@ import { reporter } from 'vfile-reporter'
 import { lintRule } from 'unified-lint-rule'
 import { visit } from 'unist-util-visit'
 
-import { pkgRoot } from '../../../util/util.js'
-import { octokit } from '../../../util/octokit.js'
+import { pkgRoot } from '../../../../util/util.js'
+import { octokit } from '../../../../util/octokit.js'
 
-/** @type {import('../../../index.js').CreateRules} */
+/** @type {import('../../../../index.js').CreateRules} */
 export const createRules = async function createRules() {
 	return []
 
@@ -24,7 +24,7 @@ export const createRules = async function createRules() {
 		.use(
 			lintRule(
 				{
-					origin: 'repository-lint:must-content',
+					origin: 'dev:must-content',
 				},
 				/**
 				 * @param {Root} tree
