@@ -1,7 +1,7 @@
 import {
 	ruleCheckPackageJsonDependencies,
 	ruleFileMustExistAndHaveContent,
-} from '../../../util/rules.js'
+} from '../../rules/rules.js'
 
 /** @type {import('../../../../index.js').CreateRules} */
 export const createRules = async function createRules() {

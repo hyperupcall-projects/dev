@@ -2,6 +2,8 @@
 
 A development tool.
 
+template.
+
 ## TODO
 
 ### Checks
@@ -15,6 +17,7 @@ A development tool.
 - packageJson
   - accurate license (read file system)
   - accurate description (read from github?)
+- packageJson.bin alphabetical if objectw
 
 ### Features
 

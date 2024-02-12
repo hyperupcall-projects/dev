@@ -3,7 +3,7 @@ import detectIndent from 'detect-indent'
 import { execa } from 'execa'
 import * as util from 'node:util'
 import _ from 'lodash'
-import { fileExists } from './util.js'
+import { fileExists } from '../rules./rules/util.js'
 
 /**
  * @typedef filesMustNotExistParam
@@ -11,7 +11,7 @@ import { fileExists } from './util.js'
  * @property {string[]} files
  *
  * @param {filesMustNotExistParam} param0
- * @returns {Promise<import('../../index.js').Rule>}
+ * @returns {Promise<import('../index.js').Rule>}
  */
 export async function filesMustNotExist({ id, files }) {
 	return {
@@ -49,7 +49,7 @@ export async function filesMustNotExist({ id, files }) {
  * @property {string} content
  *
  * @param {ruleFileMustExistAndHaveContentParam} param0
- * @returns {Promise<import('../../index.js').Rule>}
+ * @returns {Promise<import('../index.js').Rule>}
  */
 export async function ruleFileMustExistAndHaveContent({ file, content: shouldContent }) {
 	/** @type {string} */
@@ -75,7 +75,7 @@ export async function ruleFileMustExistAndHaveContent({ file, content: shouldCon
  * @property {Record<string, unknown>} shape
  *
  * @param {ruleJsonFileMustHaveShapeParam} param0
- * @returns {Promise<import('../../index.js').Rule>}
+ * @returns {Promise<import('../index.js').Rule>}
  */
 export async function ruleJsonFileMustHaveShape({ file, shape }) {
 	if (file.slice(0, 2) === './') {
@@ -108,7 +108,7 @@ export async function ruleJsonFileMustHaveShape({ file, shape }) {
  * @property {Record<string, Record<string, unknown>>} shape
  *
  * @param {ruleJsonFileMustHaveShape2Param} param0
- * @returns {Promise<import('../../index.js').Rule>}
+ * @returns {Promise<import('../index.js').Rule>}
  */
 export async function ruleJsonFileMustHaveShape2({ file, shape }) {
 	if (file.slice(0, 2) === './') {
@@ -164,7 +164,7 @@ export async function ruleJsonFileMustHaveShape2({ file, shape }) {
  * @property {string[]} packages
  *
  * @param {ruleCheckPackageJsonDependenciesParam} param0
- * @returns {Promise<import('../../index.js').Rule>}
+ * @returns {Promise<import('../index.js').Rule>}
  */
 export async function ruleCheckPackageJsonDependencies({ mainPackageName, packages }) {
 	async function packageJsonExists() {

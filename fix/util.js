@@ -4,8 +4,11 @@ import chalk from 'chalk'
 import { execa } from 'execa'
 import { createRequire } from 'node:module'
 import { existsSync } from 'node:fs'
+import { Octokit } from 'octokit'
 
 const require = createRequire(import.meta.url)
+
+export const octokit = new Octokit({ auth: process.env.GITHUB_AUTH_TOKEN })
 
 /**
  * @param {string} filepath
@@ -84,7 +87,7 @@ export function print(variant, id, text) {
 }
 
 /**
- * @returns {Promise<import('../../index.js').Project | null>}
+ * @returns {Promise<import('../index.js').Project | null>}
  */
 export async function getProject() {
 	if (!(await fileExists('.git'))) {

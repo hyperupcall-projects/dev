@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MPL-2.0
 import * as fs from 'node:fs/promises'
 
-import { fileExists } from '../../../util/util.js'
+import { fileExists } from '../../../util.js'
 
 /** @type {import('../../../../index.js').CreateRules} */
 export const createRules = async function createRules() {

@@ -5,7 +5,7 @@ import fs from 'node:fs/promises'
 import util from 'node:util'
 import chalk from 'chalk'
 import toml from '@ltd/j-toml'
-import { projectInfo, pkgRoot, print } from './util/util.js'
+import { projectInfo, pkgRoot, print } from '../util.js'
 import * as readline from 'node:readline/promises'
 import yn from 'yn'
 
@@ -175,7 +175,7 @@ async function runMatcher(matcher) {
 
 /**
  * @param {string} ruleFile
- * @param {import('../index.js').RuleSetInfo} info
+ * @param {import('../../index.js').RuleSetInfo} info
  */
 async function runRuleSet(ruleFile, info) {
 	const module = await import(ruleFile)
@@ -218,8 +218,8 @@ async function runRuleSet(ruleFile, info) {
 }
 
 /**
- * @param {import('../index.js').Rule} rule
- * @param {import('../index.js').RuleInfo} info
+ * @param {import('../../index.js').Rule} rule
+ * @param {import('../../index.js').RuleInfo} info
  */
 async function runRule(rule, info) {
 	const { id, deps, shouldFix, fix } = rule

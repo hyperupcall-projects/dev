@@ -1,11 +1,8 @@
 import * as fs from 'node:fs/promises'
 
-import { octokit } from '../../../util/octokit.js'
+import { octokit } from '../../../util.js'
 import detectIndent from 'detect-indent'
-import {
-	ruleJsonFileMustHaveShape,
-	ruleJsonFileMustHaveShape2,
-} from '../../../util/rules.js'
+import { ruleJsonFileMustHaveShape, ruleJsonFileMustHaveShape2 } from '../../../rules.ts'
 
 /** @type {import('../../../../index.js').CreateRules} */
 export const createRules = async function createRules({ project }) {

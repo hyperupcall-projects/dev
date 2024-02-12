@@ -1,9 +1,9 @@
 import * as ejs from 'ejs'
-import * as path from 'path'
-import * as url from 'url'
+import * as path from 'node:path'
+import * as url from 'node:url'
 import { globby } from 'globby'
-import * as fs from 'fs/promises'
-import { existsSync } from 'fs'
+import * as fs from 'node:fs/promises'
+import { existsSync } from 'node:fs'
 
 /**
  * @param {string} variable
@@ -15,17 +15,19 @@ export function badValue(variable, value) {
 	process.exit(1)
 }
 
+export async function printVariations() {}
+
 /**
- * @param {import("./new.js").Vars} vars
+ * @param {import("./new.js").Context} ctx
  */
-export async function templateTemplate(vars) {
+export async function templateTemplate(ctx) {
 	const templateDirs = []
 
 	{
 		const commonDir = path.join(
 			// @ts-expect-error
 			import.meta.dirname,
-			`./templates/${vars.ecosystem}/common`,
+			`./templates/${ctx.ecosystem}/common`,
 		)
 		if (existsSync(commonDir)) {
 			templateDirs.push(commonDir)
@@ -36,7 +38,7 @@ export async function templateTemplate(vars) {
 			path.join(
 				// @ts-expect-error
 				import.meta.dirname,
-				`./templates/${vars.ecosystem}/${vars.ecosystem}-${vars.variant}`,
+				`./templates/${ctx.ecosystem}/${ctx.ecosystem}-${ctx.variant}`,
 			),
 		)
 	}
@@ -47,11 +49,11 @@ export async function templateTemplate(vars) {
 
 			let output, outputPath
 			if (inputPath.endsWith('.ejs')) {
-				output = ejs.render(input, { vars })
-				outputPath = path.join(vars.dir, inputPath.slice(0, '.ejs'.length * -1))
+				output = ejs.render(input, { ctx })
+				outputPath = path.join(ctx.dir, inputPath.slice(0, '.ejs'.length * -1))
 			} else {
 				output = input
-				outputPath = path.join(vars.dir, inputPath)
+				outputPath = path.join(ctx.dir, inputPath)
 			}
 
 			await fs.mkdir(path.dirname(outputPath), { recursive: true })
