@@ -1,3 +1,4 @@
 #!/usr/bin/env node
+import { run } from '../fix/fix.js'
 
-await import('../fix/rules/fix.js')
+await run(process.argv)

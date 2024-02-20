@@ -1,14 +1,27 @@
 #!/usr/bin/env node
+import * as util from 'node:util'
 import enquirer from 'enquirer'
+import { run as runFix } from '../fix/fix.js'
+import { run as runNew } from '../new/new.js'
+import { run as runExport } from '../export/export.js'
 
 const { prompt } = enquirer
 
+if (process.argv.includes('--help')) {
+	console.info(`template <subcommand> [args...]:
+  template export [args...]
+  template fix [args...]
+  template new [args...]
+`)
+	process.exit(0)
+}
+
 if (process.argv[2] === 'export') {
-	await import('./export.js')
+	await runExport(process.argv.slice(3))
 } else if (process.argv[2] === 'fix') {
-	await import('./fix.js')
+	await runFix(process.argv.slice(3))
 } else if (process.argv[2] === 'new') {
-	await import('./new.js')
+	await runNew(process.argv.slice(3))
 } else {
 	const /** @type {{ value: string }} */ { value: subcommand } = await prompt({
 			type: 'select',
@@ -18,10 +31,10 @@ if (process.argv[2] === 'export') {
 		})
 
 	if (subcommand === 'export') {
-		await import('./export.js')
+		await runExport(process.argv.slice(2))
 	} else if (subcommand === 'fix') {
-		await import('./fix.js')
+		await runFix(process.argv.slice(2))
 	} else if (subcommand === 'new') {
-		await import('./new.js')
+		await runNew(process.argv.slice(2))
 	}
 }

@@ -7,8 +7,8 @@
 init() {
     declare -g CXXFLAGS_BARE=(-Wall -Wextra)
     declare -g CXXFLAGS_FULL=(
-        -Wall -Wextra -Wpedantic -Wshadow -Wvla 
-        -Wnon-virtual-dtor -Wframe-larger-than=5000 -Wstack-usage=10000 
+        -Wall -Wextra -Wpedantic -Wshadow -Wvla
+        -Wnon-virtual-dtor -Wframe-larger-than=5000 -Wstack-usage=10000
         -Wnon-virtual-dtor -Wold-style-cast -Wcast-align -Wunused -Woverloaded-virtual -Wpedantic -Wconversion
         -Wsign-conversion  -Wmisleading-indentation -Wduplicated-cond  -Wduplicated-branches -Wlogical-op -Wnull-dereference
         -Wuseless-cast -Wdouble-promotion -Wformat=2 -Wimplicit-fallthrough
@@ -42,7 +42,7 @@ task.cppcheck() {
 }
 
 task.codespell() {
-    codespell ./main.cpp 
+    codespell ./main.cpp
 }
 
 task.replay() {

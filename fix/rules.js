@@ -3,7 +3,6 @@ import detectIndent from 'detect-indent'
 import { execa } from 'execa'
 import * as util from 'node:util'
 import _ from 'lodash'
-import { fileExists } from '../rules./rules/util.js'
 
 /**
  * @typedef filesMustNotExistParam

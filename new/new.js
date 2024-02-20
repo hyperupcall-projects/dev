@@ -1,9 +1,119 @@
 import * as fs from 'node:fs/promises'
-import path from 'node:path'
+import * as path from 'node:path'
+import * as util from 'node:util'
 import enquirer from 'enquirer'
 import { templateTemplate } from './util.js'
+import { badValue } from '../new/util.js'
+import { TEMPLATES } from '../util.js'
 
 const { prompt } = enquirer
+
+/**
+ * @param {string[]} args
+ */
+export async function run(args) {
+	const { positionals, values } = util.parseArgs({
+		args,
+		allowPositionals: true,
+		options: {
+			ecosystem: {
+				type: 'string',
+			},
+			variant: {
+				type: 'string',
+			},
+			name: {
+				type: 'string',
+			},
+			options: {
+				type: 'string',
+			},
+		},
+	})
+
+	if (!values.ecosystem) {
+		const /** @type {{ value: string }} */ input = await prompt({
+				type: 'select',
+				name: 'value',
+				message: 'Choose an ecosystem',
+				choices: [
+					{ message: 'NodeJS', name: 'nodejs' },
+					{ message: 'Rust', name: 'rust' },
+					{ message: 'Go', name: 'go' },
+					{ message: 'C++', name: 'cpp' },
+				],
+			})
+		values.ecosystem = input.value
+	}
+
+	if (values.ecosystem === 'nodejs') {
+		values.variant = await setVariant(values.variant, TEMPLATES.nodejs)
+		values.name = await setName(values.name)
+	} else if (values.ecosystem === 'rust') {
+		values.variant = await setVariant(values.variant, TEMPLATES.rust)
+		values.name = await setName(values.name)
+	} else if (values.ecosystem === 'go') {
+		values.variant = await setVariant(values.variant, TEMPLATES.go)
+		values.name = await setName(
+			values.name,
+			'What is the project name (including GitHub organization)?',
+		)
+	} else if (values.ecosystem === 'cpp') {
+		values.variant = await setVariant(values.variant, TEMPLATES.cpp)
+		values.name = await setName(values.name)
+	} else {
+		badValue('ecosystem', values.ecosystem)
+	}
+
+	await newProject({
+		dir: positionals[0] ?? '.',
+		ecosystem: values.ecosystem,
+		variant: values.variant,
+		name: values.name,
+		options: (values.options ?? '').split(','),
+	})
+}
+
+/**
+ * @param {string | undefined} variant
+ * @param {Record<string, { name: string }>} variantObject
+ * @returns {Promise<string>}
+ */
+async function setVariant(variant, variantObject) {
+	if (!variant) {
+		const /** @type {{ value: string }} */ { value: variantName } = await prompt({
+				type: 'select',
+				name: 'value',
+				message: 'What kind of project is it?',
+				choices: Object.entries(variantObject).map(([id, { name }]) => ({
+					name: id,
+					message: name,
+				})),
+			})
+		variant = variantName
+	}
+
+	return variant
+}
+
+/**
+ * @param {string | undefined} name
+ * @param {string} [message]
+ * @returns {Promise<string>}
+ */
+async function setName(name, message) {
+	if (!name) {
+		const /** @type {{ value: string }} */ { value: projectName } = await prompt({
+				type: 'input',
+				name: 'value',
+				message: message ?? 'What is the project name?',
+			})
+
+		name = projectName
+	}
+
+	return name
+}
 
 /**
  * @typedef _Context
@@ -14,10 +124,12 @@ const { prompt } = enquirer
  * @property {string[]} options
  *
  * @typedef {Readonly<_Context>} Context
- *
+ */
+
+/**
  * @param {Context} ctx
  */
-export async function newTemplate(ctx) {
+export async function newProject(ctx) {
 	const file = path.join(
 		// @ts-expect-error
 		import.meta.dirname,

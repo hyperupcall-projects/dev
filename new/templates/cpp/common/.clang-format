@@ -1,1 +1,1 @@
-{{ include_file ".clang-format" }}
+{ { include_file ".clang-format" } }

@@ -1,77 +1,113 @@
 import * as ejs from 'ejs'
 import * as path from 'node:path'
 import * as url from 'node:url'
+import * as util from 'node:util'
+import * as os from 'node:os'
 import { globby } from 'globby'
 import * as fs from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import watcher from '@parcel/watcher'
+import { TEMPLATES } from '../util.js'
+import throttle from 'lodash/throttle.js'
+import debounce from 'lodash/debounce.js'
+import { templateTemplate } from '../new/util.js'
+import { newProject } from '../new/new.js'
 
-if (values.export) {
-	await exportTemplates(values.export ?? false)
-} else {
-	await import('../new/new.js')
+/**
+ * @param {string[]} args
+ */
+export async function run(args) {
+	const { values, positionals } = util.parseArgs({
+		args,
+		allowPositionals: false,
+		options: {
+			watch: {
+				type: 'boolean',
+			},
+			help: {
+				type: 'boolean',
+				short: 'h',
+			},
+		},
+	})
+
+	// @ts-expect-error
+	const templatesDir = path.join(path.dirname(import.meta.dirname), `./new/templates`)
+	const outputDir = path.join(
+		os.homedir(),
+		'Documents/Projects/Programming/Organizations/fox-templates',
+	)
+	await exportProjects(templatesDir, {
+		watch: values.watch ?? false,
+		outputDir,
+	})
 }
 
 /**
+ * @typedef Options
+ * @property {boolean} watch
+ * @property {string} outputDir
  *
- * @param {boolean} watch
+ * @param {string} templatesDir
+ * @param {Options} options
  */
-export async function exportTemplates(watch) {
-	const templatesDir = path.join(
-		// @ts-expect-error
-		import.meta.dirname,
-		`./templates`,
-	)
-
-	for (const ecosystemName of await fs.readdir(templatesDir)) {
-		for (const ecosystemDir of await fs.readdir(path.join(templatesDir, ecosystemName))) {
-			const templateDir = path.join(templatesDir, ecosystemName, ecosystemDir)
-			if (!ecosystemDir.startsWith(ecosystemName)) {
-				continue
-			}
-
-			console.log(ecosystemDir)
-		}
-	}
-
+export async function exportProjects(templatesDir, { watch, outputDir }) {
 	if (watch) {
 		console.log('Starting watcher...', templatesDir)
+		let /** @type {string[]} */ templateDirsToUpdate = []
+		const processDirs = debounce(async () => {
+			if (templateDirsToUpdate.length > 0) {
+				for (const templateDir of Array.from(new Set(templateDirsToUpdate))) {
+					await newProject({
+						dir: path.join(outputDir, path.basename(templateDir)),
+						ecosystem: path.dirname(path.basename(templateDir)),
+						variant: path.basename(templateDir),
+						name: path.basename(templateDir),
+						options: ['noexec'],
+					})
+				}
+				templateDirsToUpdate = []
+			}
+		}, 200)
+
 		await watcher.subscribe(
 			templatesDir,
-			(err, events) => {
+			async (err, events) => {
 				if (err) {
 					console.error(err)
 					return
 				}
 
-				new Promise(async (resolve, reject) => {
-					try {
-						const templateDirsToUpdate = []
-						for (const event of events) {
-							const relPath = path.relative(templatesDir, event.path)
-							const [ecosystemName, templateName] = relPath.split(path.sep)
-							const ecosystemDir = path.join(templatesDir, ecosystemName)
+				for (const event of events) {
+					const [ecosystemName, templateName] = path
+						.relative(templatesDir, event.path)
+						.split(path.sep)
+					const templateDirStat = await fs.stat(
+						path.join(templatesDir, ecosystemName, templateName),
+					)
 
-							if (templateName === 'common') {
-								for (const templateName of await fs.readdir(ecosystemDir)) {
-									templateDirsToUpdate.push(path.join(ecosystemDir, templateName))
-								}
-							} else {
-								templateDirsToUpdate.push(path.join(ecosystemDir, templateName))
+					if (
+						(templateDirStat.isDirectory() && templateName === 'common') ||
+						!templateDirStat.isDirectory()
+					) {
+						const ecosystemDir = path.join(templatesDir, ecosystemName)
+						for (const templateName of await fs.readdir(ecosystemDir, {
+							withFileTypes: true,
+						})) {
+							if (!templateName.isDirectory() || templateName.name === 'common') {
+								continue
 							}
 
-							console.log(event)
-							console.log()
+							const templateDir = path.join(ecosystemDir, templateName.name)
+							templateDirsToUpdate.push(templateDir)
 						}
-
-						for (const templateDir of templateDirsToUpdate) {
-							console.log(templateDir)
-						}
-						resolve(null)
-					} catch (err) {
-						reject(err)
+					} else {
+						const templateDir = path.join(templatesDir, ecosystemName, templateName)
+						templateDirsToUpdate.push(templateDir)
 					}
-				}).catch((err) => console.error(err))
+				}
+
+				processDirs()
 			},
 			{
 				ignore: ['**/node_modules/**'],
