@@ -1,7 +1,7 @@
 import * as fs from 'node:fs/promises'
 import path from 'node:path'
 
-import { fileExists } from '../../../util.js'
+import { fileExists } from '../../../../fix/util.js'
 
 /** @type {import('../../../../index.js').CreateRules} */
 export function createRules({ project }) {
