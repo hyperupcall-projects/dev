@@ -32,7 +32,7 @@ export async function run(args) {
 	})
 
 	// @ts-expect-error
-	const templatesDir = path.join(path.dirname(import.meta.dirname), `./new/templates`)
+	const templatesDir = path.join(path.dirname(import.meta.dirname), `./config/templates`)
 	const outputDir = path.join(
 		os.homedir(),
 		'Documents/Projects/Programming/Organizations/fox-templates',
