@@ -1,9 +1,9 @@
-import express from 'express';
+import express from 'express'
 // import swaggerJsdoc from 'swagger-jsdoc';
 // import swaggerUi from 'swagger-ui-express';
-import swaggerDefinition from '../../docs/swaggerDef.js';
+import swaggerDefinition from '../../docs/swaggerDef.js'
 
-const router = express.Router();
+const router = express.Router()
 
 // const specs = swaggerJsdoc({
 //   swaggerDefinition,
@@ -18,4 +18,4 @@ const router = express.Router();
 //   })
 // );
 
-export default router;
+export default router

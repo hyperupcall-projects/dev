@@ -1,28 +1,28 @@
 {
 	"name": "{{ project_name }}",
-	"type": "module",
 	"version": "{{ project_version }}",
+	"type": "module",
 	"description": "{{ project_description }}",
-	"bin": "bin/createNodejsApp.js",
-	"main": "src/index.js",
 	"repository": "{{ project_repository }}",
 	"author": "{{ project_author }}",
 	"license": "{{ project_license }}",
 	"engines": {
 		"node": ">=16.0.0"
 	},
+	"bin": "bin/createNodejsApp.js",
+	"main": "src/index.js",
 	"scripts": {
-		"start": "node --loader ts-node/esm ./src/server.ts",
 		"compile": "tsc --project ./tsconfig.json",
 		"dev": "cross-env NODE_ENV=development nodemon src/index.js",
+		"docker:dev": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up",
+		"docker:prod": "docker-compose -f docker-compose.yml -f docker-compose.prod.yml up",
+		"docker:test": "docker-compose -f docker-compose.yml -f docker-compose.test.yml up",
 		"lint": "eslint .",
 		"lint:fix": "eslint . --fix",
+		"prepare": "husky install",
 		"prettier": "prettier --check **/*.js",
 		"prettier:fix": "prettier --write **/*.js",
-		"docker:prod": "docker-compose -f docker-compose.yml -f docker-compose.prod.yml up",
-		"docker:dev": "docker-compose -f docker-compose.yml -f docker-compose.dev.yml up",
-		"docker:test": "docker-compose -f docker-compose.yml -f docker-compose.test.yml up",
-		"prepare": "husky install"
+		"start": "node --loader ts-node/esm ./src/server.ts"
 	},
 	"dependencies": {
 		"bcryptjs": "^2.4.3",
