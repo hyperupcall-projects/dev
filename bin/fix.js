@@ -1,4 +1,4 @@
 #!/usr/bin/env node
 import { run } from '../fix/fix.js'
 
-await run(process.argv)
+await run(process.argv.slice(2))

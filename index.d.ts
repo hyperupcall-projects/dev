@@ -1,12 +1,15 @@
-import type { Project as Project } from './fix/util.js'
+import type { Project } from './fix/util.js'
 
 export type Project =
 	| {
-			gitHasRemote: false
+		type: 'dir'
+	}
+	| {
+			type: 'vcs-only'
 			branchName: string
 	  }
 	| {
-			gitHasRemote: true
+			type: 'vcs-with-remote'
 			branchName: string
 			remoteName: string
 			remoteUrl: string
@@ -14,31 +17,24 @@ export type Project =
 			name: string
 	  }
 
-export type RuleSetInfo = {
-	group: string
-	ruleSet: string
-	id: string
-	filter: (longId: string) => boolean
+export type Config = {}
+
+export type Options = {
+	yes: boolean,
+	match: string[],
+	exclude: string[],
+	only: string[]
 }
 
-export type RuleInfo = {
-	group: string
-	ruleSet: string
-	rule: string
-	id: string
-}
-
-export type Rule = {
-	id: string
-	deps?: Array<(() => boolean) | (() => Promise<boolean>)>
-	shouldFix: (() => boolean) | (() => Promise<boolean>)
-	fix?: (() => void) | (() => Promise<void>)
-}
-
-export type CreateRules = (arg0: {
+export type Issues = (arg0: {
 	project: Project
-	metadata: {
+	config: {
 		projectSize: 'small' | 'large'
 		ignoredChecks: string[]
 	}
-}) => Rule[] | Promise<Rule[]>
+}) => AsyncGenerator<Issue>
+
+export type Issue = {
+	title: string,
+	fix?: (() => void) | (() => Promise<void>)
+}

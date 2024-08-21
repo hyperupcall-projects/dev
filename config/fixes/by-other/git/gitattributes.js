@@ -3,53 +3,52 @@ import path from 'node:path'
 
 import { fileExists } from '../../../../fix/util.js'
 
-/** @type {import('../../../../index.js').CreateRules} */
-export function createRules({ project }) {
+/** @type {import('../../../../index.js').Issues} */
+export async function* issues({ project }) {
 	const configFile = '.gitattributes'
 
-	return [
-		{
-			id: 'gitattributes-is-minimal',
-			async shouldFix() {
-				/** @type {string} */
-				let attributes = ''
-				try {
-					attributes = await fs.readFile(configFile, 'utf-8')
-				} catch (err) {
-					if (err.code !== 'ENOENT') {
-						throw err
-					}
-				}
-
-				const newAttributes = await minimalGitAttributes(attributes)
-
-				return newAttributes !== attributes
-			},
-			async fix() {
-				/** @type {string} */
-				let attributes = ''
-				try {
-					attributes = await fs.readFile(configFile, 'utf-8')
-				} catch (err) {
-					if (err.code !== 'ENOENT') {
-						throw err
-					}
-				}
-				const newAttributes = await minimalGitAttributes(attributes)
-
-				if (typeof newAttributes === 'string') {
-					await fs.writeFile(configFile, newAttributes)
-				} else {
-					await fs.rm(configFile).catch((err) => {
-						if (err.code === 'ENOENT') {
-							return
-						}
-						throw err
-					})
-				}
-			},
-		},
-	]
+	// TODO
+	// /** @type {string} */
+	// let attributes = ''
+	// try {
+	// 	attributes = await fs.readFile(configFile, 'utf-8')
+	// } catch (err) {
+	// 	if (err.code !== 'ENOENT') {
+	// 		throw err
+	// 	}
+	// }
+ //
+	// const newAttributes = await minimalGitAttributes(attributes)
+ //
+	// if (newAttributes !== attributes) {
+	// 	yield {
+	// 		title: `File "${configFile}" does not have the expected contents`,
+	// 		fix
+	// 	}
+	// }
+ //
+	// async function fix() {
+	// 	let /** @type {string} */ attributes = ''
+	// 	try {
+	// 		attributes = await fs.readFile(configFile, 'utf-8')
+	// 	} catch (err) {
+	// 		if (err.code !== 'ENOENT') {
+	// 			throw err
+	// 		}
+	// 	}
+	// 	const newAttributes = await minimalGitAttributes(attributes)
+ //
+	// 	if (typeof newAttributes === 'string') {
+	// 		await fs.writeFile(configFile, newAttributes)
+	// 	} else {
+	// 		await fs.rm(configFile).catch((err) => {
+	// 			if (err.code === 'ENOENT') {
+	// 				return
+	// 			}
+	// 			throw err
+	// 		})
+	// 	}
+	// }
 }
 
 async function minimalGitAttributes(/** @type {string} */ input) {

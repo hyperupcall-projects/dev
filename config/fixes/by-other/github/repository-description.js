@@ -6,8 +6,8 @@ import { execa } from 'execa'
 
 import { fileExists, pkgRoot, octokit } from '../../../../fix/util.js'
 
-/** @type {import('../../../../index.js').CreateRules} */
-export const createRules = async function createRules({ project }) {
+/** @type {import('../../../../index.js').Issues} */
+export const issues = async function* issues({ project }) {
 	const configFile = '.gitattributes'
 
 	return []

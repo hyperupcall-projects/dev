@@ -17,7 +17,8 @@ template.
 - packageJson
   - accurate license (read file system)
   - accurate description (read from github?)
-- packageJson.bin alphabetical if objectw
+- packageJson.bin alphabetical if object
+- Remove reading of `project.toml`, etc. `foxxo.toml` (`fox-dev.toml`)
 
 ### Features
 

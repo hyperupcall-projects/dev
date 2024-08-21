@@ -2,177 +2,108 @@ import * as fs from 'node:fs/promises'
 import detectIndent from 'detect-indent'
 import { execa } from 'execa'
 import * as util from 'node:util'
-import _ from 'lodash'
+import * as _ from 'lodash-es'
+import { fileExists } from './util.js'
 
 /**
- * @typedef filesMustNotExistParam
- * @property {string} id
- * @property {string[]} files
- *
- * @param {filesMustNotExistParam} param0
- * @returns {Promise<import('../index.js').Rule>}
+ * @typedef {import('../index.js')} Rule
  */
-export async function filesMustNotExist({ id, files }) {
-	return {
-		id,
-		async shouldFix() {
-			return (
-				await Promise.all(
-					files.map((file) => {
-						return fs
-							.stat(file)
-							.then(() => true)
-							.catch(() => false)
-					}),
-				)
-			).some((item) => item)
-		},
-		async fix() {
-			return await Promise.all(
-				files.map((file) => {
-					return fs.rm(file)
-				}),
-			).catch((err) => {
-				if (err.code === 'ENOENT') {
-					return
-				}
-				throw err
-			})
-		},
-	}
-}
 
 /**
- * @typedef ruleFileMustExistAndHaveContentParam
- * @property {string} file
- * @property {string} content
- *
- * @param {ruleFileMustExistAndHaveContentParam} param0
- * @returns {Promise<import('../index.js').Rule>}
+ * @param {Record<string, null | string>} mapping
+ * @returns {AsyncGenerator<Rule>}
  */
-export async function ruleFileMustExistAndHaveContent({ file, content: shouldContent }) {
-	/** @type {string} */
-	let content
-	try {
-		content = await fs.readFile(file, 'utf-8')
-	} catch {}
+export async function* filesMustHaveContent(mapping) {
+	for (let file in mapping) {
+		const expectedContent = mapping[file]
 
-	return {
-		id: `File '${file}' must have content: '${shouldContent}'`,
-		shouldFix() {
-			return content !== shouldContent
-		},
-		async fix() {
-			await fs.writeFile(file, shouldContent)
-		},
-	}
-}
+		if (file.slice(0, 2) === './') {
+			file = file.slice(2)
+		}
 
-/**
- * @typedef ruleJsonFileMustHaveShapeParam
- * @property {string} file
- * @property {Record<string, unknown>} shape
- *
- * @param {ruleJsonFileMustHaveShapeParam} param0
- * @returns {Promise<import('../index.js').Rule>}
- */
-export async function ruleJsonFileMustHaveShape({ file, shape }) {
-	if (file.slice(0, 2) === './') {
-		file = file.slice(2)
-	}
-
-	return {
-		id: `file-${file}-has-shape`,
-		async shouldFix() {
-			const oldJson = JSON.parse(await fs.readFile(file, 'utf-8'))
-			const newJson = _.merge(structuredClone(oldJson), shape)
-
-			return !util.isDeepStrictEqual(oldJson, newJson)
-		},
-		async fix() {
+		if (expectedContent === null) {
+			yield {
+				title: `File "${file}" must not exist`,
+				fix: () => fs.rm(file)
+			}
+		} else {
 			const content = await fs.readFile(file, 'utf-8')
-			const newJson = _.merge(JSON.parse(content), shape)
-
-			await fs.writeFile(
-				file,
-				JSON.stringify(newJson, null, detectIndent(content).indent || '\t'),
-			)
-		},
-	}
-}
-
-/**
- * @typedef ruleJsonFileMustHaveShape2Param
- * @property {string} file
- * @property {Record<string, Record<string, unknown>>} shape
- *
- * @param {ruleJsonFileMustHaveShape2Param} param0
- * @returns {Promise<import('../index.js').Rule>}
- */
-export async function ruleJsonFileMustHaveShape2({ file, shape }) {
-	if (file.slice(0, 2) === './') {
-		file = file.slice(2)
-	}
-
-	/**
-	 * @param {Record<string, Record<string, unknown>>} object
-	 * @param {Record<string, Record<string, unknown>>} shape
-	 * @returns {Record<string, unknown>}
-	 */
-	function merge(object, shape) {
-		for (const [propChain, propValue] of Object.entries(shape)) {
-			if (Object.hasOwn(propValue, '__delete')) {
-				object = _.omit(object, propChain)
-			} else if (Object.hasOwn(propValue, '__replace')) {
-				_.set(object, propChain, propValue)
-			} else {
-				// __merge, the default.
-				const obj = _.get(object, propChain)
-				if (obj === undefined) {
-					_.set(object, propChain, propValue)
-				} else {
-					_.merge(obj, propValue)
+			if (content !== expectedContent) {
+				yield {
+					title: `File "${file}" must have content: "${expectedContent}"`,
+					fix: () => fs.writeFile(file, expectedContent)
 				}
 			}
 		}
-
-		return object
 	}
+}
 
-	const content = await fs.readFile(file, 'utf-8')
-	const actualObject = JSON.parse(content)
-	const expectedObject = merge(structuredClone(actualObject), shape)
+/**
+ * @param {Record<string, Record<string, unknown>>} mapping
+ * @returns {AsyncGenerator<Rule>}
+ */
+export async function* filesMustHaveShape(mapping) {
+	for (let file in mapping) {
+		const shape = mapping[file]
 
-	return {
-		id: `file-${file}-has-shape2`,
-		async shouldFix() {
-			return !util.isDeepStrictEqual(expectedObject, actualObject)
-		},
-		async fix() {
-			await fs.writeFile(
-				file,
-				JSON.stringify(expectedObject, null, detectIndent(content).indent || '\t'),
-			)
-		},
+		if (file.slice(0, 2) === './') {
+			file = file.slice(2)
+		}
+
+		/**
+		 * @param {Record<string, Record<string, unknown>>} object
+		 * @param {Record<string, unknown>} shape
+		 * @returns {Record<string, unknown>}
+		 */
+		function merge(object, shape) {
+			for (const [propChain, propValue] of Object.entries(shape)) {
+				if (Object.hasOwn(propValue, '__delete')) {
+					object = _.omit(object, propChain)
+				} else if (Object.hasOwn(propValue, '__replace')) {
+					_.set(object, propChain, propValue)
+				} else {
+					// __merge, the default.
+					const obj = _.get(object, propChain)
+					if (obj === undefined) {
+						_.set(object, propChain, propValue)
+					} else {
+						_.merge(obj, propValue)
+					}
+				}
+			}
+
+			return object
+		}
+
+		const content = await fs.readFile(file, 'utf-8')
+		const actualObject = JSON.parse(content)
+		const expectedObject = merge(structuredClone(actualObject), shape)
+
+		yield {
+			async issues() {
+				return !util.isDeepStrictEqual(expectedObject, actualObject)
+			},
+			printInfo() {
+				console.log(`File "${file}" must have the correct shape`)
+			},
+			async fix() {
+				await fs.writeFile(
+					file,
+					JSON.stringify(expectedObject, null, detectIndent(content).indent || '\t'),
+				)
+			},
+		}
 	}
 }
 
 /**
  * @typedef ruleCheckPackageJsonDependenciesParam
- * @property {string} mainPackageName
  * @property {string[]} packages
  *
  * @param {ruleCheckPackageJsonDependenciesParam} param0
- * @returns {Promise<import('../index.js').Rule>}
+ * @returns {AsyncGenerator<Rule>}
  */
-export async function ruleCheckPackageJsonDependencies({ mainPackageName, packages }) {
-	async function packageJsonExists() {
-		return await fs
-			.stat('package.json')
-			.then(() => true)
-			.catch(() => false)
-	}
-
+export async function* ruleCheckPackageJsonDependencies({ packages }) {
 	const packageJsonText = await fs.readFile('package.json', 'utf-8')
 	/** @type {import('type-fest').PackageJson} */
 	const packageJson = JSON.parse(packageJsonText)
@@ -190,43 +121,78 @@ export async function ruleCheckPackageJsonDependencies({ mainPackageName, packag
 		return obj['dist-tags'].latest
 	})
 
-	return {
-		id: `File 'package.json' is missing dependencies for package: ${mainPackageName}`,
-		deps: [packageJsonExists],
-		shouldFix() {
-			for (const packageName of packages) {
-				if (!packageJson?.devDependencies?.[packageName]) {
-					return true
-				}
+	let shouldFix = false
+	for (const packageName of packages) {
+		if (!packageJson?.devDependencies?.[packageName]) {
+			shouldFix = true
+		}
+	}
+
+	for (let i = 0; i < packages.length; ++i) {
+		const packageName = packages[i]
+		// TODO: ^, etc. is not always guaranteed
+		if (packageJson?.devDependencies?.[packageName].slice(1) !== latestVersions[i]) {
+			shouldFix = true
+		}
+	}
+
+
+	if (shouldFix) {
+		yield {
+			title: `File 'package.json' is missing dependencies for package`,
+			fix
+		}
+	}
+
+	async function fix() {
+		const packageJsonModified = structuredClone(packageJson)
+		for (let i = 0; i < packages.length; ++i) {
+			const packageName = packages[i]
+
+			// TODO: ^, etc. should not always be done
+			packageJsonModified.devDependencies = {
+				...packageJsonModified?.devDependencies,
+				[packageName]: `^${latestVersions[i]}`,
 			}
+		}
 
-			for (let i = 0; i < packages.length; ++i) {
-				const packageName = packages[i]
-				// TODO: ^, etc. is not always guaranteed
-				if (packageJson?.devDependencies?.[packageName].slice(1) !== latestVersions[i]) {
-					return true
-				}
-			}
+		await fs.writeFile(
+			'package.json',
+			JSON.stringify(packageJsonModified, null, detectIndent(packageJsonText).indent),
+		)
+		console.log(`Now, run: 'npm i`)
+	}
+}
 
-			return false
-		},
-		async fix() {
-			const packageJsonModified = structuredClone(packageJson)
-			for (let i = 0; i < packages.length; ++i) {
-				const packageName = packages[i]
+/**
+ * @typedef ruleCheckPackageJsonDependenciesParam2
+ * @property {string} mainPackageName
+ * @property {Record<string, string | null>} packages
+ *
+ * @param {ruleCheckPackageJsonDependenciesParam2} param0
+ * @returns {AsyncGenerator<Rule>}
+ */
+export async function* ruleCheckPackageJsonDependencies2({ mainPackageName, packages }) {
+	const packageJsonText = await fs.readFile('package.json', 'utf-8')
+	/** @type {import('type-fest').PackageJson} */
+	const packageJson = JSON.parse(packageJsonText)
 
-				// TODO: ^, etc. should not always be done
-				packageJsonModified.devDependencies = {
-					...packageJsonModified?.devDependencies,
-					[packageName]: `^${latestVersions[i]}`,
-				}
-			}
+	let shouldFix = false
+	for (const [packageName, packageValue] of Object.entries(packages)) {
+		if (!packageJson?.devDependencies?.[packageName] && packageValue !== null) {
+			shouldFix = true
+		}
+	}
 
-			await fs.writeFile(
-				'package.json',
-				JSON.stringify(packageJsonModified, null, detectIndent(packageJsonText).indent),
-			)
-			console.log(`Now, run: 'npm i`)
-		},
+	for (const [packageName, packageValue] of Object.entries(packages)) {
+		if (packageJson?.devDependencies?.[packageName] && packageValue === null) {
+			shouldFix = true
+		}
+	}
+
+	if (shouldFix) {
+		yield {
+			title: `File 'package.json' is missing dependencies2 for package: ${mainPackageName}`
+		}
 	}
 }

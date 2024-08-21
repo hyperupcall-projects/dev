@@ -15,8 +15,6 @@ export function badValue(variable, value) {
 	process.exit(1)
 }
 
-export async function printVariations() {}
-
 /**
  * @param {import("./new.js").Context} ctx
  */

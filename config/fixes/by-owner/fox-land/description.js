@@ -9,10 +9,10 @@ import { reporter } from 'vfile-reporter'
 import { lintRule } from 'unified-lint-rule'
 import { visit } from 'unist-util-visit'
 
-import { pkgRoot, octokit } from '../../../../../fix/util.js'
+import { pkgRoot, octokit } from '../../../../fix/util.js'
 
-/** @type {import('../../../../../index.js').CreateRules} */
-export const createRules = async function createRules() {
+/** @type {import('../../../../index.js').Issues} */
+export const issues = async function* issues() {
 	return []
 
 	const readmeText = await fs.readFile('README.md', 'utf-8')
@@ -82,8 +82,10 @@ export const createRules = async function createRules() {
 
 	return [
 		{
-			id: 'readme-description-consistent',
-			async shouldFix() {},
+			async issues() {},
+			printInfo() {
+				console.log('Readme description is consistent')
+			},
 		},
 	]
 }
