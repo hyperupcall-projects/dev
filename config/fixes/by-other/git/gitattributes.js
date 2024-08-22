@@ -3,6 +3,8 @@ import path from 'node:path'
 
 import { fileExists } from '../../../../fix/util.js'
 
+export const skip = true
+
 /** @type {import('../../../../index.js').Issues} */
 export async function* issues({ project }) {
 	const configFile = '.gitattributes'
@@ -22,7 +24,7 @@ export async function* issues({ project }) {
  //
 	// if (newAttributes !== attributes) {
 	// 	yield {
-	// 		title: `File "${configFile}" does not have the expected contents`,
+	// 		message: [`File "${configFile}" does not have the expected contents`],
 	// 		fix
 	// 	}
 	// }

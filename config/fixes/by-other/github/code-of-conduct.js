@@ -1,22 +1,20 @@
 // SPDX-License-Identifier: MPL-2.0
-import * as fs from 'node:fs/promises'
+import { globby } from 'globby'
 
-import { fileExists } from '../../../../fix/util.js'
+/**
+ * Check if the repository does not have a code of conduct file. All code of conduct
+ * files should be defined in the organization's ".github" repository.
+ *
+ * See more: https://docs.github.com/en/communities/setting-up-your-project-for-healthy-contributions/adding-a-code-of-conduct-to-your-project
+ * See more: https://docs.github.com/en/communities/setting-up-your-project-for-healthy-contributions/creating-a-default-community-health-file
+ */
 
 /** @type {import('../../../../index.js').Issues} */
 export const issues = async function* issues() {
-	const conductFile = 'CODE_OF_CONDUCT.md'
-
-	if (!(await fileExists(conductFile))) {
+	const files = await globby(['*code_of_conduct*', '.github/*code_of_conduct*', 'docs/*code_of_conduct*'], { caseSensitiveMatch: false })
+	if (files.length > 0) {
 		yield {
-			title: `The file "${conductFile}" must exist`
-		}
-	}
-
-	const content = await fs.readFile(conductFile, 'utf-8')
-	if (content.startsWith('\n')) {
-		yield {
-			title: 'Code of Conduct must not start with a newline',
+			message: ['Expected to find no code of conduct files', 'But, found at least one', `Found files: ${new Intl.ListFormat('en').format(files.map((file) => `"${file}"`))}`]
 		}
 	}
 }

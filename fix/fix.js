@@ -119,7 +119,7 @@ Flags:
 		await fixFromDir(dir, predicate, project, config, options)
 	}
 
-	// TODO: by-name, by-owner
+	// TODO: by-name
 
 	console.log('Done.')
 }
@@ -157,12 +157,23 @@ async function fixFromFile(fixFile, fixId, project, config, options) {
 		throw new TypeError(`Failed to find issues for "${fixId}" because no "issues" function was exported`)
 	}
 
+	if (module.skip) {
+		console.info(`⏭️ ${fixId}: Skipped`)
+		return
+	}
+
 	try {
 		let failed = false
 		const issues = module.issues({ project, config })
 		for await (const issue of issues) {
-			console.info(`❔ ${fixId}: Found issue`)
-			console.info(`  => ${issue.title}`)
+			console.info(`${fixId}: Found issue`)
+			if (Array.isArray(issue.message)) {
+				for (const message of issue.message) {
+					console.info(`  => ${message}`)
+				}
+			} else {
+				console.info(issue.message)
+			}
 
 			if (!issue.fix) {
 				console.info(`❌ ${fixId}: Failed because no fix function exists`)

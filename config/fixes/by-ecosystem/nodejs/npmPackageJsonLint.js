@@ -3,10 +3,11 @@ import * as path from 'node:path'
 
 import { pkgRoot } from '../../../../fix/util.js'
 import {
-	ruleCheckPackageJsonDependencies,
 	filesMustHaveShape,
 	filesMustHaveContent,
 } from '../../../../fix/rules.js'
+
+export const skip = true
 
 /** @type {import('../../../../index.js').Issues} */
 export const issues = async function* issues() {
@@ -31,7 +32,7 @@ export const issues = async function* issues() {
 		'npmpackagejsonlint.config.js': null,
 	})
 
-	yield *ruleCheckPackageJsonDependencies({
-			packages: ['npm-package-json-lint', '@hyperupcall/npm-package-json-lint-config']
-	})
+	// yield *packageJsonMustHaveDependencies({
+	// 		packages: ['npm-package-json-lint', '@hyperupcall/npm-package-json-lint-config']
+	// })
 }

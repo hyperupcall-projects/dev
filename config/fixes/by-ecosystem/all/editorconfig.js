@@ -4,6 +4,10 @@ import * as path from 'node:path'
 
 import { fileExists, pkgRoot } from '../../../../fix/util.js'
 
+/**
+ * Check that the EditorConfig file exists and has the correct content.
+ */
+
 /** @type {import('../../../../index.js').Issues} */
 export const issues = async function* issues() {
 	const configFile = '.editorconfig'
@@ -12,7 +16,7 @@ export const issues = async function* issues() {
 
 	if (!await fileExists(configFile)) {
 		yield {
-			title: `EditorConfig file "${configFile}" must exist`,
+			message: [`Expected EditorConfig file "${configFile}" to exist`],
 			fix: () => fs.writeFile(configFile, configContent)
 		}
 	}
@@ -21,7 +25,7 @@ export const issues = async function* issues() {
 	const content = await fs.readFile(configFile, 'utf-8')
 	if (content.length === 0) {
 		yield {
-			title: `EditorConfig file "${configFile}" must not be empty`,
+			message: [`Expected EditorConfig file "${configFile}" to not be empty`],
 			fix: () => fs.writeFile(configFile, configContent)
 		}
 	}

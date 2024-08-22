@@ -3,10 +3,11 @@ import * as path from 'node:path'
 
 import { pkgRoot } from '../../../../fix/util.js'
 import {
-	ruleCheckPackageJsonDependencies,
 	filesMustHaveShape,
 	filesMustHaveContent,
 } from '../../../../fix/rules.js'
+
+export const skip = true
 
 /** @type {import('../../../../index.js').Issues} */
 export const issues = async function* issues() {
@@ -34,7 +35,7 @@ export const issues = async function* issues() {
 		'.markdownlint.mjs': null,
 	})
 
-	yield *ruleCheckPackageJsonDependencies({
-		packages: ['markdownlint', '@hyperupcall/markdownlint-config'],
-	})
+	// yield *packageJsonMustHaveDependencies({
+	// 	packages: ['markdownlint', '@hyperupcall/markdownlint-config'],
+	// })
 }

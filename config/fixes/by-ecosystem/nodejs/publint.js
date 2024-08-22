@@ -1,5 +1,7 @@
 import { execa } from 'execa'
-import { ruleCheckPackageJsonDependencies } from '../../../../fix/rules.js'
+import { } from '../../../../fix/rules.js'
+
+export const skip = true
 
 /** @type {import('../../../../index.js').Issues} */
 export const issues = async function* issues() {
@@ -7,10 +9,10 @@ export const issues = async function* issues() {
 	if (!stdout.includes('All good!')) {
 		console.log(stdout)
 	}
-
+	// TODO
 	if (exitCode !== 0) {
 		yield {
-			title: 'Publint should succeed'
+			message: ['Publint should succeed']
 		}
 	}
 }

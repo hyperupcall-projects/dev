@@ -1,37 +1,65 @@
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 
-import { pkgRoot } from '../../../../fix/util.js'
+import { getNpmLatestVersion, pkgRoot } from '../../../../fix/util.js'
 import {
 	filesMustHaveContent,
-	ruleCheckPackageJsonDependencies,
+	filesMustHaveShape,
 } from '../../../../fix/rules.js'
 
 /** @type {import('../../../../index.js').Issues} */
 export const issues = async function* issues() {
-	const configFile = path.join(pkgRoot('@hyperupcall/configs'), '.eslintrc.json')
-	const configContent = await fs.readFile(configFile, 'utf-8')
+	// Check that there is only one configuration file.
+	{
+		// TODO: Move to @hyperupcall/configs
+		const configContent = `export { default } from '@hyperupcall/scripts-nodejs/config-eslint.js'\n`
 
-	yield *filesMustHaveContent({
-		'.eslintrc.json': configContent,
-	})
+		// https://eslint.org/docs/latest/use/configure/configuration-files-deprecated
+		// https://eslint.org/docs/latest/use/configure/configuration-files
+		yield* filesMustHaveContent({
+			'.eslintrc.js': null,
+			'.eslintrc.cjs': null,
+			'.eslintrc.yaml': null,
+			'eslintrc.yml': null,
+			'.eslintrc.json': null,
+			'eslint.config.js': configContent,
+			'eslint.config.mjs': null,
+			'eslint.config.cjs': null,
+			'eslint.config.ts': null,
+			'eslint.config.mts': null,
+			'eslint.config.cts': null,
+		})
+		yield *filesMustHaveShape({
+			'package.json': {
+				eslintConfig: { __delete: null },
+			}
+		})
+	}
 
-	yield *ruleCheckPackageJsonDependencies({
-		packages: [
-			'eslint',
-			'eslint-config-prettier',
-			'@hyperupcall/eslint-config',
-			'eslint-plugin-import',
-			'eslint-plugin-markdown',
-			'eslint-plugin-promise',
-			'eslint-plugin-n',
-			'eslint-plugin-unicorn',
-			'eslint-plugin-security',
-			'@eslint-community/eslint-plugin-eslint-comments',
-			'eslint-plugin-regexp',
-			'eslint-plugin-perfectionist',
-			'eslint-plugin-no-unsanitized',
-			'eslint-plugin-mdx',
-		]
-	})
+	// Check that all the necessary dependencies are installed.
+	{
+		const [version] = await getNpmLatestVersion(['@hyperupcall/scripts-nodejs'])
+		yield* filesMustHaveShape({
+			'package.json': {
+				scripts: {
+					lint: 'hyperupcall-scripts-nodejs lint',
+				},
+				devDependencies: {
+					'@hyperupcall/scripts-nodejs': `${version}`
+				}
+			}
+		})
+
+		const packageJson = JSON.parse(await fs.readFile('package.json', 'utf-8'))
+		const dependencyKeys = ['dependencies', 'devDependencies', 'peerDependencies', 'peerDependenciesMeta', 'bundleDependencies', 'optionalDependencies']
+		for (const dependencyKey in dependencyKeys) {
+			for (const dependencyName in packageJson[dependencyKey] ?? {}) {
+				if (dependencyObject.includes('eslint')) {
+					yield {
+						message: ['Expected to find no dependencies that included the string "eslint"', `But, found "${dependencyName}"`],
+					}
+				}
+			}
+		}
+	}
 }

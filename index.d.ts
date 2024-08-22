@@ -35,6 +35,6 @@ export type Issues = (arg0: {
 }) => AsyncGenerator<Issue>
 
 export type Issue = {
-	title: string,
+	message: string | string[],
 	fix?: (() => void) | (() => Promise<void>)
 }

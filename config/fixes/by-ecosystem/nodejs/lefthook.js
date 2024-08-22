@@ -1,4 +1,6 @@
-import { ruleCheckPackageJsonDependencies } from '../../../../fix/rules.js'
+import { } from '../../../../fix/rules.js'
+
+export const skip = true
 
 /** @type {import('../../../../index.js').Issues} */
 export const issues = async function* issues() {

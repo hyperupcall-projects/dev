@@ -5,10 +5,10 @@
 	"description": "A repository linter.",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/fox-tools/fix.git"
+		"url": "https://github.com/fox-land/dev.git"
 	},
 	"bugs": {
-		"url": "https://github.com/fox-tools/fix/issues"
+		"url": "https://github.com/fox-land/dev/issues"
 	},
 	"author": "Edwin Kofler <edwin@kofler.dev> (https://edwinkofler.com)",
 	"license": "MPL-2.0",
@@ -20,20 +20,19 @@
 	},
 	"keywords": [],
 	"scripts": {
-		"format": "prettier --check .",
-		"lint": "eslint ."
+		"format": "hyperupcall-scripts-nodejs format",
+		"lint": "hyperupcall-scripts-nodejs lint"
 	},
 	"dependencies": {
 		"@hyperupcall/configs": "^0.2.3",
 		"@ltd/j-toml": "^1.38.0",
-		"@octokit/rest": "^20.0.2",
 		"@parcel/watcher": "^2.4.0",
 		"chalk": "^5.3.0",
 		"dedent": "^1.5.1",
 		"del": "^7.1.0",
 		"detect-indent": "^7.0.1",
 		"detect-newline": "^4.0.1",
-		"diff": "^5.1.0",
+		"diff": "6.0.0-beta",
 		"ejs": "^3.1.9",
 		"enquirer": "^2.4.1",
 		"execa": "^8.0.1",
@@ -43,7 +42,7 @@
 		"lodash-es": "^4.17.21",
 		"micromatch": "^4.0.5",
 		"minimatch": "^9.0.3",
-		"octokit": "^3.1.2",
+		"octokit": "^4.0.2",
 		"remark": "^15.0.1",
 		"remark-parse": "^11.0.0",
 		"smol-toml": "^1.3.0",
@@ -76,10 +75,11 @@
 		"markdownlint": "^0.33.0",
 		"prettier": "^3.2.5",
 		"prettier-plugin-pkg": "^0.18.1",
-		"type-fest": "^4.5.0"
+		"type-fest": "^4.5.0",
+		"@hyperupcall/scripts-nodejs": "0.2.0"
 	},
 	"markdownlint-cli2": {
 		"extends": "./node_modules/@hyperupcall/markdownlint-config/.markdownlint.json"
 	},
-	"prettier": "@hyperupcall/prettier-config"
+	"prettier": "@hyperupcall/scripts-nodejs/prettier-config.js"
 }

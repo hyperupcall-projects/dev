@@ -61,3 +61,19 @@ export async function writeTrees(trees) {
 		}
 	}
 }
+
+export async function getNpmLatestVersion(/** @type {string[]} */ packages) {
+	const latestVersionsObjects = await Promise.all(
+		packages.map((packageName) => execa('npm', ['view', '--json', packageName])),
+	)
+	const latestVersions = latestVersionsObjects.map((result) => {
+		if (result.exitCode !== 0) {
+			console.log(result.stderr)
+			throw new Error(result)
+		}
+
+		const obj = JSON.parse(result.stdout)
+		return obj['dist-tags'].latest
+	})
+	return latestVersions
+}
