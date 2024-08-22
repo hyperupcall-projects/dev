@@ -1,12 +1,8 @@
 # dev
 
-A development tool.
-
-template.
+My development tool. I use this for all my projects. It helps with creating new projects from a template and managing the configuration of those projects.
 
 ## TODO
-
-### Checks
 
 - org: .github repo specific errors
 - org: github test if org has all files archived (fox-archived)
@@ -19,9 +15,4 @@ template.
   - accurate description (read from github?)
 - packageJson.bin alphabetical if object
 - Remove reading of `project.toml`, etc. `foxxo.toml` (`fox-dev.toml`)
-
-### Features
-
-- diff function mechanism
 - flag to enable-disable certain checks
-- flag to disable connecting internet (speed w/ broadband)
