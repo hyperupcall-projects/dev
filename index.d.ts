@@ -1,5 +1,3 @@
-import type { Project } from './fix/util.js'
-
 export type Project =
 	| {
 		type: 'dir'

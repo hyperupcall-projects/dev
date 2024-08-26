@@ -44,29 +44,41 @@ export const issues = async function* issues({ project }) {
 
 	// Check the homepage URL.
 	{
-		// Keep the trailing slash for consistency; GitHub defaults to adding a trailing slash when
-		// deriving the homepage URL from the repository name and owner.
-		const expectedURL = `https://${project.owner}.github.io/${project.name}/`
-		if (data.homepage  !== expectedURL) {
-			if (!data.homepage) {
+		if (!data.homepage) {
+			yield {
+				message: ['Expected GitHub repository to have a homepage URL', 'But, no homepage URL was found'],
+				fix: () => octokit.rest.repos.update({
+					owner: project.owner,
+					repo: project.name,
+					homepage: expectedURL
+				})
+			}
+		}
+
+		if (project.name.includes('.')) {
+			const expectedURL = `https://${project.name}`
+			if (data.homepage !== expectedURL) {
 				yield {
-					message: ['Expected GitHub repository to have a homepage URL', 'But, no homepage URL was found'],
+					message: [`Expected GitHub repository to have a homepage URL of "${expectedURL}"`, `But, homepage URL of "${data.homepage}" was found`, `Detected a period in the repository name, which indicates that it represents a domain name`],
 					fix: () => octokit.rest.repos.update({
 						owner: project.owner,
 						repo: project.name,
 						homepage: expectedURL
 					})
 				}
-			} else {
-				if (data.homepage !== expectedURL) {
-					yield {
-						message: [`Expected GitHub repository to have a homepage URL of "${expectedURL}"`, `But, homepage URL of "${data.homepage}" was found`],
-						fix: () => octokit.rest.repos.update({
-							owner: project.owner,
-							repo: project.name,
-							homepage: expectedURL
-						})
-					}
+			}
+		}	else {
+			// Keep the trailing slash for consistency; GitHub defaults to adding a trailing slash when
+			// deriving the homepage URL from the repository name and owner.
+			const expectedURL = `https://${project.owner}.github.io/${project.name}/`
+			if (data.homepage !== expectedURL) {
+				yield {
+					message: [`Expected GitHub repository to have a homepage URL of "${expectedURL}"`, `But, homepage URL of "${data.homepage}" was found`],
+					fix: () => octokit.rest.repos.update({
+						owner: project.owner,
+						repo: project.name,
+						homepage: expectedURL
+					})
 				}
 			}
 		}

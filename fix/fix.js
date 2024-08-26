@@ -158,7 +158,7 @@ async function fixFromFile(fixFile, fixId, project, config, options) {
 	}
 
 	if (module.skip) {
-		console.info(`⏭️ ${fixId}: Skipped`)
+		console.info(`⏭️  ${fixId}: Skipped`)
 		return
 	}
 

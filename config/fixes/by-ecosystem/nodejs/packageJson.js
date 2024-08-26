@@ -6,9 +6,6 @@ import { filesMustHaveShape } from '../../../../fix/rules.js'
 
 /** @type {import('../../../../index.js').Issues} */
 export const issues = async function* issues({ project }) {
-	const bugsUrl = `https://github.com/${project.owner}/${project.name}/issues`
-	const gitUrl = `https://github.com/${project.owner}/${project.name}.git`
-
 	let packageJsonText = await fs.readFile('package.json', 'utf-8')
 	/** @type {import('type-fest').PackageJson} */
 	let packageJson = JSON.parse(packageJsonText)
@@ -32,32 +29,28 @@ export const issues = async function* issues({ project }) {
 	}
 
 	packageJson = JSON.parse(await fs.readFile('package.json', 'utf-8'))
-	if (packageJson.private === true) {
+	if (packageJson.private) {
 		yield *filesMustHaveShape({
 			'package.json': {
 				author: { __delete: null },
-				scripts: {
-					format: 'prettier --check .',
-					lint: 'eslint .',
-				},
 				bugs: { __delete: null },
 				repository: { __delete: null },
 			},
 		})
+	} else {
+		yield* filesMustHaveShape({
+			'package.json': {
+				author: 'Edwin Kofler <edwin@kofler.dev> (https://edwinkofler.com)',
+				bugs: {
+					url: `https://github.com/${project.owner}/${project.name}/issues`,
+				},
+				repository: {
+					type: 'git',
+					url: `https://github.com/${project.owner}/${project.name}.git`
+				},
+			},
+		})
 	}
-
-	yield* filesMustHaveShape({
-		'package.json': {
-			author: 'Edwin Kofler <edwin@kofler.dev> (https://edwinkofler.com)',
-			bugs: {
-				url: bugsUrl,
-			},
-			repository: {
-				type: 'git',
-				url: gitUrl,
-			},
-		},
-	})
 
 	packageJsonText = await fs.readFile('package.json', 'utf-8')
 	packageJson = JSON.parse(packageJsonText)
