@@ -44,6 +44,10 @@ export const issues = async function* issues({ project }) {
 
 	// Check the homepage URL.
 	{
+		// Keep the trailing slash for consistency; GitHub defaults to adding a trailing slash when
+		// deriving the homepage URL from the repository name and owner.
+		let expectedURL = `https://${project.owner}.github.io/${project.name}/`
+
 		if (!data.homepage) {
 			yield {
 				message: ['Expected GitHub repository to have a homepage URL', 'But, no homepage URL was found'],
@@ -56,7 +60,7 @@ export const issues = async function* issues({ project }) {
 		}
 
 		if (project.name.includes('.')) {
-			const expectedURL = `https://${project.name}`
+			expectedURL = `https://${project.name}`
 			if (data.homepage !== expectedURL) {
 				yield {
 					message: [`Expected GitHub repository to have a homepage URL of "${expectedURL}"`, `But, homepage URL of "${data.homepage}" was found`, `Detected a period in the repository name, which indicates that it represents a domain name`],
@@ -67,10 +71,7 @@ export const issues = async function* issues({ project }) {
 					})
 				}
 			}
-		}	else {
-			// Keep the trailing slash for consistency; GitHub defaults to adding a trailing slash when
-			// deriving the homepage URL from the repository name and owner.
-			const expectedURL = `https://${project.owner}.github.io/${project.name}/`
+		} else {
 			if (data.homepage !== expectedURL) {
 				yield {
 					message: [`Expected GitHub repository to have a homepage URL of "${expectedURL}"`, `But, homepage URL of "${data.homepage}" was found`],
