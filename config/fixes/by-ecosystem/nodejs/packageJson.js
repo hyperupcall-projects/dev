@@ -1,8 +1,8 @@
 import * as fs from 'node:fs/promises'
 
-import { octokit } from '../../../../fix/util.js'
+import { octokit } from '../../../common.js'
 import detectIndent from 'detect-indent'
-import { filesMustHaveShape } from '../../../../fix/rules.js'
+import { filesMustHaveShape } from '../../../common.js'
 
 /** @type {import('../../../../index.js').Issues} */
 export const issues = async function* issues({ project }) {

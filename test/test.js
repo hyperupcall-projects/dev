@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 
-import { customMerge } from "../fix/rules.js";
+import { customMerge } from '../config/common.js'
 import assert from 'node:assert'
 
 test('custom merge works', () => {

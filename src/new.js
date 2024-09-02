@@ -1,10 +1,12 @@
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import * as util from 'node:util'
+import * as url from 'node:url'
+import { existsSync } from 'node:fs'
 import enquirer from 'enquirer'
-import { templateTemplate } from './util.js'
-import { badValue } from '../new/util.js'
-import { TEMPLATES } from '../util.js'
+import * as ejs from 'ejs'
+import { globby } from 'globby'
+import { TEMPLATES } from './util.js'
 
 const { prompt } = enquirer
 
@@ -182,3 +184,59 @@ async function defaultInitFn(ctx) {
  * @param {Context} ctx
  */
 function defaultRunFn(ctx) {}
+
+
+/**
+ * @param {string} variable
+ * @param {any} value
+ * @returns {never}
+ */
+export function badValue(variable, value) {
+	console.error(`Unexpected value of ${variable}: ${value}`)
+	process.exit(1)
+}
+
+/**
+ * @param {import("../src/new.js").Context} ctx
+ */
+export async function templateTemplate(ctx) {
+	const templateDirs = []
+
+	{
+		const commonDir = path.join(
+			// @ts-expect-error
+			import.meta.dirname,
+			`./templates/${ctx.ecosystem}/common`,
+		)
+		if (existsSync(commonDir)) {
+			templateDirs.push(commonDir)
+		}
+	}
+	{
+		templateDirs.push(
+			path.join(
+				// @ts-expect-error
+				import.meta.dirname,
+				`./templates/${ctx.ecosystem}/${ctx.ecosystem}-${ctx.variant}`,
+			),
+		)
+	}
+
+	for (const templateDir of templateDirs) {
+		for (const inputPath of await globby('**/*', { cwd: templateDir, dot: true })) {
+			const input = await fs.readFile(path.join(templateDir, inputPath), 'utf-8')
+
+			let output, outputPath
+			if (inputPath.endsWith('.ejs')) {
+				output = ejs.render(input, { ctx })
+				outputPath = path.join(ctx.dir, inputPath.slice(0, '.ejs'.length * -1))
+			} else {
+				output = input
+				outputPath = path.join(ctx.dir, inputPath)
+			}
+
+			await fs.mkdir(path.dirname(outputPath), { recursive: true })
+			await fs.writeFile(outputPath, output)
+		}
+	}
+}

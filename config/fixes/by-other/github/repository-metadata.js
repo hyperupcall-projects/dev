@@ -7,7 +7,7 @@ import child_process from 'node:child_process'
 import detectIndent from 'detect-indent'
 import { execa } from 'execa'
 
-import { fileExists, pkgRoot, octokit } from '../../../../fix/util.js'
+import { fileExists, pkgRoot, octokit } from '../../../common.js'
 
 /**
  * Check that various fields of the the GitHub repository metadata conforms

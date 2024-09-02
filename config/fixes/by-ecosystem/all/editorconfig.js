@@ -2,7 +2,7 @@
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 
-import { fileExists, pkgRoot } from '../../../../fix/util.js'
+import { fileExists, pkgRoot } from '../../../common.js'
 
 /**
  * Check that the EditorConfig file exists and has the correct content.

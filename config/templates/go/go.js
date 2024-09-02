@@ -1,7 +1,7 @@
 import { execa } from 'execa'
-import { writeTrees } from '../../../fix/util.js'
+import { writeTrees } from '../../common.js'
 import dedent from 'dedent'
-import { badValue } from '../../util.js'
+import { badValue } from '../../common.js'
 
 /**
  * @typedef {import('../../new.js').Context} Context

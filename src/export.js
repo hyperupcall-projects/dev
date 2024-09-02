@@ -7,10 +7,9 @@ import { globby } from 'globby'
 import * as fs from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import watcher from '@parcel/watcher'
-import { TEMPLATES } from '../util.js'
+import { TEMPLATES } from './util.js'
 import { throttle, debounce } from 'lodash-es'
-import { templateTemplate } from '../new/util.js'
-import { newProject } from '../new/new.js'
+import { newProject } from './new.js'
 
 /**
  * @param {string[]} args

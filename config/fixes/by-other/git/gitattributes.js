@@ -1,7 +1,7 @@
 import * as fs from 'node:fs/promises'
 import path from 'node:path'
 
-import { fileExists } from '../../../../fix/util.js'
+import { fileExists } from '../../../common.js'
 
 export const skip = true
 

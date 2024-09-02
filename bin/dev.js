@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 import * as util from 'node:util'
 import enquirer from 'enquirer'
-import { run as runExport } from '../export/export.js'
-import { run as runNew } from '../new/new.js'
-import { run as runFix } from '../fix/fix.js'
+
+import { run as runExport } from '../src/export.js'
+import { run as runNew } from '../src/new.js'
+import { run as runFix } from '../src/fix.js'
 import { run as runInstall } from '../src/install.js'
 
 const { prompt } = enquirer
@@ -11,8 +12,9 @@ const { prompt } = enquirer
 if (process.argv.includes('--help')) {
 	console.info(`template <subcommand> [args...]:
   template export [args...]
-  template fix [args...]
   template new [args...]
+  template fix [args...]
+  template install [args...]
 `)
 	process.exit(0)
 }

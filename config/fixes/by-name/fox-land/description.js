@@ -9,7 +9,7 @@ import { reporter } from 'vfile-reporter'
 import { lintRule } from 'unified-lint-rule'
 import { visit } from 'unist-util-visit'
 
-import { pkgRoot, octokit } from '../../../../fix/util.js'
+import { pkgRoot, octokit } from '../../../common.js'
 
 /** @type {import('../../../../index.js').Issues} */
 export const issues = async function* issues() {

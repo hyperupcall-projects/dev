@@ -1,7 +1,7 @@
 import * as fs from 'node:fs/promises'
 import path from 'node:path'
 
-import { fileExists, pkgRoot } from '../../../../fix/util.js'
+import { fileExists, pkgRoot } from '../../../common.js'
 import { globby } from 'globby'
 
 /**

@@ -1,5 +1,5 @@
 import { execa } from 'execa'
-import { badValue, templateTemplate } from '../../util.js'
+import { badValue, templateTemplate } from '../../common.js'
 
 /**
  * @typedef {import('../../new.js').Context} Context

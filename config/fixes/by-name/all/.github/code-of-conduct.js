@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 import * as fs from 'node:fs/promises'
 
-import { fileExists } from '../../../../fix/util.js'
 import { globby } from 'globby'
 
 /**

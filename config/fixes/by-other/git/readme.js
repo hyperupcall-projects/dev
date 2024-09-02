@@ -2,7 +2,7 @@ import * as fs from 'node:fs/promises'
 import path from 'node:path'
 import { globby } from 'globby'
 
-import { fileExists, pkgRoot } from '../../../../fix/util.js'
+import { fileExists, pkgRoot } from '../../../common.js'
 
 /**
  * Check if the README file (if it exists) conforms to my standards.

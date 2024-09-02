@@ -1,11 +1,12 @@
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 
-import { getNpmLatestVersion, pkgRoot } from '../../../../fix/util.js'
 import {
+	getNpmLatestVersion,
+	pkgRoot,
 	filesMustHaveShape,
 	filesMustHaveContent,
-} from '../../../../fix/rules.js'
+} from '../../../common.js'
 
 /** @type {import('../../../../index.js').Issues} */
 export const issues = async function* issues() {

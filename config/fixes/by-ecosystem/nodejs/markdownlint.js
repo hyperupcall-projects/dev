@@ -1,11 +1,11 @@
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 
-import { pkgRoot } from '../../../../fix/util.js'
 import {
+	pkgRoot,
 	filesMustHaveShape,
 	filesMustHaveContent,
-} from '../../../../fix/rules.js'
+} from '../../../common.js'
 
 export const skip = true
 

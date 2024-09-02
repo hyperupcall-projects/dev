@@ -14,8 +14,6 @@
 	"license": "MPL-2.0",
 	"private": false,
 	"bin": {
-		"fix": "./bin/fix.js",
-		"new": "./bin/new.js",
 		"dev": "./bin/dev.js"
 	},
 	"keywords": [],

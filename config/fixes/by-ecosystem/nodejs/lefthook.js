@@ -1,5 +1,3 @@
-import { } from '../../../../fix/rules.js'
-
 export const skip = true
 
 /** @type {import('../../../../index.js').Issues} */

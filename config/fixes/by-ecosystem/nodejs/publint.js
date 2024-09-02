@@ -1,5 +1,4 @@
 import { execa } from 'execa'
-import { } from '../../../../fix/rules.js'
 
 export const skip = true
 

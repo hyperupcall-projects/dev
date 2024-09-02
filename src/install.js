@@ -7,7 +7,7 @@ import nutil from 'node:util'
 import ansiEscapes from 'ansi-escapes';
 import chalk from 'chalk'
 import dedent from 'dedent'
-import { fileExists } from '../fix/util.js'
+import { fileExists } from '../config/common.js'
 import { execa } from 'execa'
 import semver from 'semver'
 
@@ -115,7 +115,7 @@ const ctx = {
 }
 ctx.project = ctx.projects[0]
 
-export async function run() {
+export async function run(/** @type {string[]} */ args) {
 	await fs.mkdir(ctx.devDir, { recursive: true })
 	await fs.mkdir(ctx.repositoryDir, { recursive: true })
 
