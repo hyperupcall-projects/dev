@@ -4,6 +4,7 @@ My development tool. I use this for all my projects. It helps with creating new 
 
 ## TODO
 
+- changelog
 - org: .github repo specific errors
 - org: github test if org has all files archived (fox-archived)
 - org: .github/funding.yml and all file checks for orgs

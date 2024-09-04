@@ -19,6 +19,7 @@ import semver from 'semver'
  * @property {() => Promise<boolean>} installed
  * @property {boolean} isCloned
  * @property {boolean} isInstalled
+ * @property {boolean} isOutOfDate
  * @property {string} gitRef
  * @property {string[]} versions
  *
@@ -27,6 +28,8 @@ import semver from 'semver'
  * @property {string} repositoryDir
  * @property {Project} project
  * @property {Project[]} projects
+ *
+ * @typedef {'main' | 'update-version'} Screen
  */
 
 /** @type {Ctx} */
@@ -115,6 +118,7 @@ const ctx = {
 }
 ctx.project = ctx.projects[0]
 
+let ignoreKeystrokes = false
 export async function run(/** @type {string[]} */ args) {
 	await fs.mkdir(ctx.devDir, { recursive: true })
 	await fs.mkdir(ctx.repositoryDir, { recursive: true })
@@ -130,104 +134,193 @@ export async function run(/** @type {string[]} */ args) {
 	})
 
 	await updateProjectData()
-	await renderMenu()
+	await render('')
 
-	let ignoreKeystrokes = false
 	process.stdin.on('data', async (data) => {
 		if (ignoreKeystrokes) {
 			return
 		}
 
 		const char = data.toString()
-		let currentProject = ctx.projects.indexOf(ctx.project)
-
-		if (char === '\x1B' || char === 'q') {
-			process.exit()
-		}
-
-		if (char === 'j') {
-			currentProject = Math.min(ctx.projects.length - 1, currentProject + 1)
-			ctx.project = ctx.projects[currentProject]
-		} else if (char === 'k') {
-			currentProject = Math.max(0, currentProject - 1)
-			ctx.project = ctx.projects[currentProject]
-		} else if (char === 'c') {
-			if (ctx.project.isCloned) {
-				process.stdout.write(ansiEscapes.clearScreen + ansiEscapes.cursorTo(0, 0))
-				process.stdout.write('Repository already cloned...\n')
-			} else {
-				const name =  path.basename(new URL(ctx.projects[currentProject].url).pathname)
-				const dir = path.join(ctx.repositoryDir, name)
-
-				process.stdout.write(ansiEscapes.clearScreen + ansiEscapes.cursorTo(0, 0))
-				ignoreKeystrokes = true
-				await execa({ stdio: 'inherit' })`git clone ${ctx.projects[currentProject].url} ${dir}`
-				ignoreKeystrokes = false
-				await updateProjectData()
-			}
-			await waitOnConfirmInput()
-		} else if (char === 'r') {
-			if (ctx.project.isCloned) {
-				const name =  path.basename(new URL(ctx.projects[currentProject].url).pathname)
-				const dir = path.join(ctx.repositoryDir, name)
-
-				process.stdout.write(ansiEscapes.clearScreen + ansiEscapes.cursorTo(0, 0))
-				await fs.rm(dir, { recursive: true })
-				await updateProjectData()
-			} else {
-				process.stdout.write(ansiEscapes.clearScreen + ansiEscapes.cursorTo(0, 0))
-				process.stdout.write('Repository already removed...\n')
-			}
-			await waitOnConfirmInput()
-		} else if (char === 'i') {
-			if (ctx.project.isCloned) {
-				const name =  path.basename(new URL(ctx.projects[currentProject].url).pathname)
-				const dir = path.join(ctx.repositoryDir, name)
-
-				process.stdout.write(ansiEscapes.clearScreen + ansiEscapes.cursorTo(0, 0))
-				const scriptFile = path.join(os.tmpdir(), `dev-${crypto.randomUUID()}.sh`)
-				await fs.writeFile(scriptFile, ctx.projects[currentProject].install)
-				ignoreKeystrokes = true
-				await execa({ stdio: 'inherit', cwd: dir })`bash -eo pipefail ${scriptFile}`
-				ignoreKeystrokes = false
-				await updateProjectData()
-			} else {
-				process.stdout.write(ansiEscapes.clearScreen + ansiEscapes.cursorTo(0, 0))
-				process.stdout.write('Repository does not exist...\n')
-			}
-			await waitOnConfirmInput()
-		} else if (char === 'u') {
-			if (ctx.project.isCloned) {
-				const name =  path.basename(new URL(ctx.projects[currentProject].url).pathname)
-				const dir = path.join(ctx.repositoryDir, name)
-
-				process.stdout.write(ansiEscapes.clearScreen + ansiEscapes.cursorTo(0, 0))
-				const scriptFile = path.join(os.tmpdir(), `dev-${crypto.randomUUID()}.sh`)
-				await fs.writeFile(scriptFile, ctx.projects[currentProject].uninstall)
-				ignoreKeystrokes = true
-				await execa({ stdio: 'inherit', cwd: dir })`bash -eo pipefail ${scriptFile}`
-				ignoreKeystrokes = false
-				await updateProjectData()
-			} else {
-				process.stdout.write(ansiEscapes.clearScreen + ansiEscapes.cursorTo(0, 0))
-				process.stdout.write('Repository does not exist...\n')
-			}
-			await waitOnConfirmInput()
-		} else if (char === 'v') {
-			process.stdout.write(ansiEscapes.clearScreen + ansiEscapes.cursorTo(0, 0))
-			process.stdout.write('Not implemented...\n')
-			await waitOnConfirmInput()
-		}
-
-		await renderMenu()
+		await render(char)
 	})
 }
+
+let /** @type {Screen} */ currentScreen = 'main'
+async function render(/** @type {string} */ char) {
+	if (currentScreen === 'main') {
+		await renderMainScreen(char)
+	} else if (currentScreen === 'update-version') {
+		await renderUpdateVersionScreen(char)
+	}
+}
+
+async function renderMainScreen(/** @type {string} */ char) {
+	let currentProject = ctx.projects.indexOf(ctx.project)
+
+	if (char === '\x1B' || char === 'q') {
+		process.exit()
+	} else if (char === 'j') {
+		currentProject = Math.min(ctx.projects.length - 1, currentProject + 1)
+		ctx.project = ctx.projects[currentProject]
+	} else if (char === 'k') {
+		currentProject = Math.max(0, currentProject - 1)
+		ctx.project = ctx.projects[currentProject]
+	} else if (char === 'c') {
+		if (ctx.project.isCloned) {
+			process.stdout.write(ansiEscapes.clearScreen + ansiEscapes.cursorTo(0, 0))
+			process.stdout.write('Repository already cloned...\n')
+		} else {
+			const name =  path.basename(new URL(ctx.projects[currentProject].url).pathname)
+			const dir = path.join(ctx.repositoryDir, name)
+
+			process.stdout.write(ansiEscapes.clearScreen + ansiEscapes.cursorTo(0, 0))
+			ignoreKeystrokes = true
+			await execa({ stdio: 'inherit' })`git clone ${ctx.projects[currentProject].url} ${dir}`
+			ignoreKeystrokes = false
+			await updateProjectData()
+		}
+		await waitOnConfirmInput()
+	} else if (char === 'r') {
+		if (ctx.project.isCloned) {
+			const name =  path.basename(new URL(ctx.projects[currentProject].url).pathname)
+			const dir = path.join(ctx.repositoryDir, name)
+
+			process.stdout.write(ansiEscapes.clearScreen + ansiEscapes.cursorTo(0, 0))
+			await fs.rm(dir, { recursive: true })
+			await updateProjectData()
+		} else {
+			process.stdout.write(ansiEscapes.clearScreen + ansiEscapes.cursorTo(0, 0))
+			process.stdout.write('Repository already removed...\n')
+		}
+		await waitOnConfirmInput()
+	} else if (char === 'i') {
+		if (ctx.project.isCloned) {
+			const name =  path.basename(new URL(ctx.projects[currentProject].url).pathname)
+			const dir = path.join(ctx.repositoryDir, name)
+
+			process.stdout.write(ansiEscapes.clearScreen + ansiEscapes.cursorTo(0, 0))
+			const scriptFile = path.join(os.tmpdir(), `dev-${crypto.randomUUID()}.sh`)
+			await fs.writeFile(scriptFile, ctx.projects[currentProject].install)
+			ignoreKeystrokes = true
+			await execa({ stdio: 'inherit', cwd: dir })`bash -eo pipefail ${scriptFile}`
+			ignoreKeystrokes = false
+			await updateProjectData()
+		} else {
+			process.stdout.write(ansiEscapes.clearScreen + ansiEscapes.cursorTo(0, 0))
+			process.stdout.write('Repository does not exist...\n')
+		}
+		await waitOnConfirmInput()
+	} else if (char === 'u') {
+		if (ctx.project.isCloned) {
+			const name =  path.basename(new URL(ctx.projects[currentProject].url).pathname)
+			const dir = path.join(ctx.repositoryDir, name)
+
+			process.stdout.write(ansiEscapes.clearScreen + ansiEscapes.cursorTo(0, 0))
+			const scriptFile = path.join(os.tmpdir(), `dev-${crypto.randomUUID()}.sh`)
+			await fs.writeFile(scriptFile, ctx.projects[currentProject].uninstall)
+			ignoreKeystrokes = true
+			await execa({ stdio: 'inherit', cwd: dir })`bash -eo pipefail ${scriptFile}`
+			ignoreKeystrokes = false
+			await updateProjectData()
+		} else {
+			process.stdout.write(ansiEscapes.clearScreen + ansiEscapes.cursorTo(0, 0))
+			process.stdout.write('Repository does not exist...\n')
+		}
+		await waitOnConfirmInput()
+	} else if (char === 'f') {
+		await updateProjectData()
+	} else if (char === 'v') {
+		currentScreen = 'update-version'
+		await render('')
+		return
+	}
+
+	const sep = '='.repeat(process.stdout.columns)
+	const nameColLen = 13
+	const clonedColLen = 8
+	const installedColLen = 10
+	const refColLen = 9
+	const latestVersionColLen = 18
+
+	process.stdout.write(ansiEscapes.clearScreen + ansiEscapes.cursorTo(0, 0))
+	process.stdout.write(`${sep}\n`)
+	process.stdout.write(`    ${'Name'.padEnd(nameColLen)} ${'Cloned'.padEnd(clonedColLen)}`)
+	process.stdout.write(`${'Installed'.padEnd(installedColLen)} ${'Ref'.padEnd(refColLen)}`)
+	process.stdout.write(`${'Latest Version?'.padEnd(latestVersionColLen)}\n`)
+	process.stdout.write(`${sep}\n`)
+	for (let i = 0; i < ctx.projects.length; ++i) {
+		const name = path.basename(new URL(ctx.projects[i].url).pathname)
+
+		process.stdout.write(`[${i === currentProject ? 'x' : ' '}] `)
+		process.stdout.write(`${name.padEnd(nameColLen)} ${(ctx.projects[i].isCloned ? 'YES' : 'NO').padEnd(clonedColLen)}`)
+		process.stdout.write(`${(ctx.projects[i].isInstalled ? 'YES' : 'NO').padEnd(installedColLen)} ${ctx.projects[i].gitRef.padEnd(refColLen)}`)
+		process.stdout.write(`${ctx.projects[i].isOutOfDate ? 'NO' : 'YES'}`)
+		process.stdout.write('\n')
+	}
+	process.stdout.write(`${sep}\n`)
+	process.stdout.write(dedent`
+		CONTROLS
+		  - j/k: Move up/down
+		  - c: Clone repository
+		  - r: Remove repository
+		  - i: Install repository
+		  - u: Uninstall repository
+		  - f: Fetch refs
+		  - v: Switch version/ref of repository
+		  - q/esc: Exit program\n`)
+	process.stdout.write(`${sep}\n`)
+}
+
+let currentVersion = 0
+async function renderUpdateVersionScreen(/** @type {string} */ char) {
+	let currentProject = ctx.projects.indexOf(ctx.project)
+	const name =  path.basename(new URL(ctx.projects[currentProject].url).pathname)
+
+	if (char === '\x1B' || char === 'q') {
+		process.exit()
+	} else if (char === 'j') {
+		currentVersion = Math.min(ctx.projects[currentProject].versions.length - 1, currentVersion + 1)
+	} else if (char === 'k') {
+		currentVersion = Math.max(0, currentVersion - 1)
+	} else if (char === '\x0D') {
+		ignoreKeystrokes = true
+		process.stdout.write(ansiEscapes.clearScreen + ansiEscapes.cursorTo(0, 0))
+		const ref = ctx.projects[currentProject].versions[currentVersion]
+		await execa`git -C ${path.join(ctx.repositoryDir, name)} switch --detach refs/tags/${ref}`
+		ignoreKeystrokes = false
+		currentScreen = 'main'
+		await render('')
+		return
+	} else if (char === 'v' || char === '\x7F') {
+		currentScreen = 'main'
+		await render('')
+		return
+	}
+
+	const sep = '='.repeat(process.stdout.columns)
+	process.stdout.write(ansiEscapes.clearScreen + ansiEscapes.cursorTo(0, 0))
+	process.stdout.write(`REPOSITORY: ${name}\n`)
+	for (let i = 0; i < ctx.projects[currentProject].versions.length; ++i) {
+		const version = ctx.projects[currentProject].versions[i]
+		process.stdout.write(`[${i === currentVersion ? 'x' : ' '}] ${version}\n`)
+	}
+	process.stdout.write(`${sep}\n`)
+	process.stdout.write(dedent`
+		CONTROLS
+		  - j/k: Move up/down
+		  - Enter: Select version
+		  - v/backspace: Go back
+		  - q/esc: Exit program\n`)
+	process.stdout.write(`${sep}\n`)
+}
+
 
 async function updateProjectData() {
 	let projectExists = await Promise.all(ctx.projects.map((project) => {
 		const name =  path.basename(new URL(project.url).pathname)
 		const dir = path.join(ctx.repositoryDir, name)
-		return fileExists(dir, 'utf-8')
+		return fileExists(dir)
 	}))
 	for (let i = 0; i < ctx.projects.length; ++i) {
 		ctx.projects[i].isCloned = projectExists[i]
@@ -241,11 +334,32 @@ async function updateProjectData() {
 		const name =  path.basename(new URL(project.url).pathname)
 		const dir = path.join(ctx.repositoryDir, name)
 
-		const { stdout: tag } = await execa`git -C ${dir} tag --points-at HEAD`
-		if (tag) {
-			return tag
+		const [{ stdout: currentTag }, { stdout: latestTag }] = await Promise.all([
+			await execa`git -C ${dir} tag --points-at HEAD`,
+			await execa`git -C ${dir} describe --tags --abbrev=0`.catch(() => ({ stdout: '' }))
+		])
+		if (currentTag) {
+			if (currentTag === latestTag) {
+				ctx.projects[i].isOutOfDate = false
+				return currentTag
+			} else {
+				ctx.projects[i].isOutOfDate = true
+				return currentTag
+			}
 		} else {
-			return 'HEAD'
+			const [{ stdout: localRef }, { stdout: remoteRef }, { stdout: remoteRefFormatted }] = await Promise.all([
+				await execa`git -C ${dir} rev-parse --short HEAD`,
+				await execa`git -C ${dir} rev-parse --short @{u}`,
+				await execa`git -C ${dir} rev-parse --abbrev-ref @{u}`.catch(() => ({stdout: ''}))
+			])
+
+			if (localRef === remoteRef) {
+				ctx.projects[i].isOutOfDate = false
+				return remoteRefFormatted
+			} else {
+				ctx.projects[i].isOutOfDate = true
+				return localRef
+			}
 		}
 	}))
 	for (let i = 0; i < ctx.projects.length; ++i) {
@@ -261,11 +375,14 @@ async function updateProjectData() {
 		const dir = path.join(ctx.repositoryDir, name)
 
 		await execa`git -C ${dir} fetch --all`
-		const { stdout } = await execa`git -C ${dir} tag --list`
+		const [{ stdout }, {stdout: remoteRef }] = await Promise.all([
+			execa`git -C ${dir} tag --list`,
+			execa`git -C ${dir} rev-parse --abbrev-ref @{u}`.catch(() => ({ stdout: ''}))
+		])
 
 		const tags = stdout.split('\n')
-		const versions = tags.filter((tag) => tag.startsWith('v')).sort((a, b) => semver.lt(a, b))
-		return versions
+		const versions = tags.filter((tag) => tag.startsWith('v')).sort((a, b) => semver.gt(a, b) ? -1 : semver.lt(a, b) ? 1 : 0)
+		return [remoteRef].concat(versions)
 	}))
 	for (let i = 0; i < ctx.projects.length; ++i) {
 		ctx.projects[i].versions = projectVersions[i]
@@ -276,43 +393,6 @@ async function updateProjectData() {
 	}
 }
 
-async function renderMenu() {
-	const sep = '='.repeat(process.stdout.columns)
-	const nameColLen = 13
-	const clonedColLen = 8
-	const installedColLen = 10
-	const refColLen = 6
-	const latestVersionColLen = 18
-	const currentProject = ctx.projects.indexOf(ctx.project)
-
-	process.stdout.write(ansiEscapes.clearScreen + ansiEscapes.cursorTo(0, 0))
-	process.stdout.write(`${sep}\n`)
-	process.stdout.write(`    ${'Name'.padEnd(nameColLen)} ${'Cloned'.padEnd(clonedColLen)}`)
-	process.stdout.write(`${'Installed'.padEnd(installedColLen)} ${'Ref'.padEnd(refColLen)}`)
-	process.stdout.write(`${'Latest Version?'.padEnd(latestVersionColLen)}\n`)
-	process.stdout.write(`${sep}\n`)
-	for (let i = 0; i < ctx.projects.length; ++i) {
-		const name = path.basename(new URL(ctx.projects[i].url).pathname)
-
-		process.stdout.write(`[${i === currentProject ? 'x' : ' '}] `)
-		process.stdout.write(`${name.padEnd(nameColLen)} ${(ctx.projects[i].isCloned ? 'YES' : 'NO').padEnd(clonedColLen)}`)
-		process.stdout.write(`${(ctx.projects[i].isInstalled ? 'YES' : 'NO').padEnd(installedColLen)} ${ctx.projects[i].gitRef.padEnd(refColLen)}`)
-
-		process.stdout.write('\n')
-	}
-	process.stdout.write(`${sep}\n`)
-	process.stdout.write(dedent`
-		CONTROLS
-		  - j/k: Move up/down
-		  - c: Clone repository
-		  - r: Remove repository
-		  - i: Install repository
-		  - u: Uninstall repository
-		  - v: Switch version/ref of repository
-		  - q/esc: Exit program\n`)
-	process.stdout.write(`${sep}\n`)
-}
-
 async function waitOnConfirmInput() {
 	process.stdout.write('PRESS ENTER TO CONTINUE...\n')
 	await new Promise((resolve, reject) => {
@@ -321,7 +401,7 @@ async function waitOnConfirmInput() {
 				const char = data.toString()
 
 				if (char === '\x0D') {
-					resolve()
+					resolve(undefined)
 				}
 			})
 			.on('error', reject)
