@@ -30,10 +30,10 @@ export const issues = async function* issues() {
 			'eslint.config.mts': null,
 			'eslint.config.cts': null,
 		})
-		yield *filesMustHaveShape({
+		yield* filesMustHaveShape({
 			'package.json': {
 				eslintConfig: { __delete: null },
-			}
+			},
 		})
 	}
 
@@ -46,18 +46,28 @@ export const issues = async function* issues() {
 					lint: 'hyperupcall-scripts-nodejs lint',
 				},
 				devDependencies: {
-					'@hyperupcall/scripts-nodejs': `${version}`
-				}
-			}
+					'@hyperupcall/scripts-nodejs': `${version}`,
+				},
+			},
 		})
 
 		const packageJson = JSON.parse(await fs.readFile('package.json', 'utf-8'))
-		const dependencyKeys = ['dependencies', 'devDependencies', 'peerDependencies', 'peerDependenciesMeta', 'bundleDependencies', 'optionalDependencies']
+		const dependencyKeys = [
+			'dependencies',
+			'devDependencies',
+			'peerDependencies',
+			'peerDependenciesMeta',
+			'bundleDependencies',
+			'optionalDependencies',
+		]
 		for (const dependencyKey in dependencyKeys) {
 			for (const dependencyName in packageJson[dependencyKey] ?? {}) {
-				if (dependencyObject.includes('eslint')) {
+				if (dependencyName.includes('eslint')) {
 					yield {
-						message: ['Expected to find no dependencies that included the string "eslint"', `But, found "${dependencyName}"`],
+						message: [
+							'Expected to find no dependencies that included the string "eslint"',
+							`But, found "${dependencyName}"`,
+						],
 					}
 				}
 			}

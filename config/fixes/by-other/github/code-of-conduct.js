@@ -11,10 +11,17 @@ import { globby } from 'globby'
 
 /** @type {import('../../../../index.js').Issues} */
 export const issues = async function* issues() {
-	const files = await globby(['*code_of_conduct*', '.github/*code_of_conduct*', 'docs/*code_of_conduct*'], { caseSensitiveMatch: false })
+	const files = await globby(
+		['*code_of_conduct*', '.github/*code_of_conduct*', 'docs/*code_of_conduct*'],
+		{ caseSensitiveMatch: false },
+	)
 	if (files.length > 0) {
 		yield {
-			message: ['Expected to find no code of conduct files', 'But, found at least one', `Found files: ${new Intl.ListFormat('en').format(files.map((file) => `"${file}"`))}`]
+			message: [
+				'Expected to find no code of conduct files',
+				'But, found at least one',
+				`Found files: ${new Intl.ListFormat('en').format(files.map((file) => `"${file}"`))}`,
+			],
 		}
 	}
 }

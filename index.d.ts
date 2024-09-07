@@ -1,7 +1,7 @@
 export type Project =
 	| {
-		type: 'dir'
-	}
+			type: 'dir'
+	  }
 	| {
 			type: 'vcs-only'
 			branchName: string
@@ -18,9 +18,9 @@ export type Project =
 export type Config = {}
 
 export type Options = {
-	yes: boolean,
-	match: string[],
-	exclude: string[],
+	yes: boolean
+	match: string[]
+	exclude: string[]
 	only: string[]
 }
 
@@ -33,6 +33,6 @@ export type Issues = (arg0: {
 }) => AsyncGenerator<Issue>
 
 export type Issue = {
-	message: string | string[],
+	message: string | string[]
 	fix?: (() => void) | (() => Promise<void>)
 }

@@ -23,18 +23,18 @@ test('custom merge works', () => {
 	result = {
 		name: 'Edwin',
 		dependencies: {
-			'@hyperupcall/null': '1.0.0'
-		}
+			'@hyperupcall/null': '1.0.0',
+		},
 	}
 	customMerge(result, {
 		dependencies: {
-			'@hyperupcall/null2': { __delete: null }
-		}
+			'@hyperupcall/null2': { __delete: null },
+		},
 	})
 	assert.deepStrictEqual(result, {
 		name: 'Edwin',
 		dependencies: {
-			'@hyperupcall/null': '1.0.0'
-		}
+			'@hyperupcall/null': '1.0.0',
+		},
 	})
 })

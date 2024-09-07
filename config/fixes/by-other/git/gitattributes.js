@@ -19,16 +19,16 @@ export async function* issues({ project }) {
 	// 		throw err
 	// 	}
 	// }
- //
+	//
 	// const newAttributes = await minimalGitAttributes(attributes)
- //
+	//
 	// if (newAttributes !== attributes) {
 	// 	yield {
 	// 		message: [`File "${configFile}" does not have the expected contents`],
 	// 		fix
 	// 	}
 	// }
- //
+	//
 	// async function fix() {
 	// 	let /** @type {string} */ attributes = ''
 	// 	try {
@@ -39,7 +39,7 @@ export async function* issues({ project }) {
 	// 		}
 	// 	}
 	// 	const newAttributes = await minimalGitAttributes(attributes)
- //
+	//
 	// 	if (typeof newAttributes === 'string') {
 	// 		await fs.writeFile(configFile, newAttributes)
 	// 	} else {

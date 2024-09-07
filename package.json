@@ -16,7 +16,6 @@
 	"bin": {
 		"dev": "./bin/dev.js"
 	},
-	"keywords": [],
 	"scripts": {
 		"format": "hyperupcall-scripts-nodejs format",
 		"lint": "hyperupcall-scripts-nodejs lint"
@@ -81,5 +80,5 @@
 	"markdownlint-cli2": {
 		"extends": "./node_modules/@hyperupcall/markdownlint-config/.markdownlint.json"
 	},
-	"prettier": "@hyperupcall/scripts-nodejs/prettier-config.js"
+	"prettier": "@hyperupcall/scripts-nodejs/config-prettier.js"
 }

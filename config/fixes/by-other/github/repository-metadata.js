@@ -17,27 +17,37 @@ import { fileExists, pkgRoot, octokit } from '../../../common.js'
 export const issues = async function* issues({ project }) {
 	const { data } = await octokit.rest.repos.get({
 		owner: project.owner,
-		repo: project.name
-	});
+		repo: project.name,
+	})
 
 	// Check the description.
 	{
 		if (!data.description || !data.description.trim()) {
 			yield {
-				message: ['Expected GitHub repository to have a description', 'But, no description was found'],
+				message: [
+					'Expected GitHub repository to have a description',
+					'But, no description was found',
+				],
 			}
 		}
-		if (!data.description) throw new TypeError(`Expected variable "data.description" to not be falsy`)
+		if (!data.description)
+			throw new TypeError(`Expected variable "data.description" to not be falsy`)
 
 		if (!data.description.endsWith('.')) {
 			yield {
-				message: ['Expected GitHub repository description to end with a period', 'But, no period was found at the end of the description'],
+				message: [
+					'Expected GitHub repository description to end with a period',
+					'But, no period was found at the end of the description',
+				],
 			}
 		}
 
 		if (data.description.length >= 65) {
 			yield {
-				message: ['Expected GitHub repository description to have less than 65 UTF-16 code units', `But, GitHub repository description has ${data.description.length} UTF-16 code units`]
+				message: [
+					'Expected GitHub repository description to have less than 65 UTF-16 code units',
+					`But, GitHub repository description has ${data.description.length} UTF-16 code units`,
+				],
 			}
 		}
 	}
@@ -47,40 +57,35 @@ export const issues = async function* issues({ project }) {
 		// Keep the trailing slash for consistency; GitHub defaults to adding a trailing slash when
 		// deriving the homepage URL from the repository name and owner.
 		let expectedURL = `https://${project.owner}.github.io/${project.name}/`
+		if (project.name.includes('.')) {
+			expectedURL = `https://${project.name}`
+		}
 
 		if (!data.homepage) {
 			yield {
-				message: ['Expected GitHub repository to have a homepage URL', 'But, no homepage URL was found'],
-				fix: () => octokit.rest.repos.update({
-					owner: project.owner,
-					repo: project.name,
-					homepage: expectedURL
-				})
-			}
-		}
-
-		if (project.name.includes('.')) {
-			expectedURL = `https://${project.name}`
-			if (data.homepage !== expectedURL) {
-				yield {
-					message: [`Expected GitHub repository to have a homepage URL of "${expectedURL}"`, `But, homepage URL of "${data.homepage}" was found`, `Detected a period in the repository name, which indicates that it represents a domain name`],
-					fix: () => octokit.rest.repos.update({
+				message: [
+					'Expected GitHub repository to have a homepage URL',
+					'But, no homepage URL was found',
+				],
+				fix: () =>
+					octokit.rest.repos.update({
 						owner: project.owner,
 						repo: project.name,
-						homepage: expectedURL
-					})
-				}
+						homepage: expectedURL,
+					}),
 			}
-		} else {
-			if (data.homepage !== expectedURL) {
-				yield {
-					message: [`Expected GitHub repository to have a homepage URL of "${expectedURL}"`, `But, homepage URL of "${data.homepage}" was found`],
-					fix: () => octokit.rest.repos.update({
+		} else if (data.homepage !== expectedURL) {
+			yield {
+				message: [
+					`Expected GitHub repository to have a homepage URL of "${expectedURL}"`,
+					`But, homepage URL of "${data.homepage}" was found`,
+				],
+				fix: () =>
+					octokit.rest.repos.update({
 						owner: project.owner,
 						repo: project.name,
-						homepage: expectedURL
-					})
-				}
+						homepage: expectedURL,
+					}),
 			}
 		}
 	}
@@ -92,27 +97,36 @@ export const issues = async function* issues({ project }) {
 		if (data.has_projects) {
 			const projects = await octokit.rest.projects.listForRepo({
 				owner: project.owner,
-				repo: project.name
+				repo: project.name,
 			})
 			if (projects.data.length === 0) {
 				yield {
-					message: ['Expected GitHub repository to have the "projects" tab disabled', 'But, the "projects" tab is enabled'],
-					fix: () => octokit.rest.repos.update({
-						owner: project.owner,
-						repo: project.name,
-						has_projects: false
-					})
+					message: [
+						'Expected GitHub repository to have the "projects" tab disabled',
+						'But, the "projects" tab is enabled',
+					],
+					fix: () =>
+						octokit.rest.repos.update({
+							owner: project.owner,
+							repo: project.name,
+							has_projects: false,
+						}),
 				}
 			} else {
 				yield {
-					message: ['Expected GitHub repository to have the "projects" tab disabled', 'But, the "projects" tab is enabled and the repository has defined at least one project'],
+					message: [
+						'Expected GitHub repository to have the "projects" tab disabled',
+						'But, the "projects" tab is enabled and the repository has defined at least one project',
+					],
 				}
 			}
 		}
 
 		if (data.has_wiki) {
 			if (!project.owner.match(/^[\w-]+/) || !project.name.match(/^[\w-]+/)) {
-				throw new Error(`The "owner" or "name" of the GitHub repository contains invalid characters`)
+				throw new Error(
+					`The "owner" or "name" of the GitHub repository contains invalid characters`,
+				)
 			}
 
 			let shouldDisableWikiTab = false
@@ -124,9 +138,9 @@ export const issues = async function* issues({ project }) {
 						env: {
 							GIT_CONFIG_NOSYSTEM: '1',
 							GIT_CONFIG: '/dev/null',
-							GIT_TERMINAL_PROMPT: '0'
-						}
-					}
+							GIT_TERMINAL_PROMPT: '0',
+						},
+					},
 				)
 				// If we get a valid response, then the wiki repository exists (and has content). Therefore,
 				// we should not automatically disable the wiki tab and let the user decide what to do.
@@ -145,23 +159,34 @@ export const issues = async function* issues({ project }) {
 
 			if (shouldDisableWikiTab) {
 				yield {
-					message: ['Expected GitHub repository to have the "wiki" tab disabled', 'But, the "wiki" tab is enabled', 'However, the wiki repository does not exist'],
-					fix: () => octokit.rest.repos.update({
-						owner: project.owner,
-						repo: project.name,
-						has_wiki: false
-					})
+					message: [
+						'Expected GitHub repository to have the "wiki" tab disabled',
+						'But, the "wiki" tab is enabled',
+						'However, the wiki repository does not exist',
+					],
+					fix: () =>
+						octokit.rest.repos.update({
+							owner: project.owner,
+							repo: project.name,
+							has_wiki: false,
+						}),
 				}
 			} else {
 				yield {
-					message: ['Expected GitHub repository to have the "wiki" tab disabled', 'But, the "wiki" tab is enabled and the wiki repository does exist'],
+					message: [
+						'Expected GitHub repository to have the "wiki" tab disabled',
+						'But, the "wiki" tab is enabled and the wiki repository does exist',
+					],
 				}
 			}
 		}
 
 		if (data.has_discussions) {
 			yield {
-				message: ['Expected GitHub repository to have the "discussions" tab disabled', 'But, the "discussions" tab is enabled'],
+				message: [
+					'Expected GitHub repository to have the "discussions" tab disabled',
+					'But, the "discussions" tab is enabled',
+				],
 			}
 		}
 	}
@@ -170,7 +195,10 @@ export const issues = async function* issues({ project }) {
 
 	if (data.default_branch !== 'main') {
 		yield {
-			message: ['Expected GitHub repository to have a default branch of "main"', `But, default branch of "${data.default_branch}" was found`],
+			message: [
+				'Expected GitHub repository to have a default branch of "main"',
+				`But, default branch of "${data.default_branch}" was found`,
+			],
 		}
 	}
 }

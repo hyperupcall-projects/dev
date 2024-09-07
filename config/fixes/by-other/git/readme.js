@@ -21,7 +21,10 @@ export const issues = async function* issues({ project }) {
 		const files = await globby('.github/*readme*', { caseSensitiveMatch: false })
 		if (files.length > 0) {
 			yield {
-				message: ['Expected to find a single readme file at the root project directory', 'But, found readme files in the ".github" directory']
+				message: [
+					'Expected to find a single readme file at the root project directory',
+					'But, found readme files in the ".github" directory',
+				],
 			}
 		}
 	}
@@ -32,18 +35,24 @@ export const issues = async function* issues({ project }) {
 		if (files.length === 0) {
 			yield {
 				message: ['Expected to find a single readme file', 'But, found no readme files'],
-				fix: () => fs.writeFile('README.md', `# ${project.name}\n`)
+				fix: () => fs.writeFile('README.md', `# ${project.name}\n`),
 			}
 		} else if (files.length === 1) {
 			if (files[0] !== 'README.md') {
 				yield {
-					message: ['Expected readme file with name of "README.md"', `But, found readme file with name of "${files[0]}"`],
-					fix: () => fs.rename(files[0], 'README.md')
+					message: [
+						'Expected readme file with name of "README.md"',
+						`But, found readme file with name of "${files[0]}"`,
+					],
+					fix: () => fs.rename(files[0], 'README.md'),
 				}
 			}
 		} else if (files.length > 1) {
 			yield {
-				message: ['Expected to find a single readme file', 'But, found more than one readme file'],
+				message: [
+					'Expected to find a single readme file',
+					'But, found more than one readme file',
+				],
 			}
 		}
 	}
@@ -57,12 +66,18 @@ export const issues = async function* issues({ project }) {
 	const content = await fs.readFile('README.md', 'utf-8')
 	if (!content.match('^#')) {
 		yield {
-			message: ['Expected readme file to have a title matching the project name', 'But, no title was found']
+			message: [
+				'Expected readme file to have a title matching the project name',
+				'But, no title was found',
+			],
 		}
 	}
 	if (!content.match(`^# ${project.name}`)) {
 		yield {
-			message: ['Expected readme file to have a title matching the project name', 'But, no title was found with this name']
+			message: [
+				'Expected readme file to have a title matching the project name',
+				'But, no title was found with this name',
+			],
 		}
 	}
 }

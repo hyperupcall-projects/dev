@@ -1,11 +1,7 @@
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 
-import {
-	pkgRoot,
-	filesMustHaveShape,
-	filesMustHaveContent,
-} from '../../../common.js'
+import { pkgRoot, filesMustHaveShape, filesMustHaveContent } from '../../../common.js'
 
 export const skip = true
 
@@ -16,8 +12,7 @@ export const issues = async function* issues() {
 			'./node_modules/@hyperupcall/npm-package-json-lint-config/npmpackagejsonlintrc.json',
 	}
 
-
-	yield *filesMustHaveShape({
+	yield* filesMustHaveShape({
 		'package.json': {
 			npmpackagejsonlint: {
 				extends: 'npm-package-json-lint-config-default',
@@ -26,7 +21,7 @@ export const issues = async function* issues() {
 	})
 
 	// https://npmpackagejsonlint.org/docs/configuration#config-sources
-	yield *filesMustHaveContent({
+	yield* filesMustHaveContent({
 		'.npmpackagejsonlintrc': null,
 		'.npmpackagejsonlintrc.json': null,
 		'npmpackagejsonlint.config.js': null,

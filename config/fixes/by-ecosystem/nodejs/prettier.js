@@ -13,7 +13,7 @@ export const issues = async function* issues() {
 	// Check that there is only one configuration file.
 	{
 		// https://prettier.io/docs/en/configuration.html
-		yield *filesMustHaveContent({
+		yield* filesMustHaveContent({
 			'.prettierrc': null,
 			'.prettierrc.json': null,
 			'.prettierrc.yml': null,
@@ -28,9 +28,9 @@ export const issues = async function* issues() {
 			'.prettierrc.toml': null,
 		})
 
-		yield *filesMustHaveShape({
+		yield* filesMustHaveShape({
 			'package.json': {
-				'prettier': '@hyperupcall/scripts-nodejs/prettier-config.js'
+				prettier: '@hyperupcall/scripts-nodejs/config-prettier.js',
 			},
 		})
 	}
@@ -38,23 +38,33 @@ export const issues = async function* issues() {
 	// Check that all the necessary dependencies are installed.
 	{
 		const [version] = await getNpmLatestVersion(['@hyperupcall/scripts-nodejs'])
-		yield *filesMustHaveShape({
+		yield* filesMustHaveShape({
 			'package.json': {
 				scripts: {
 					format: 'hyperupcall-scripts-nodejs format',
 				},
 				devDependencies: {
-					'@hyperupcall/scripts-nodejs': `${version}`
+					'@hyperupcall/scripts-nodejs': `${version}`,
 				},
 			},
 		})
 		const packageJson = JSON.parse(await fs.readFile('package.json', 'utf-8'))
-		const dependencyKeys = ['dependencies', 'devDependencies', 'peerDependencies', 'peerDependenciesMeta', 'bundleDependencies', 'optionalDependencies']
+		const dependencyKeys = [
+			'dependencies',
+			'devDependencies',
+			'peerDependencies',
+			'peerDependenciesMeta',
+			'bundleDependencies',
+			'optionalDependencies',
+		]
 		for (const dependencyKey in dependencyKeys) {
 			for (const dependencyName in packageJson[dependencyKey] ?? {}) {
 				if (dependencyObject.includes('prettier')) {
 					yield {
-						message: ['Expected to find no dependencies that included the string "prettier"', `But, found "${dependencyName}"`],
+						message: [
+							'Expected to find no dependencies that included the string "prettier"',
+							`But, found "${dependencyName}"`,
+						],
 					}
 				}
 			}

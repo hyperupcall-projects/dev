@@ -18,7 +18,7 @@ I wrote it in Bash.
 
 Writing it in Bash was so stupid I abandoned this approach.
 
-Next, I wrote  [repo](https://github.com/fox-archives/repo) (originally called "foxxy"), a repository manager, in Rust (originally with Deno). It had some issues:
+Next, I wrote [repo](https://github.com/fox-archives/repo) (originally called "foxxy"), a repository manager, in Rust (originally with Deno). It had some issues:
 
 - At the time, the Deno ecosystem had fewer libraries to choose from and features to use
 - Rust is not a good scripting language

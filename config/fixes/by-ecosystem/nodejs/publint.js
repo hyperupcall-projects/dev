@@ -11,7 +11,7 @@ export const issues = async function* issues() {
 	// TODO
 	if (exitCode !== 0) {
 		yield {
-			message: ['Publint should succeed']
+			message: ['Publint should succeed'],
 		}
 	}
 }

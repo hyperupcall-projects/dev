@@ -21,7 +21,7 @@ if (process.argv.includes('--help')) {
 
 if (process.argv[2] === 'export') {
 	await runExport(process.argv.slice(3))
-}  else if (process.argv[2] === 'new') {
+} else if (process.argv[2] === 'new') {
 	await runNew(process.argv.slice(3))
 } else if (process.argv[2] === 'fix') {
 	await runFix(process.argv.slice(3))

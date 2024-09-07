@@ -57,7 +57,9 @@ Flags:
 
 	let config = {}
 	try {
-		config = toml.parse(await fs.readFile(path.join(process.cwd(), 'project.toml'), 'utf-8'))
+		config = toml.parse(
+			await fs.readFile(path.join(process.cwd(), 'project.toml'), 'utf-8'),
+		)
 	} catch (err) {
 		if (/** @type {NodeJS.Error} */ (err).code !== 'ENOENT') {
 			throw err
@@ -65,11 +67,11 @@ Flags:
 	}
 
 	const /** @type {Options} */ options = {
-		yes: values.yes ?? false,
-		match: values.match?.split(',') ?? [],
-		exclude: values.exclude?.split(',') ?? [],
-		only: values.only?.split(',') ?? [],
-	}
+			yes: values.yes ?? false,
+			match: values.match?.split(',') ?? [],
+			exclude: values.exclude?.split(',') ?? [],
+			only: values.only?.split(',') ?? [],
+		}
 
 	if (project.type === 'dir') {
 		console.log(`${chalk.blue('Directory:')} ${process.cwd()}`)
@@ -77,9 +79,7 @@ Flags:
 		console.log(`${chalk.blue('Repository:')} ${process.cwd()}`)
 	} else if (project.type === 'vcs-with-remote') {
 		console.log(
-			`${chalk.blue(`Remote:`)} https://github.com/${project.owner}/${
-				project.name
-			}`,
+			`${chalk.blue(`Remote:`)} https://github.com/${project.owner}/${project.name}`,
 		)
 	}
 
@@ -106,11 +106,11 @@ Flags:
 				return true
 			}
 
-			if (fixId.startsWith('nodejs/') && await fileExists('package.json')) {
+			if (fixId.startsWith('nodejs/') && (await fileExists('package.json'))) {
 				return true
 			}
 
-			if (fixId.startsWith('deno/') && await fileExists('deno.jsonc')) {
+			if (fixId.startsWith('deno/') && (await fileExists('deno.jsonc'))) {
 				return true
 			}
 
@@ -133,7 +133,9 @@ Flags:
  */
 async function fixFromDir(dir, predicate, project, config, options) {
 	for (const group of await fs.readdir(dir, { withFileTypes: true })) {
-		for (const fixFileEntry of await fs.readdir(path.join(group.parentPath, group.name), { withFileTypes: true })) {
+		for (const fixFileEntry of await fs.readdir(path.join(group.parentPath, group.name), {
+			withFileTypes: true,
+		})) {
 			const fixFile = path.join(fixFileEntry.parentPath, fixFileEntry.name)
 			const fixId = `${group.name}/${fixFileEntry.name.slice(0, -3)}`
 
@@ -154,7 +156,9 @@ async function fixFromDir(dir, predicate, project, config, options) {
 async function fixFromFile(fixFile, fixId, project, config, options) {
 	const module = await import(fixFile)
 	if (!module.issues) {
-		throw new TypeError(`Failed to find issues for "${fixId}" because no "issues" function was exported`)
+		throw new TypeError(
+			`Failed to find issues for "${fixId}" because no "issues" function was exported`,
+		)
 	}
 
 	if (module.skip) {
@@ -218,7 +222,7 @@ async function fixFromFile(fixFile, fixId, project, config, options) {
 async function getProject() {
 	if (!(await fileExists('.git'))) {
 		return {
-			type: 'dir'
+			type: 'dir',
 		}
 	}
 

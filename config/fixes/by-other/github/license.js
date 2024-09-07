@@ -19,20 +19,29 @@ export const issues = async function* issues() {
 		const files = await globby(['*license*'], { caseSensitiveMatch: false })
 		if (files.length === 0) {
 			yield {
-				message: ['Expected to find a license file', 'But, found no license file was found'],
-				fix: () => fs.copyFile(configPath, 'LICENSE')
+				message: [
+					'Expected to find a license file',
+					'But, found no license file was found',
+				],
+				fix: () => fs.copyFile(configPath, 'LICENSE'),
 			}
 		} else if (files.length === 1) {
 			if (files[0] !== 'LICENSE') {
 				yield {
-					message: ['Expected to find a license file with name of "LICENSE"', `But, found license file with name of "${files[0]}"`],
-					fix: () => fs.rename(files[0], 'LICENSE')
+					message: [
+						'Expected to find a license file with name of "LICENSE"',
+						`But, found license file with name of "${files[0]}"`,
+					],
+					fix: () => fs.rename(files[0], 'LICENSE'),
 				}
 			}
 		} else if (files.length > 1) {
 			if (files.some((file) => !file.startsWith('LICENSE-'))) {
 				yield {
-					message: ['For multiple license files, expected to find all of their names prefixed with "LICENSE-"', 'But, found at least one without that prefix'],
+					message: [
+						'For multiple license files, expected to find all of their names prefixed with "LICENSE-"',
+						'But, found at least one without that prefix',
+					],
 				}
 			}
 
@@ -48,7 +57,10 @@ export const issues = async function* issues() {
 			const content = await fs.readFile(file, 'utf-8')
 			if (content.length === 0) {
 				yield {
-					message: ['Expected to find all license files with content', `But, found license file "${file}" has no content`]
+					message: [
+						'Expected to find all license files with content',
+						`But, found license file "${file}" has no content`,
+					],
 				}
 			}
 

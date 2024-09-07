@@ -185,7 +185,6 @@ async function defaultInitFn(ctx) {
  */
 function defaultRunFn(ctx) {}
 
-
 /**
  * @param {string} variable
  * @param {any} value
