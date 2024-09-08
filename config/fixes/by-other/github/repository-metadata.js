@@ -33,7 +33,7 @@ export const issues = async function* issues({ project }) {
 		if (!data.description)
 			throw new TypeError(`Expected variable "data.description" to not be falsy`)
 
-		if (!data.description.endsWith('.')) {
+		if (!data.description.endsWith('.') && !data.description.endsWith('!')) {
 			yield {
 				message: [
 					'Expected GitHub repository description to end with a period',

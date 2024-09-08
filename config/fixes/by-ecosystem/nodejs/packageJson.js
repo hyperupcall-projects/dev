@@ -46,7 +46,7 @@ export const issues = async function* issues({ project }) {
 				},
 				repository: {
 					type: 'git',
-					url: `https://github.com/${project.owner}/${project.name}.git`,
+					url: `https://github.com/${project.owner}/${project.name}`,
 				},
 			},
 		})
@@ -54,7 +54,6 @@ export const issues = async function* issues({ project }) {
 
 	packageJsonText = await fs.readFile('package.json', 'utf-8')
 	packageJson = JSON.parse(packageJsonText)
-
 	if (
 		!packageJson?.private &&
 		(Array.isArray(packageJson.keywords) ? packageJson.keywords.length === 0 : false)

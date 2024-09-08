@@ -52,15 +52,14 @@ export const issues = async function* issues() {
 		})
 
 		const packageJson = JSON.parse(await fs.readFile('package.json', 'utf-8'))
-		const dependencyKeys = [
+		for (const dependencyKey of [
 			'dependencies',
 			'devDependencies',
 			'peerDependencies',
 			'peerDependenciesMeta',
 			'bundleDependencies',
 			'optionalDependencies',
-		]
-		for (const dependencyKey in dependencyKeys) {
+		]) {
 			for (const dependencyName in packageJson[dependencyKey] ?? {}) {
 				if (dependencyName.includes('eslint')) {
 					yield {

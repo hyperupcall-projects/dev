@@ -5,7 +5,7 @@
 	"description": "A repository linter.",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/fox-land/dev.git"
+		"url": "https://github.com/fox-land/dev"
 	},
 	"bugs": {
 		"url": "https://github.com/fox-land/dev/issues"
@@ -53,28 +53,9 @@
 		"yn": "^5.0.0"
 	},
 	"devDependencies": {
-		"@eslint-community/eslint-plugin-eslint-comments": "^4.4.0",
-		"@hyperupcall/eslint-config": "^1.0.0",
-		"@hyperupcall/markdownlint-config": "^0.3.2",
-		"@hyperupcall/prettier-config": "^0.8.0",
-		"@hyperupcall/scripts-nodejs": "0.2.0",
+		"@hyperupcall/scripts-nodejs": "0.2.1",
 		"@types/lodash": "^4.17.7",
 		"@types/node": "^22.5.2",
-		"eslint": "^9.9.1",
-		"eslint-config-prettier": "^9.1.0",
-		"eslint-plugin-import": "^2.29.1",
-		"eslint-plugin-markdown": "^5.1.0",
-		"eslint-plugin-mdx": "^3.1.5",
-		"eslint-plugin-n": "^17.10.2",
-		"eslint-plugin-no-unsanitized": "^4.1.0",
-		"eslint-plugin-perfectionist": "^3.3.0",
-		"eslint-plugin-promise": "^7.1.0",
-		"eslint-plugin-regexp": "^2.6.0",
-		"eslint-plugin-security": "^3.0.1",
-		"eslint-plugin-unicorn": "^55.0.0",
-		"markdownlint": "^0.35.0",
-		"prettier": "^3.3.3",
-		"prettier-plugin-pkg": "^0.18.1",
 		"type-fest": "^4.26.0"
 	},
 	"markdownlint-cli2": {

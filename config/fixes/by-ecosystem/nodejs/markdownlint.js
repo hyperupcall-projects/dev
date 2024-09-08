@@ -3,8 +3,6 @@ import * as path from 'node:path'
 
 import { pkgRoot, filesMustHaveShape, filesMustHaveContent } from '../../../common.js'
 
-export const skip = true
-
 /** @type {import('../../../../index.js').Issues} */
 export const issues = async function* issues() {
 	const markdownlintConfig = {
@@ -31,7 +29,24 @@ export const issues = async function* issues() {
 		'.markdownlint.mjs': null,
 	})
 
-	// yield *packageJsonMustHaveDependencies({
-	// 	packages: ['markdownlint', '@hyperupcall/markdownlint-config'],
-	// })
+	const packageJson = JSON.parse(await fs.readFile('package.json', 'utf-8'))
+	for (const dependencyKey of [
+		'dependencies',
+		'devDependencies',
+		'peerDependencies',
+		'peerDependenciesMeta',
+		'bundleDependencies',
+		'optionalDependencies',
+	]) {
+		for (const dependencyName in packageJson[dependencyKey] ?? {}) {
+			if (dependencyName.includes('markdownlint')) {
+				yield {
+					message: [
+						'Expected to find no dependencies that included the string "markdownlint"',
+						`But, found "${dependencyName}"`,
+					],
+				}
+			}
+		}
+	}
 }

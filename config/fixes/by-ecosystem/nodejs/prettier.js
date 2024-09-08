@@ -48,18 +48,18 @@ export const issues = async function* issues() {
 				},
 			},
 		})
+
 		const packageJson = JSON.parse(await fs.readFile('package.json', 'utf-8'))
-		const dependencyKeys = [
+		for (const dependencyKey of [
 			'dependencies',
 			'devDependencies',
 			'peerDependencies',
 			'peerDependenciesMeta',
 			'bundleDependencies',
 			'optionalDependencies',
-		]
-		for (const dependencyKey in dependencyKeys) {
+		]) {
 			for (const dependencyName in packageJson[dependencyKey] ?? {}) {
-				if (dependencyObject.includes('prettier')) {
+				if (dependencyName.includes('prettier')) {
 					yield {
 						message: [
 							'Expected to find no dependencies that included the string "prettier"',
