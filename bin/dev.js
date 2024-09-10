@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 import * as util from 'node:util'
+import path from 'node:path'
 import enquirer from 'enquirer'
+import dotenv from 'dotenv'
 
 import { run as runExport } from '../src/export.js'
 import { run as runNew } from '../src/new.js'
@@ -8,6 +10,8 @@ import { run as runFix } from '../src/fix.js'
 import { run as runInstall } from '../src/install.js'
 
 const { prompt } = enquirer
+
+dotenv.config(path.join(import.meta.dirname, '../.env'))
 
 if (process.argv.includes('--help')) {
 	console.info(`template <subcommand> [args...]:

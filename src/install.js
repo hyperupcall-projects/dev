@@ -57,6 +57,18 @@ const ctx = {
 				}
 			},
 		},
+		{
+			url: 'https://github.com/fox-incubating/dev',
+			install: dedent`
+				ln -sf "$PWD/bin/dev" ~/.local/bin/dev
+			`,
+			uninstall: dedent`
+				rm -f ~/.local/bin/dev
+			`,
+			async installed() {
+				return await fileExists(path.join(os.homedir(), '.local/bin/dev'))
+			},
+		},
 		// {
 		// 	url: 'https://github.com/fox-incubating/wo',
 		// 	install: dedent`
