@@ -60,10 +60,12 @@ const ctx = {
 		{
 			url: 'https://github.com/fox-incubating/dev',
 			install: dedent`
-				ln -sf "$PWD/bin/dev" ~/.local/bin/dev
+				pnpm install
+				ln -sf "$PWD/bin/dev.js" ~/.local/bin/dev
 			`,
 			uninstall: dedent`
 				rm -f ~/.local/bin/dev
+				pnpm uninstall
 			`,
 			async installed() {
 				return await fileExists(path.join(os.homedir(), '.local/bin/dev'))
