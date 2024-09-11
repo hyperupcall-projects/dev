@@ -12,130 +12,151 @@ import { execa } from 'execa'
 import semver from 'semver'
 
 /**
- * @typedef {Object} Project
- * @property {string} url
- * @property {string} install
- * @property {string} uninstall
- * @property {() => Promise<boolean>} installed
+ * @typedef {Object} ProjectData
  * @property {boolean} isCloned
  * @property {boolean} isInstalled
  * @property {boolean} isOutOfDate
  * @property {string} gitRef
  * @property {string[]} versions
  *
- * @typedef {Object} <Ctx>		</Ctx>
- * @property {string} devDir
- * @property {string} repositoryDir
- * @property {Project} project
- * @property {Project[]} projects
- *
- * @typedef {'main' | 'update-version'} Screen
+ * @typedef {Object} Project
+ * @property {string} name
+ * @property {string} url
+ * @property {string} install
+ * @property {string} uninstall
+ * @property {() => Promise<boolean>} installed
+ * @property {ProjectData} [data]
  */
 
-/** @type {Ctx} */
-const ctx = {
+/** @type {Project[]} */
+const Projects = [
+	{
+		name: 'hub',
+		url: 'https://github.com/fox-incubating/hub',
+		install: dedent`
+			pnpm install
+			pnpm build
+			make install
+	`,
+		uninstall: dedent`
+			make uninstall
+	`,
+		async installed() {
+			try {
+				const { stdout } = await execa`systemctl --user is-enabled hub.service`
+				return stdout === 'enabled'
+			} catch (err) {
+				return false
+			}
+		},
+	},
+	{
+		name: 'dev',
+		url: 'https://github.com/fox-incubating/dev',
+		install: dedent`
+			pnpm install
+			ln -sf "$PWD/bin/dev.js" ~/.local/bin/dev
+	`,
+		uninstall: dedent`
+			rm -f ~/.local/bin/dev
+			pnpm uninstall
+	`,
+		async installed() {
+			return await fileExists(path.join(os.homedir(), '.local/bin/dev'))
+		},
+	},
+	{
+		name: 'ten',
+		url: 'https://github.com/fox-incubating/ten',
+		install: dedent`
+			pnpm install
+			ln -sf "$PWD/bin/ten.js" ~/.local/bin/ten
+	`,
+		uninstall: dedent`
+			rm -f ~/.local/bin/ten
+			pnpm uninstall
+	`,
+		async installed() {
+			return await fileExists(path.join(os.homedir(), '.local/bin/ten'))
+		},
+	},
+	{
+		name: 'pick-sticker',
+		url: 'https://github.com/fox-projects/pick-sticker',
+		install: dedent`
+			# ./bake collect
+			./bake download
+			./bake generate_sizes
+			./bake browsec
+	`,
+		uninstall: '',
+		async installed() {
+			return false
+		},
+	},
+	{
+		name: 'woof',
+		url: 'https://github.com/version-manager/woof',
+		install: dedent``,
+		uninstall: '',
+		async installed() {
+			try {
+				await execa({ shell: true })`command -v woof`
+				return true
+			} catch (err) {
+				return false
+			}
+		},
+	},
+	// {
+	// 	url: 'https://github.com/hyperupcall/autoenv'
+	// },
+	// {
+	// 	url: 'https://github.com/bash-bastion/basalt',
+	// 	install: dedent`
+	// 		./scripts/install.sh | sh`,
+	// 	uninstall: '',
+	// 	async installed() {
+	// 		try {
+	// 			await execa({ shell: true })`command -v basalt`
+	// 			return true
+	// 		} catch (err) {
+	// 			return false
+	// 		}
+	// 	}
+	// },
+	// {
+	// 	url: 'https://github.com/fox-incubating/wo',
+	// 	install: dedent`
+	// 		cargo install --path .
+	// 	`,
+	// 	uninstall: dedent`
+	// 		cargo uninstall --path .
+	// 	`,
+	// 	async installed() {
+	// 		try {
+	// 			await execa({ shell: true })`command -v wo`
+	// 			return true
+	// 		} catch (err) {
+	// 			return false
+	// 		}
+	// 	}
+	// },
+]
+
+/**
+ * @typedef {'main' | 'update-version'} Screen
+ */
+const Ctx = {
 	devDir: path.join(os.homedir(), '.dev'),
 	repositoryDir: path.join(os.homedir(), '.dev/repositories'),
-	project: null,
-	projects: [
-		{
-			url: 'https://github.com/fox-incubating/hub',
-			install: dedent`
-				pnpm install
-				pnpm build
-				make install
-			`,
-			uninstall: dedent`
-				make uninstall
-			`,
-			async installed() {
-				try {
-					const { stdout } = await execa`systemctl --user is-enabled hub.service`
-					return stdout === 'enabled'
-				} catch (err) {
-					return false
-				}
-			},
-		},
-		{
-			url: 'https://github.com/fox-incubating/dev',
-			install: dedent`
-				pnpm install
-				ln -sf "$PWD/bin/dev.js" ~/.local/bin/dev
-			`,
-			uninstall: dedent`
-				rm -f ~/.local/bin/dev
-				pnpm uninstall
-			`,
-			async installed() {
-				return await fileExists(path.join(os.homedir(), '.local/bin/dev'))
-			},
-		},
-		// {
-		// 	url: 'https://github.com/fox-incubating/wo',
-		// 	install: dedent`
-		// 		cargo install --path .
-		// 	`,
-		// 	uninstall: dedent`
-		// 		cargo uninstall --path .
-		// 	`,
-		// 	async installed() {
-		// 		try {
-		// 			await execa({ shell: true })`command -v wo`
-		// 			return true
-		// 		} catch (err) {
-		// 			return false
-		// 		}
-		// 	}
-		// },
-		{
-			url: 'https://github.com/fox-projects/pick-sticker',
-			install: dedent`
-				# ./bake collect
-				./bake download
-				./bake generate_sizes
-				./bake browsec
-			`,
-			uninstall: '',
-		},
-		// {
-		// 	url: 'https://github.com/hyperupcall/autoenv'
-		// },
-		// {
-		// 	url: 'https://github.com/bash-bastion/basalt',
-		// 	install: dedent`
-		// 		./scripts/install.sh | sh`,
-		// 	uninstall: '',
-		// 	async installed() {
-		// 		try {
-		// 			await execa({ shell: true })`command -v basalt`
-		// 			return true
-		// 		} catch (err) {
-		// 			return false
-		// 		}
-		// 	}
-		// },
-		{
-			url: 'https://github.com/version-manager/woof',
-			install: dedent``,
-			uninstall: '',
-			async installed() {
-				try {
-					await execa({ shell: true })`command -v woof`
-					return true
-				} catch (err) {
-					return false
-				}
-			},
-		},
-	],
+	currentProject: 'hub',
 }
-ctx.project = ctx.projects[0]
 
 let ignoreKeystrokes = false
 export async function run(/** @type {string[]} */ args) {
-	await fs.mkdir(ctx.devDir, { recursive: true })
-	await fs.mkdir(ctx.repositoryDir, { recursive: true })
+	await fs.mkdir(Ctx.devDir, { recursive: true })
+	await fs.mkdir(Ctx.repositoryDir, { recursive: true })
 
 	process.stdin.setRawMode(true)
 	process.stdout.write(ansiEscapes.cursorSavePosition)
@@ -170,7 +191,10 @@ async function render(/** @type {string} */ char) {
 }
 
 async function renderMainScreen(/** @type {string} */ char) {
-	let currentProject = ctx.projects.indexOf(ctx.project)
+	const project = Projects.find((project) => project.name === Ctx.currentProject)
+	if (!project?.data) {
+		throw new Error(`Failed to find project with name: \"${Ctx.currentProject}\"`)
+	}
 
 	if (char === '\x1B' || char === 'q') {
 		process.stdout.write(ansiEscapes.cursorRestorePosition)
@@ -178,35 +202,37 @@ async function renderMainScreen(/** @type {string} */ char) {
 		process.stdout.write(ansiEscapes.exitAlternativeScreen)
 		process.exit()
 	} else if (char === 'j') {
-		currentProject = Math.min(ctx.projects.length - 1, currentProject + 1)
-		ctx.project = ctx.projects[currentProject]
+		const idx = Projects.findIndex((project) => project.name === Ctx.currentProject)
+		const newIdx = Math.min(Projects.length - 1, idx + 1)
+		Ctx.currentProject = Projects[newIdx].name
 	} else if (char === 'k') {
-		currentProject = Math.max(0, currentProject - 1)
-		ctx.project = ctx.projects[currentProject]
+		const idx = Projects.findIndex((project) => project.name === Ctx.currentProject)
+		const newIdx = Math.max(0, idx - 1)
+		Ctx.currentProject = Projects[newIdx].name
 	} else if (char === 'c') {
-		if (ctx.project.isCloned) {
+		if (project.data.isCloned) {
 			process.stdout.write(ansiEscapes.eraseScreen + ansiEscapes.cursorTo(0, 0))
 			process.stdout.write('Repository already cloned...\n')
 		} else {
-			const name = path.basename(new URL(ctx.projects[currentProject].url).pathname)
-			const dir = path.join(ctx.repositoryDir, name)
+			const dir = path.join(Ctx.repositoryDir, project.name)
 
 			process.stdout.write(ansiEscapes.eraseScreen + ansiEscapes.cursorTo(0, 0))
 			ignoreKeystrokes = true
 			await execa({
 				stdio: 'inherit',
-			})`git clone ${ctx.projects[currentProject].url} ${dir}`
+			})`git clone ${project.url} ${dir}`
 			ignoreKeystrokes = false
 			await updateProjectData()
 		}
 		await waitOnConfirmInput()
 	} else if (char === '\x7F') {
-		if (ctx.project.isCloned) {
-			const name = path.basename(new URL(ctx.projects[currentProject].url).pathname)
-			const dir = path.join(ctx.repositoryDir, name)
+		if (project.data.isCloned) {
+			const dir = path.join(Ctx.repositoryDir, project.name)
 
 			process.stdout.write(ansiEscapes.eraseScreen + ansiEscapes.cursorTo(0, 0))
-			process.stdout.write(`REMOVING DIRECTORY: ${path.join(ctx.repositoryDir, name)}\n`)
+			process.stdout.write(
+				`REMOVING DIRECTORY: ${path.join(Ctx.repositoryDir, project.name)}\n`,
+			)
 			process.stdout.write(`Exit with "q/esc" to abort in less than 5 seconds\n`)
 			await new Promise((resolve, reject) => {
 				setTimeout(async () => {
@@ -228,13 +254,12 @@ async function renderMainScreen(/** @type {string} */ char) {
 			await waitOnConfirmInput()
 		}
 	} else if (char === 'i') {
-		if (ctx.project.isCloned) {
-			const name = path.basename(new URL(ctx.projects[currentProject].url).pathname)
-			const dir = path.join(ctx.repositoryDir, name)
+		if (project.data.isCloned) {
+			const dir = path.join(Ctx.repositoryDir, project.name)
 
 			process.stdout.write(ansiEscapes.eraseScreen + ansiEscapes.cursorTo(0, 0))
 			const scriptFile = path.join(os.tmpdir(), `dev-${crypto.randomUUID()}.sh`)
-			await fs.writeFile(scriptFile, ctx.projects[currentProject].install)
+			await fs.writeFile(scriptFile, project.install)
 			ignoreKeystrokes = true
 			await execa({ stdio: 'inherit', cwd: dir })`bash -eo pipefail ${scriptFile}`
 			ignoreKeystrokes = false
@@ -245,13 +270,12 @@ async function renderMainScreen(/** @type {string} */ char) {
 		}
 		await waitOnConfirmInput()
 	} else if (char === 'u') {
-		if (ctx.project.isCloned) {
-			const name = path.basename(new URL(ctx.projects[currentProject].url).pathname)
-			const dir = path.join(ctx.repositoryDir, name)
+		if (project.data.isCloned) {
+			const dir = path.join(Ctx.repositoryDir, project.name)
 
 			process.stdout.write(ansiEscapes.eraseScreen + ansiEscapes.cursorTo(0, 0))
 			const scriptFile = path.join(os.tmpdir(), `dev-${crypto.randomUUID()}.sh`)
-			await fs.writeFile(scriptFile, ctx.projects[currentProject].uninstall)
+			await fs.writeFile(scriptFile, project.uninstall)
 			ignoreKeystrokes = true
 			await execa({ stdio: 'inherit', cwd: dir })`bash -eo pipefail ${scriptFile}`
 			ignoreKeystrokes = false
@@ -289,19 +313,21 @@ async function renderMainScreen(/** @type {string} */ char) {
 			'\n',
 	)
 	process.stdout.write(`${sep}\n`)
-	for (let i = 0; i < ctx.projects.length; ++i) {
-		const name = path.basename(new URL(ctx.projects[i].url).pathname)
+	for (const project of Projects) {
+		if (!project?.data) {
+			throw new Error(`Project does not have data attached: \"${project.name}\"`)
+		}
 
-		process.stdout.write(`[${i === currentProject ? 'x' : ' '}] `)
+		process.stdout.write(`[${project.name === Ctx.currentProject ? 'x' : ' '}] `)
 		process.stdout.write(
-			name.padEnd(nameColLen) +
-				(ctx.projects[i].isCloned ? 'YES' : 'NO').padEnd(clonedColLen),
+			project.name.padEnd(nameColLen) +
+				(project.data.isCloned ? 'YES' : 'NO').padEnd(clonedColLen),
 		)
 		process.stdout.write(
-			(ctx.projects[i].isInstalled ? 'YES' : 'NO').padEnd(installedColLen) +
-				ctx.projects[i].gitRef.padEnd(currentRef),
+			(project.data.isInstalled ? 'YES' : 'NO').padEnd(installedColLen) +
+				project.data.gitRef.padEnd(currentRef),
 		)
-		process.stdout.write(ctx.projects[i].isOutOfDate ? 'NO' : 'YES')
+		process.stdout.write(project.data.isOutOfDate ? 'NO' : 'YES')
 		process.stdout.write('\n')
 	}
 	process.stdout.write(`${sep}\n`)
@@ -320,27 +346,28 @@ async function renderMainScreen(/** @type {string} */ char) {
 
 let currentVersion = 0
 async function renderUpdateVersionScreen(/** @type {string} */ char) {
-	let currentProject = ctx.projects.indexOf(ctx.project)
-	const name = path.basename(new URL(ctx.projects[currentProject].url).pathname)
+	const project = Projects.find((project) => project.name === Ctx.currentProject)
+	if (!project?.data) {
+		throw new Error(`Failed to find project with name: \"${Ctx.currentProject}\"`)
+	}
 
 	if (char === '\x1B' || char === 'q') {
 		process.exit()
 	} else if (char === 'j') {
-		currentVersion = Math.min(
-			ctx.projects[currentProject].versions.length - 1,
-			currentVersion + 1,
-		)
+		currentVersion = Math.min(project.data.versions.length - 1, currentVersion + 1)
 	} else if (char === 'k') {
 		currentVersion = Math.max(0, currentVersion - 1)
 	} else if (char === '\x0D') {
 		ignoreKeystrokes = true
 		process.stdout.write(ansiEscapes.eraseScreen + ansiEscapes.cursorTo(0, 0))
-		const ref = ctx.projects[currentProject].versions[currentVersion]
+		const ref = project.data.versions[currentVersion]
+		const dir = path.join(Ctx.repositoryDir, project.name)
+		await execa`git -C ${dir} reset --hard HEAD`
 		if (ref.startsWith('v')) {
 			// TODO
-			await execa`git -C ${path.join(ctx.repositoryDir, name)} switch --detach refs/tags/${ref}`
+			await execa`git -C ${dir} switch --detach refs/tags/${ref}`
 		} else {
-			await execa`git -C ${path.join(ctx.repositoryDir, name)} switch --detach ${ref}`
+			await execa`git -C ${dir} switch --detach ${ref}`
 		}
 
 		ignoreKeystrokes = false
@@ -356,9 +383,9 @@ async function renderUpdateVersionScreen(/** @type {string} */ char) {
 
 	const sep = '='.repeat(process.stdout.columns)
 	process.stdout.write(ansiEscapes.eraseScreen + ansiEscapes.cursorTo(0, 0))
-	process.stdout.write(`REPOSITORY: ${name}\n`)
-	for (let i = 0; i < ctx.projects[currentProject].versions.length; ++i) {
-		const version = ctx.projects[currentProject].versions[i]
+	process.stdout.write(`REPOSITORY: ${project.name}\n`)
+	for (let i = 0; i < project.data.versions.length; ++i) {
+		const version = project.data.versions[i]
 		process.stdout.write(`[${i === currentVersion ? 'x' : ' '}] ${version}\n`)
 	}
 	process.stdout.write(`${sep}\n`)
@@ -372,104 +399,91 @@ async function renderUpdateVersionScreen(/** @type {string} */ char) {
 }
 
 async function updateProjectData() {
-	let projectExists = await Promise.all(
-		ctx.projects.map((project) => {
-			const name = path.basename(new URL(project.url).pathname)
-			const dir = path.join(ctx.repositoryDir, name)
-			return fileExists(dir)
+	await Promise.all(
+		Projects.map((project) => {
+			return new Promise(async (resolve, reject) => {
+				try {
+					await mutateProject(project)
+					resolve(undefined)
+				} catch (err) {
+					reject(err)
+				}
+			})
 		}),
 	)
-	for (let i = 0; i < ctx.projects.length; ++i) {
-		ctx.projects[i].isCloned = projectExists[i]
-	}
 
-	let projectRefs = await Promise.all(
-		ctx.projects.map(async (project, i) => {
-			if (!projectExists[i]) {
-				return ''
+	async function mutateProject(/** @type {Project} */ project) {
+		const dir = path.join(Ctx.repositoryDir, project.name)
+		const projectExists = await fileExists(dir)
+
+		if (!project.data) {
+			project.data = {}
+		}
+		project.data.isCloned = projectExists
+		project.data.gitRef = ''
+
+		if (!projectExists) {
+			return
+		}
+
+		// First set of mutations
+		const [{ stdout: currentTag }, { stdout: latestTag }] = await Promise.all([
+			await execa`git -C ${dir} tag --points-at HEAD`,
+			await execa`git -C ${dir} describe --tags --abbrev=0`.catch(() => ({
+				stdout: '',
+			})),
+		])
+		if (currentTag) {
+			if (currentTag === latestTag) {
+				project.data.isOutOfDate = false
+				project.data.gitRef = currentTag
+			} else {
+				project.data.isOutOfDate = true
+				project.data.gitRef = currentTag
 			}
-
-			const name = path.basename(new URL(project.url).pathname)
-			const dir = path.join(ctx.repositoryDir, name)
-
-			const [{ stdout: currentTag }, { stdout: latestTag }] = await Promise.all([
-				await execa`git -C ${dir} tag --points-at HEAD`,
-				await execa`git -C ${dir} describe --tags --abbrev=0`.catch(() => ({
+		} else {
+			const [
+				{ stdout: localRef },
+				{ stdout: remoteRef },
+				{ stdout: remoteRefFormatted },
+			] = await Promise.all([
+				await execa`git -C ${dir} rev-parse --short HEAD`,
+				await execa`git -C ${dir} rev-parse --short @{u}`.catch(() => ({ stdout: '' })),
+				await execa`git -C ${dir} rev-parse --abbrev-ref @{u}`.catch(() => ({
 					stdout: '',
 				})),
 			])
-			if (currentTag) {
-				if (currentTag === latestTag) {
-					ctx.projects[i].isOutOfDate = false
-					return currentTag
-				} else {
-					ctx.projects[i].isOutOfDate = true
-					return currentTag
-				}
+
+			if (localRef === remoteRef) {
+				project.data.isOutOfDate = false
+				project.data.gitRef = remoteRefFormatted
 			} else {
-				const [
-					{ stdout: localRef },
-					{ stdout: remoteRef },
-					{ stdout: remoteRefFormatted },
-				] = await Promise.all([
-					await execa`git -C ${dir} rev-parse --short HEAD`,
-					await execa`git -C ${dir} rev-parse --short @{u}`.catch(() => ({ stdout: '' })),
-					await execa`git -C ${dir} rev-parse --abbrev-ref @{u}`.catch(() => ({
-						stdout: '',
-					})),
-				])
-
-				if (localRef === remoteRef) {
-					ctx.projects[i].isOutOfDate = false
-					return remoteRefFormatted
-				} else {
-					ctx.projects[i].isOutOfDate = true
-					return localRef
-				}
+				project.data.isOutOfDate = true
+				project.data.gitRef = localRef
 			}
-		}),
-	)
-	for (let i = 0; i < ctx.projects.length; ++i) {
-		ctx.projects[i].gitRef = projectRefs[i]
-	}
+		}
 
-	let projectVersions = await Promise.all(
-		ctx.projects.map(async (project, i) => {
-			if (!projectExists[i]) {
-				return []
-			}
+		// Last mutations
+		const remoteName = 'me' // TODO: Assumes this
+		await execa`git -C ${dir} fetch --all`
+		let [{ stdout }, { stdout: remoteRef }, { stdout: defaultRemoteRefSpec }] =
+			await Promise.all([
+				execa`git -C ${dir} tag --list`,
+				execa`git -C ${dir} rev-parse --abbrev-ref @{u}`.catch(() => ({ stdout: '' })),
+				execa`git -C ${dir} symbolic-ref refs/remotes/${remoteName}/HEAD --short`,
+			])
 
-			const name = path.basename(new URL(project.url).pathname)
-			const dir = path.join(ctx.repositoryDir, name)
+		if (!remoteRef) {
+			const { stdout: remoteHead } =
+				await execa`git -C ${dir} rev-parse --short ${defaultRemoteRefSpec}`
+			remoteRef = remoteHead
+		}
 
-			const remoteName = 'me' // TODO: Assumes this
-			await execa`git -C ${dir} fetch --all`
-			let [{ stdout }, { stdout: remoteRef }, { stdout: defaultRemoteRefSpec }] =
-				await Promise.all([
-					execa`git -C ${dir} tag --list`,
-					execa`git -C ${dir} rev-parse --abbrev-ref @{u}`.catch(() => ({ stdout: '' })),
-					execa`git -C ${dir} symbolic-ref refs/remotes/${remoteName}/HEAD --short`,
-				])
-
-			if (!remoteRef) {
-				const { stdout: remoteHead } =
-					await execa`git -C ${dir} rev-parse --short ${defaultRemoteRefSpec}`
-				remoteRef = remoteHead
-			}
-
-			const tags = stdout.split('\n')
-			const versions = tags
-				.filter((tag) => tag.startsWith('v'))
-				.sort((a, b) => (semver.gt(a, b) ? -1 : semver.lt(a, b) ? 1 : 0))
-			return [remoteRef].concat(versions)
-		}),
-	)
-	for (let i = 0; i < ctx.projects.length; ++i) {
-		ctx.projects[i].versions = projectVersions[i]
-	}
-
-	for (let i = 0; i < ctx.projects.length; ++i) {
-		ctx.projects[i].isInstalled = (await ctx.projects[i]?.installed?.()) ?? false
+		const tags = stdout.split('\n')
+		const versions = tags
+			.filter((tag) => tag.startsWith('v'))
+			.sort((a, b) => (semver.gt(a, b) ? -1 : semver.lt(a, b) ? 1 : 0))
+		project.data.versions = [remoteRef].concat(versions)
 	}
 }
 
