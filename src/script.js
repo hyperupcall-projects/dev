@@ -3,6 +3,7 @@ import { existsSync } from 'node:fs'
 import * as path from 'node:path'
 import * as os from 'node:os'
 import * as readline from 'node:readline/promises'
+import * as util from 'node:util'
 
 import { minimatch } from 'minimatch'
 import { globby } from 'globby'
@@ -11,9 +12,77 @@ import untildify from 'untildify'
 import yn from 'yn'
 import chalk from 'chalk'
 
-export async function run(/** @type {string[]} args */ args) {}
+import { forEachRepository } from './util.js'
 
-export async function checkLicenseHeaders({ octokit, config }) {
+export async function run(/** @type {string[]} args */ args) {
+	const { values, positionals } = util.parseArgs({
+		args,
+		allowPositionals: true,
+		options: {
+			help: {
+				type: 'boolean',
+				short: 'h',
+			},
+		},
+	})
+	const task = positionals[0]
+
+	const helpText = `script <taskName>
+TASKS:
+
+check-license-headers
+`
+	if (values.help) {
+		console.info(helpText)
+	}
+	if (!task) {
+		process.stdout.write(helpText)
+		process.exit(1)
+	}
+
+	if (task === 'check-license-headers') {
+		await checkLicenseHeaders(positionals.slice(1))
+	} else if (task === 'symlink-hidden-dirs') {
+		await symlinkHiddenDirs(positionals.slice(1))
+	} else {
+		process.stdout.write('Error: Failed to pass task name\n')
+		process.exit(1)
+	}
+}
+
+export async function checkLicenseHeaders(/** @type {string[]} */ args) {
+	await forEachRepository(
+		config.organizationsDir,
+		{ ignores: config.ignoredOrganizations },
+		async function run({ orgDir, orgEntry, repoDir, repoEntry }) {
+			// Unfortunately, globby is too buggy when finding and using ignore files.
+			// Instead, use 'ignore-walk', which does require a few hacks.
+			const walker = new walk.Walker({
+				path: repoDir,
+				ignoreFiles: ['.gitignore', '.ignore', '__custom_ignore__'],
+			})
+			walker.ignoreRules['__custom_ignore__'] = ['.git'].map(
+				(dirname) =>
+					new minimatch.Minimatch(`**/${dirname}/*`, {
+						dot: true,
+						flipNegate: true,
+					}),
+			)
+			walker.on('done', async (files) => {
+				for (const file of files) {
+					const filepath = path.join(repoDir, file)
+					await onFile(filepath)
+				}
+			})
+			walker.on('error', (err) => {
+				if (err) {
+					throw err
+				}
+			})
+			walker.start()
+		},
+	)
+
 	async function onFile(/** @type {string} */ filepath) {
 		const filename = path.basename(filepath)
 
@@ -95,41 +164,9 @@ export async function checkLicenseHeaders({ octokit, config }) {
 			// console.log(`Not recognized: ${filepath}`)
 		}
 	}
-
-	await forEachRepository(
-		config.organizationsDir,
-		{ ignores: config.ignoredOrganizations },
-		async function run({ orgDir, orgEntry, repoDir, repoEntry }) {
-			// Unfortunately, globby is too buggy when finding and using ignore files.
-			// Instead, use 'ignore-walk', which does require a few hacks.
-			const walker = new walk.Walker({
-				path: repoDir,
-				ignoreFiles: ['.gitignore', '.ignore', '__custom_ignore__'],
-			})
-			walker.ignoreRules['__custom_ignore__'] = ['.git'].map(
-				(dirname) =>
-					new minimatch.Minimatch(`**/${dirname}/*`, {
-						dot: true,
-						flipNegate: true,
-					}),
-			)
-			walker.on('done', async (files) => {
-				for (const file of files) {
-					const filepath = path.join(repoDir, file)
-					await onFile(filepath)
-				}
-			})
-			walker.on('error', (err) => {
-				if (err) {
-					throw err
-				}
-			})
-			walker.start()
-		},
-	)
 }
 
-export async function symlinkHiddenDirs({ octokit, config }) {
+export async function symlinkHiddenDirs(/** @type {string[]} */ args) {
 	await forEachRepository(
 		config.organizationsDir,
 		async function run({ orgDir, orgEntry, repoDir, repoEntry }) {

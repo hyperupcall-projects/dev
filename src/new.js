@@ -1,7 +1,6 @@
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import * as util from 'node:util'
-import * as url from 'node:url'
 import { existsSync } from 'node:fs'
 import enquirer from 'enquirer'
 import * as ejs from 'ejs'
@@ -133,7 +132,6 @@ async function setName(name, message) {
  */
 export async function newProject(ctx) {
 	const file = path.join(
-		// @ts-expect-error
 		import.meta.dirname,
 		'templates',
 		ctx.ecosystem,
@@ -203,7 +201,6 @@ export async function templateTemplate(ctx) {
 
 	{
 		const commonDir = path.join(
-			// @ts-expect-error
 			import.meta.dirname,
 			`./templates/${ctx.ecosystem}/common`,
 		)
@@ -214,7 +211,6 @@ export async function templateTemplate(ctx) {
 	{
 		templateDirs.push(
 			path.join(
-				// @ts-expect-error
 				import.meta.dirname,
 				`./templates/${ctx.ecosystem}/${ctx.ecosystem}-${ctx.variant}`,
 			),

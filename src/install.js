@@ -15,8 +15,8 @@ import semver from 'semver'
  * @typedef {Object} ProjectData
  * @property {boolean} isCloned
  * @property {boolean} isInstalled
- * @property {boolean} isOutOfDate
  * @property {string} gitRef
+ * @property {string} latestGitRef
  * @property {string[]} versions
  *
  * @typedef {Object} Project
@@ -110,7 +110,7 @@ const Projects = [
 	`,
 		uninstall: '',
 		async installed() {
-			return false
+			return await fileExists(path.join(os.homedir(), '.local/bin/pick-sticker'))
 		},
 	},
 	{
@@ -187,6 +187,7 @@ export async function run(/** @type {string[]} */ args) {
 		process.stdout.write(ansiEscapes.exitAlternativeScreen)
 	})
 
+	process.stdout.write(`Fetching data...\n`)
 	await updateProjectData()
 	await render('')
 
@@ -337,17 +338,31 @@ async function renderMainScreen(/** @type {string} */ char) {
 			throw new Error(`Project does not have data attached: \"${project.name}\"`)
 		}
 
-		process.stdout.write(`[${project.name === Ctx.currentProject ? 'x' : ' '}] `)
-		process.stdout.write(
-			project.name.padEnd(nameColLen) +
-				(project.data.isCloned ? 'YES' : 'NO').padEnd(clonedColLen),
-		)
-		process.stdout.write(
-			(project.data.isInstalled ? 'YES' : 'NO').padEnd(installedColLen) +
-				project.data.gitRef.padEnd(currentRef),
-		)
-		process.stdout.write(project.data.isOutOfDate ? 'NO' : 'YES')
-		process.stdout.write('\n')
+		let str = ''
+		str += `[${project.name === Ctx.currentProject ? 'x' : ' '}] `
+		str += project.name.padEnd(nameColLen)
+		str += (project.data.isCloned ? 'YES' : 'NO').padEnd(clonedColLen)
+		str += (project.data.isInstalled ? 'YES' : 'NO').padEnd(installedColLen)
+		str += project.data.gitRef
+			.padEnd(currentRef)
+			.replace(
+				project.data.gitRef,
+				project.data.gitRef === project.data.latestGitRef
+					? chalk.green(project.data.gitRef)
+					: chalk.red(project.data.gitRef),
+			)
+		str += project.data.latestGitRef
+			.padEnd(latestRef)
+			.replace(
+				project.data.latestGitRef,
+				project.data.gitRef === project.data.latestGitRef
+					? chalk.green(project.data.latestGitRef)
+					: chalk.red(project.data.latestGitRef),
+			)
+		str += '\n'
+		str = str.replaceAll('YES', chalk.green('yes'))
+		str = str.replaceAll('NO', chalk.red('no'))
+		process.stdout.write(str)
 	}
 	process.stdout.write(`${sep}\n`)
 	process.stdout.write(dedent`
@@ -418,91 +433,61 @@ async function renderUpdateVersionScreen(/** @type {string} */ char) {
 }
 
 async function updateProjectData() {
-	await Promise.all(
-		Projects.map((project) => {
-			return new Promise(async (resolve, reject) => {
-				try {
-					await mutateProject(project)
-					resolve(undefined)
-				} catch (err) {
-					reject(err)
-				}
-			})
-		}),
-	)
+	await Promise.all(Projects.map(mutateProject))
 
 	async function mutateProject(/** @type {Project} */ project) {
 		const dir = path.join(Ctx.repositoryDir, project.name)
 		const projectExists = await fileExists(dir)
 
-		if (!project.data) {
-			project.data = {}
-		}
-		project.data.isCloned = projectExists
-		project.data.gitRef = ''
+		const isInstalled = (await project.installed()) ?? false
 
-		if (!projectExists) {
-			return
+		const projectData = {
+			isCloned: projectExists,
+			isInstalled,
+			gitRef: '',
+			latestGitRef: '',
+			versions: /** @type {string[]} */ ([]),
 		}
+
+		await execa`git -C ${dir} fetch --all`
+		const remoteName = 'me' // TODO: Assumes this
 
 		// First set of mutations
-		const [{ stdout: currentTag }, { stdout: latestTag }] = await Promise.all([
-			await execa`git -C ${dir} tag --points-at HEAD`,
-			await execa`git -C ${dir} describe --tags --abbrev=0`.catch(() => ({
+		const [
+			{ stdout: headTag },
+			{ stdout: latestTag },
+			{ stdout: headRef },
+			{ stdout: remoteRef },
+			{ stdout: tagList },
+		] = await Promise.all([
+			execa`git -C ${dir} tag --points-at HEAD`,
+			execa`git -C ${dir} describe --tags --abbrev=0`.catch(() => ({
 				stdout: '',
 			})),
+			execa`git -C ${dir} rev-parse --short HEAD`,
+			execa`git -C ${dir} symbolic-ref refs/remotes/${remoteName}/HEAD --short`.then(
+				(defaultRemoteRefSpec) => {
+					return execa`git -C ${dir} rev-parse --short ${defaultRemoteRefSpec}`
+				},
+			),
+			execa`git -C ${dir} tag --list`,
 		])
-		if (currentTag) {
-			if (currentTag === latestTag) {
-				project.data.isOutOfDate = false
-				project.data.gitRef = currentTag
-			} else {
-				project.data.isOutOfDate = true
-				project.data.gitRef = currentTag
-			}
+		if (headTag) {
+			projectData.gitRef = headTag
+			projectData.latestGitRef = latestTag
 		} else {
-			const [
-				{ stdout: localRef },
-				{ stdout: remoteRef },
-				{ stdout: remoteRefFormatted },
-			] = await Promise.all([
-				await execa`git -C ${dir} rev-parse --short HEAD`,
-				await execa`git -C ${dir} rev-parse --short @{u}`.catch(() => ({ stdout: '' })),
-				await execa`git -C ${dir} rev-parse --abbrev-ref @{u}`.catch(() => ({
-					stdout: '',
-				})),
-			])
-
-			if (localRef === remoteRef) {
-				project.data.isOutOfDate = false
-				project.data.gitRef = remoteRefFormatted
-			} else {
-				project.data.isOutOfDate = true
-				project.data.gitRef = localRef
-			}
+			projectData.gitRef = headRef
+			projectData.latestGitRef = remoteRef
 		}
 
 		// Last mutations
-		const remoteName = 'me' // TODO: Assumes this
-		await execa`git -C ${dir} fetch --all`
-		let [{ stdout }, { stdout: remoteRef }, { stdout: defaultRemoteRefSpec }] =
-			await Promise.all([
-				execa`git -C ${dir} tag --list`,
-				execa`git -C ${dir} rev-parse --abbrev-ref @{u}`.catch(() => ({ stdout: '' })),
-				execa`git -C ${dir} symbolic-ref refs/remotes/${remoteName}/HEAD --short`,
-			])
-
-		if (!remoteRef) {
-			const { stdout: remoteHead } =
-				await execa`git -C ${dir} rev-parse --short ${defaultRemoteRefSpec}`
-			remoteRef = remoteHead
-		}
-
-		const tags = stdout.split('\n')
+		const tags = tagList.split('\n')
 		const versions = tags
 			.filter((tag) => tag.startsWith('v'))
 			.sort((a, b) => (semver.gt(a, b) ? -1 : semver.lt(a, b) ? 1 : 0))
-		project.data.versions = [remoteRef].concat(versions)
+		projectData.versions = [remoteRef].concat(versions)
+
+		project.data = projectData
 	}
 }
 

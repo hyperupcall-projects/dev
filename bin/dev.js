@@ -34,7 +34,7 @@ if (process.argv[2]) {
 			type: 'select',
 			name: 'value',
 			message: 'Choose subcommand',
-			choices: ['export', 'new', 'fix', 'install'],
+			choices: ['export', 'new', 'fix', 'install', 'repos', 'script'],
 		})
 	subcommand = value
 	args = process.argv.slice(2)
