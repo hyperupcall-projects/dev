@@ -30,16 +30,15 @@
 		"del": "^7.1.0",
 		"detect-indent": "^7.0.1",
 		"detect-newline": "^4.0.1",
-		"diff": "6.0.0-beta",
+		"diff": "7.0.0",
 		"dotenv": "^16.4.5",
 		"ejs": "^3.1.10",
 		"enquirer": "^2.4.1",
-		"execa": "^9.3.1",
+		"execa": "^9.4.0",
 		"globby": "^14.0.2",
-		"ignore-walk": "^6.0.5",
+		"ignore-walk": "^7.0.0",
 		"jsonc-parser": "^3.3.1",
 		"lodash-es": "^4.17.21",
-		"micromatch": "^4.0.8",
 		"minimatch": "^10.0.1",
 		"octokit": "^4.0.2",
 		"remark": "^15.0.1",
@@ -55,9 +54,9 @@
 	},
 	"devDependencies": {
 		"@hyperupcall/scripts-nodejs": "0.2.1",
-		"@types/lodash": "^4.17.7",
-		"@types/node": "^22.5.2",
-		"type-fest": "^4.26.0"
+		"@types/lodash": "^4.17.10",
+		"@types/node": "^22.7.4",
+		"type-fest": "^4.26.1"
 	},
 	"markdownlint-cli2": {
 		"extends": "./node_modules/@hyperupcall/markdownlint-config/.markdownlint.json"

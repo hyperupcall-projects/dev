@@ -2,50 +2,57 @@
 import * as util from 'node:util'
 import path from 'node:path'
 import enquirer from 'enquirer'
-import dotenv from 'dotenv'
 
 import { run as runExport } from '../src/export.js'
 import { run as runNew } from '../src/new.js'
 import { run as runFix } from '../src/fix.js'
 import { run as runInstall } from '../src/install.js'
+import { run as runRepos } from '../src/repos.js'
+import { run as runScript } from '../src/script.js'
 
 const { prompt } = enquirer
 
-dotenv.config(path.join(import.meta.dirname, '../.env'))
-
 if (process.argv.includes('--help')) {
-	console.info(`template <subcommand> [args...]:
-  template export [args...]
-  template new [args...]
-  template fix [args...]
-  template install [args...]
+	console.info(`dev <subcommand> [args...]
+  dev export [args...]
+  dev new [args...]
+  dev fix [args...]
+  dev install [args...]
+  dev repos [args...]
+  dev script [args...]
 `)
 	process.exit(0)
 }
 
-if (process.argv[2] === 'export') {
-	await runExport(process.argv.slice(3))
-} else if (process.argv[2] === 'new') {
-	await runNew(process.argv.slice(3))
-} else if (process.argv[2] === 'fix') {
-	await runFix(process.argv.slice(3))
-} else if (process.argv[2] === 'install') {
-	await runInstall(process.argv.slice(3))
+let subcommand = ''
+let args = []
+if (process.argv[2]) {
+	subcommand = process.argv[2]
+	args = process.argv.slice(3)
 } else {
-	const /** @type {{ value: string }} */ { value: subcommand } = await prompt({
+	const /** @type {{ value: string }} */ { value } = await prompt({
 			type: 'select',
 			name: 'value',
 			message: 'Choose subcommand',
 			choices: ['export', 'new', 'fix', 'install'],
 		})
+	subcommand = value
+	args = process.argv.slice(2)
+}
 
-	if (subcommand === 'export') {
-		await runExport(process.argv.slice(2))
-	} else if (subcommand === 'new') {
-		await runNew(process.argv.slice(2))
-	} else if (subcommand === 'fix') {
-		await runFix(process.argv.slice(2))
-	} else if (process.argv[2] === 'install') {
-		await runInstall(process.argv.slice(2))
-	}
+if (subcommand === 'export') {
+	await runExport(args)
+} else if (subcommand === 'new') {
+	await runNew(args)
+} else if (subcommand === 'fix') {
+	await runFix(args)
+} else if (subcommand === 'install') {
+	await runInstall(args)
+} else if (subcommand === 'repos') {
+	await runRepos(args)
+} else if (subcommand === 'script') {
+	await runScript(args)
+} else {
+	console.error(`Unknown subcommand: "${subcommand}"`)
+	process.exit(1)
 }

@@ -11,8 +11,11 @@ import * as _ from 'lodash-es'
 import dedent from 'dedent'
 import * as diff from 'diff'
 import chalk from 'chalk'
+import dotenv from 'dotenv'
 
 const require = createRequire(import.meta.url)
+
+dotenv.config({ path: path.join(import.meta.dirname, '../.env') })
 
 export const octokit = new Octokit({ auth: process.env.GITHUB_AUTH_TOKEN })
 
