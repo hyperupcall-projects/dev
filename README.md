@@ -17,3 +17,4 @@ My development tool. I use this for all my projects. It helps with creating new 
 - packageJson.bin alphabetical if object
 - Remove reading of `project.toml`, etc. `foxxo.toml` (`fox-dev.toml`)
 - flag to enable-disable certain checks
+development

@@ -5,7 +5,7 @@ import { globby } from 'globby'
 import path from 'node:path'
 import { existsSync } from 'node:fs'
 
-export async function run() {
+export async function run(/** @type {string[]} */ args) {
 	const templatesDir =
 		'/storage/ur/storage_home/Docs/Projects/Programming/Organizations/fox-templates'
 

@@ -7,14 +7,10 @@ import { globby } from 'globby'
 import * as fs from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import watcher from '@parcel/watcher'
-import { TEMPLATES } from './util.js'
 import { throttle, debounce } from 'lodash-es'
-import { newProject } from './new.js'
+import { createProject } from './new.js'
 
-/**
- * @param {string[]} args
- */
-export async function run(args) {
+export async function run(/** @type {string[]} */ args) {
 	const { values, positionals } = util.parseArgs({
 		args,
 		allowPositionals: false,
@@ -55,11 +51,11 @@ export async function exportProjects(templatesDir, { watch, outputDir }) {
 		const processDirs = debounce(async () => {
 			if (templateDirsToUpdate.length > 0) {
 				for (const templateDir of Array.from(new Set(templateDirsToUpdate))) {
-					await newProject({
+					await createProject({
 						dir: path.join(outputDir, path.basename(templateDir)),
 						ecosystem: path.dirname(path.basename(templateDir)),
-						variant: path.basename(templateDir),
-						name: path.basename(templateDir),
+						templateName: path.basename(templateDir),
+						projectName: path.basename(templateDir),
 						options: ['noexec'],
 					})
 				}

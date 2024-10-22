@@ -71,14 +71,14 @@ const Projects = [
 		install: dedent`
 			pnpm install
 			ln -sf "$PWD/bin/ten.js" ~/.local/bin/ten
-			cat <<"EOF" > ~/.local/share/systemd/user/knowledge-site.service
+			cat <<"EOF" > ~/.local/share/systemd/user/brain.service
 				[Unit]
 				Description=Hub
 				ConditionPathIsDirectory=%h/.dev/repositories/ten/
 
 				[Service]
 				Type=simple
-				WorkingDirectory=%h/Dropbox-Maestral/KnowledgeFinal
+				WorkingDirectory=%h/Dropbox-Maestral/Knowledge
 				ExecStart=%h/.local/bin/mise exec -- ten serve
 				Environment=PORT=52001
 				Restart=on-failure
@@ -87,11 +87,11 @@ const Projects = [
 				WantedBy=default.target
 			EOF
 			systemctl --user daemon-reload
-			systemctl --user start knowledge-site.service
+			systemctl --user start brain.service
 	`,
 		uninstall: dedent`
-			systemctl --user stop knowledge-site.service
-			rm -f ~/.local/share/systemd/user/knowledge-site.service
+			systemctl --user stop brain.service
+			rm -f ~/.local/share/systemd/user/brain.service
 			rm -f ~/.local/bin/ten
 			pnpm uninstall
 	`,

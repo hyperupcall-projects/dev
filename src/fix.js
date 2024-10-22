@@ -41,7 +41,7 @@ export async function run(/** @type {string[]} */ args) {
 	})
 
 	if (values.help) {
-		console.info(`fix --match=<MATCHER> --only=<FILTER>= --exclude=<FILTER> <DIR>:
+		console.info(`fix --match=<MATCHER> --only=<FILTER>= --exclude=<FILTER> <DIR>
 
 Flags:
   --help`)
