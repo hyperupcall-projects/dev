@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env -S node --experimental-strip-types --no-warnings
 import * as util from 'node:util'
 import path from 'node:path'
 import enquirer from 'enquirer'

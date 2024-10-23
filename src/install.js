@@ -78,7 +78,7 @@ const Projects = [
 
 				[Service]
 				Type=simple
-				WorkingDirectory=%h/Dropbox-Maestral/Knowledge
+				WorkingDirectory=%h/Dropbox-Maestral/Brain
 				ExecStart=%h/.local/bin/mise exec -- ten serve
 				Environment=PORT=52001
 				Restart=on-failure

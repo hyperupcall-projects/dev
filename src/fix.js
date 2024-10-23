@@ -162,7 +162,7 @@ async function fixFromFile(fixFile, fixId, project, config, options) {
 	}
 
 	if (module.skip) {
-		console.info(`⏭️  ${fixId}: Skipped`)
+		console.info(`[${chalk.yellow('SKIP')}] ${fixId}`)
 		return
 	}
 
@@ -170,17 +170,19 @@ async function fixFromFile(fixFile, fixId, project, config, options) {
 		let failed = false
 		const issues = module.issues({ project, config })
 		for await (const issue of issues) {
-			console.info(`${fixId}: Found issue`)
+			console.info(`[${chalk.cyan('EVAL')}] ${fixId}: Found issue`)
 			if (Array.isArray(issue.message)) {
 				for (const message of issue.message) {
-					console.info(`  => ${message}`)
+					console.info(` -> ${message}`)
 				}
 			} else {
 				console.info(issue.message)
 			}
 
 			if (!issue.fix) {
-				console.info(`❌ ${fixId}: Failed because no fix function exists`)
+				printWithTips(`[${chalk.red('FAIL')}] ${fixId}`, [
+					'No fix function exists'
+				])
 				failed = true
 				break
 			}
@@ -201,17 +203,21 @@ async function fixFromFile(fixFile, fixId, project, config, options) {
 			if (shouldRunFix) {
 				await issue.fix()
 			} else {
-				console.info(`❌ ${fixId}: Failed because running fix function was declined`)
+				printWithTips(`[${chalk.red('FAIL')}] ${fixId}`, [
+					'Failed because running fix function was declined'
+				])
 				failed = true
 				break
 			}
 		}
 
 		if (!failed) {
-			console.info(`✅ ${fixId}`)
+			console.info(`[${chalk.green('PASS')}] ${fixId}`)
 		}
 	} catch (err) {
-		console.info(`❌ ${fixId}: Failed because an error was caught:`)
+		printWithTips(`[${chalk.red('FAIL')}] ${fixId}`, [
+			'Failed because an error was caught'
+		])
 		console.error(err)
 	}
 }
@@ -274,5 +280,12 @@ async function getProject() {
 		remoteUrl,
 		owner: match.groups.owner,
 		name: match.groups.name,
+	}
+}
+
+function printWithTips(/** @type {string} */ str, /** @type {string[]} */ tips) {
+	console.info(str)
+	for (const tip of tips) {
+		console.info(` -> ${tip}`)
 	}
 }

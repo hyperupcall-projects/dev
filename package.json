@@ -5,10 +5,10 @@
 	"description": "A repository linter.",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/fox-land/dev"
+		"url": "https://github.com/fox-incubating/dev"
 	},
 	"bugs": {
-		"url": "https://github.com/fox-land/dev/issues"
+		"url": "https://github.com/fox-incubating/dev/issues"
 	},
 	"author": "Edwin Kofler <edwin@kofler.dev> (https://edwinkofler.com)",
 	"license": "MPL-2.0",

@@ -47,13 +47,13 @@ export async function* filesMustHaveContent(mapping) {
 				const content = await fs.readFile(file, 'utf-8')
 				if (content !== expectedContent) {
 					yield {
-						message: `  => Expected file "${file}" to have content:\n---\n${expectedContent}\n---\n  => But, the file has content:\n---\n${content}\n---\n`,
+						message: `  -> Expected file "${file}" to have content:\n---\n${expectedContent}\n---\n  => But, the file has content:\n---\n${content}\n---\n`,
 						fix: () => fs.writeFile(file, expectedContent),
 					}
 				}
 			} else {
 				yield {
-					message: `  => Expected file "${file}" to exist and have content:\n---\n${expectedContent}\n---\n  => But, the file does not exist`,
+					message: `  -> Expected file "${file}" to exist and have content:\n---\n${expectedContent}\n---\n  => But, the file does not exist`,
 					fix: () => fs.writeFile(file, expectedContent),
 				}
 			}
@@ -93,14 +93,21 @@ export async function* filesMustHaveShape(mapping) {
 				}
 			}
 
+			const oldStr = content
+			const newStr = JSON.stringify(expected, null, detectIndent(content).indent ?? '  ')
+			const rawPatch = diff.createPatch(file, oldStr, newStr, undefined, undefined, {
+				context: 4,
+
+			})
+			const patch = rawPatch.replace(/^[\s\S]*\n.*?=\n/, '').replaceAll(/\n\+(?!\+)/g, '\n' + chalk.green('+')).replaceAll(/\n-(?!\-)/g, '\n' + chalk.red('-'))
+
 			yield {
 				message:
 					'  ' +
 					dedent`
-					=> Expected file "${file}" to have the correct shape:
-					---
-					${difference.replaceAll('\n', '\n' + '\t'.repeat(5))}
-					---
+					-> Expected file "${file}" to have the correct shape:
+					${'='.repeat(80)}
+					${patch.replaceAll('\n', '\n' + '\t'.repeat(5))}${'='.repeat(80)}
 					`,
 				fix: () =>
 					fs.writeFile(
