@@ -1,9 +1,9 @@
-#!/usr/bin/env -S node --experimental-strip-types --no-warnings
+#!/usr/bin/env node
 import * as util from 'node:util'
 import path from 'node:path'
 import enquirer from 'enquirer'
 
-import { run as runExport } from '../src/export.js'
+import { run as runExport } from '../src/_export.js'
 import { run as runNew } from '../src/new.js'
 import { run as runFix } from '../src/fix.js'
 import { run as runInstall } from '../src/install.js'

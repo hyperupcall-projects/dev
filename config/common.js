@@ -97,9 +97,11 @@ export async function* filesMustHaveShape(mapping) {
 			const newStr = JSON.stringify(expected, null, detectIndent(content).indent ?? '  ')
 			const rawPatch = diff.createPatch(file, oldStr, newStr, undefined, undefined, {
 				context: 4,
-
 			})
-			const patch = rawPatch.replace(/^[\s\S]*\n.*?=\n/, '').replaceAll(/\n\+(?!\+)/g, '\n' + chalk.green('+')).replaceAll(/\n-(?!\-)/g, '\n' + chalk.red('-'))
+			const patch = rawPatch
+				.replace(/^[\s\S]*\n.*?=\n/, '')
+				.replaceAll(/\n\+(?!\+)/g, '\n' + chalk.green('+'))
+				.replaceAll(/\n-(?!\-)/g, '\n' + chalk.red('-'))
 
 			yield {
 				message:
@@ -234,3 +236,6 @@ export async function getNpmLatestVersion(/** @type {string[]} */ packages) {
 	})
 	return latestVersions
 }
+
+// TODO: Extract to package
+export function formatError() {}

@@ -10,7 +10,7 @@ const { positionals, values } = util.parseArgs({
 		help: {
 			default: false,
 			short: 'h',
-			type: 'boolean'
-		}
-	}
+			type: 'boolean',
+		},
+	},
 })

@@ -180,9 +180,7 @@ async function fixFromFile(fixFile, fixId, project, config, options) {
 			}
 
 			if (!issue.fix) {
-				printWithTips(`[${chalk.red('FAIL')}] ${fixId}`, [
-					'No fix function exists'
-				])
+				printWithTips(`[${chalk.red('FAIL')}] ${fixId}`, ['No fix function exists'])
 				failed = true
 				break
 			}
@@ -204,7 +202,7 @@ async function fixFromFile(fixFile, fixId, project, config, options) {
 				await issue.fix()
 			} else {
 				printWithTips(`[${chalk.red('FAIL')}] ${fixId}`, [
-					'Failed because running fix function was declined'
+					'Failed because running fix function was declined',
 				])
 				failed = true
 				break
@@ -216,7 +214,7 @@ async function fixFromFile(fixFile, fixId, project, config, options) {
 		}
 	} catch (err) {
 		printWithTips(`[${chalk.red('FAIL')}] ${fixId}`, [
-			'Failed because an error was caught'
+			'Failed because an error was caught',
 		])
 		console.error(err)
 	}

@@ -8,7 +8,6 @@ export const skip = false
 
 /** @type {import('../../../../index.js').Issues} */
 export async function* issues({ project }) {
-
 	const output = await execa('git', ['remote', '--verbose'])
 
 	const remotes = new Set()
@@ -22,10 +21,14 @@ export async function* issues({ project }) {
 		// TODO: remoteName === origin
 		if (remoteUrl.endsWith('.git')) {
 			yield {
-				message: [
-					`Remote URL "${remoteUrl}" should not end in ".git"`
-				],
-				fix: async () => await execa('git', ['remote', 'set-url', remoteName, /(?<url>.*?)\.git$/.exec(remoteUrl)?.groups?.url])
+				message: [`Remote URL "${remoteUrl}" should not end in ".git"`],
+				fix: async () =>
+					await execa('git', [
+						'remote',
+						'set-url',
+						remoteName,
+						/(?<url>.*?)\.git$/.exec(remoteUrl)?.groups?.url,
+					]),
 			}
 		}
 	}

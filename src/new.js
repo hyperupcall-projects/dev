@@ -58,28 +58,27 @@ export async function run(/** @type {string[]} */ args) {
 		}
 
 		const /** @type {{ value: string }} */ { value } = await prompt({
-			type: 'select',
-			name: 'value',
-			message: `Choose a "${values.ecosystem}" template`,
-			choices: Object.entries(parameters).map(([id, { name }]) => ({
-				name: id,
-				message: name,
-			})),
-		})
+				type: 'select',
+				name: 'value',
+				message: `Choose a "${values.ecosystem}" template`,
+				choices: Object.entries(parameters).map(([id, { name }]) => ({
+					name: id,
+					message: name,
+				})),
+			})
 
 		values['template-name'] = value
 	}
 
 	if (!values['project-name']) {
 		const /** @type {{ value: string }} */ { value } = await prompt({
-			type: 'input',
-			name: 'value',
-			message: 'What is the project name?',
-		})
+				type: 'input',
+				name: 'value',
+				message: 'What is the project name?',
+			})
 
 		values['project-name'] = value
 	}
-
 
 	await createProject({
 		dir: positionals[0] ?? '.',
@@ -117,7 +116,12 @@ export async function createProject(/** @type {Context} */ ctx) {
 		}
 	}
 
-	const templateDir = path.join(import.meta.dirname, '../config/templates', ctx.ecosystem, `${ctx.ecosystem}-${ctx.templateName}`)
+	const templateDir = path.join(
+		import.meta.dirname,
+		'../config/templates',
+		ctx.ecosystem,
+		`${ctx.ecosystem}-${ctx.templateName}`,
+	)
 
 	await walk(templateDir)
 	async function walk(/** @type {string} */ dir) {
@@ -137,7 +141,7 @@ export async function createProject(/** @type {Context} */ ctx) {
 				{
 					const template = await fs.readFile(inputFile, 'utf-8')
 					outputContent = sqrl.render(template, {
-						key: 'value'
+						key: 'value',
 					})
 				}
 				await fs.writeFile(outputFile, outputContent)
@@ -166,7 +170,7 @@ function getTemplateData() {
 				await execa('npm', ['run', 'start'], {
 					stdio: 'inherit',
 				})
-			}
+			},
 		},
 		rust: {
 			templates: {
@@ -184,7 +188,7 @@ function getTemplateData() {
 				await execa('cargo', ['run'], {
 					stdio: 'inherit',
 				})
-			}
+			},
 		},
 		go: {
 			templates: {
@@ -202,7 +206,7 @@ function getTemplateData() {
 				await execa('go', ['mod', 'init', `github.com/${ctx.name}`], {
 					stdio: 'inherit',
 				})
-			}
+			},
 		},
 		cpp: {
 			templates: {
@@ -217,7 +221,7 @@ function getTemplateData() {
 				await execa('c++', ['run', '.'], {
 					stdio: 'inherit',
 				})
-			}
+			},
 		},
 	}
 }

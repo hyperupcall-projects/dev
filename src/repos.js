@@ -1,6 +1,7 @@
 import * as fs from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import * as path from 'node:path'
+import * as util from 'node:util'
 import * as os from 'node:os'
 import * as readline from 'node:readline/promises'
 
@@ -14,7 +15,9 @@ import chalk from 'chalk'
 import { fileExists, octokit } from '../config/common.js'
 
 /**
- * @typedef {import('octokit').Octokit} Octokit
+ * @import { Octokit } from 'octokit'
+ * @import { GetResponseDataTypeFromEndpointMethod } from '@octokit/types'
+ * @typedef {GetResponseDataTypeFromEndpointMethod<typeof octokit.rest.repos.get>} GitHubRepository
  *
  * @typedef Config
  * @property {string} organizationsDir
@@ -22,15 +25,40 @@ import { fileExists, octokit } from '../config/common.js'
  */
 
 export async function run(/** @type {string[]} args */ args) {
+	const { values, positionals } = util.parseArgs({
+		args,
+		allowPositionals: true,
+		options: {
+			help: {
+				type: 'boolean',
+				short: 'h',
+			},
+		},
+	})
+
+	const helpMenu = `repos <sync|run args ...>
+
+	Flags:
+	--help`
+	if (values.help) {
+		console.info(helpMenu)
+		process.exit(0)
+	}
+
+	if (!positionals[0]) {
+		process.stdout.write(helpMenu + '\n')
+		process.exit(1)
+	}
+
 	const config = {
-		organizationsDir: untildify('~/.hidden/repositories'),
+		organizationsDir: untildify('~/.dev/managed-repositories'),
 		ignored: [
+			// Skip cloning from the following organizations:
 			'eshsrobotics/*',
 			'hackclub/*',
 			'bpkg/*',
 			'replit-discord/*',
 			'gamedevunite-at-smc/*',
-			'chesslablab/*',
 			'foxium-browser/*',
 			'cs-club-smc/*',
 			'ecc-cs-club/*',
@@ -41,26 +69,58 @@ export async function run(/** @type {string[]} args */ args) {
 			'fox-forks/*',
 			'asdf-contrib-hyperupcall/*',
 			'fix-js/*',
-			'fix-lists/*',
 			'big-blocks/*',
 			'GameDevUniteAtECC/*',
 			'swallowjs/*',
-			'AdventOfVim/*',
-			'aovim/*',
+			'EpicGames/*',
+			// Skip cloning from the following repositories:
 			'SchemaStore/json-validator',
 			'hyperupcall/hidden',
 			'hyperupcall/secrets',
 		],
 	}
-	await syncRepositories({ octokit, config })
+	if (positionals[0] === 'sync') {
+		await syncRepositories({ octokit, config })
+	} else if (positionals[0] === 'run') {
+		for (let orgEntry of await fs.readdir(config.organizationsDir, {
+			withFileTypes: true,
+		})) {
+			for (let repoEntry of await fs.readdir(
+				path.join(orgEntry.parentPath, orgEntry.name),
+				{
+					withFileTypes: true,
+				},
+			)) {
+				const repoPath = path.join(repoEntry.parentPath, repoEntry.name)
+				const cmdName = positionals[1]
+				const cmdArgs = positionals.slice(2)
+				if (!cmdName) {
+					console.error(`Failed to pass command to run`)
+					process.exit(1)
+				}
+				const res = await execa(cmdName, cmdArgs, {
+					cwd: repoPath,
+					stdin: 'inherit',
+					stdout: 'inherit',
+					stderr: 'inherit',
+				}).catch(() => {})
+				if (res.exitCode > 1) {
+					process.exit(1)
+				}
+				console.log('='.repeat(process.stdout.rows) + '\n')
+				console.log('='.repeat(process.stdout.rows) + '\n')
+				console.log('='.repeat(process.stdout.rows) + '\n')
+			}
+		}
+	}
 }
 
 /**
- * @typedef FunctionOptions
+ * @typedef SyncRepositoriesParams
  * @property {Octokit} octokit
  * @property {Config} config
  *
- * @param {FunctionOptions} options
+ * @param {SyncRepositoriesParams} options
  */
 export async function syncRepositories({ octokit, config }) {
 	{
@@ -76,21 +136,91 @@ export async function syncRepositories({ octokit, config }) {
 	}
 	await fs.mkdir(config.organizationsDir, { recursive: true })
 
-	const githubOwner = (await octokit.rest.users.getAuthenticated()).data.login
+	/** @type {Record<string, GitHubRepository[]>} */
+	const Repositories = {}
+	function isValidRepository(
+		/** @type {string} */ ownerName,
+		/** @type {string} */ repoName,
+	) {
+		if (!(ownerName in Repositories)) {
+			return false
+		}
+
+		for (const repository of Repositories[ownerName]) {
+			if (repository.name === repoName) {
+				return true
+			}
+		}
+
+		return false
+	}
+
+	// Collect repositories from organizations.
 	{
-		const orgList = []
-		for await (const { data: organizations } of octokit.paginate.iterator(
+		const joinedOrganizations = []
+		for await (const { data: memberships } of octokit.paginate.iterator(
 			octokit.rest.orgs.listMembershipsForAuthenticatedUser,
 			{
 				per_page: 100,
 			},
 		)) {
-			for (const organization of organizations) {
-				orgList.push(organization)
+			for (const membership of memberships) {
+				// If user has joined the organization.
+				if (membership.state !== 'active') {
+					console.info(`Ignoring org "${membership.organization.login}" (not active)`)
+					continue
+				}
+
+				if (
+					config.ignored.some(
+						(pattern) => `${membership.organization.login}/*` === pattern,
+					)
+				) {
+					console.info(`Ignoring org "${membership.organization.login}"`)
+					continue
+				}
+
+				joinedOrganizations.push(membership.organization)
 			}
 		}
+		const joinedOrganizationsData = await Promise.all(
+			joinedOrganizations.map(async (organization) => {
+				return await octokit
+					.request('GET /orgs/{org}/repos', {
+						org: organization.login,
+						headers: {
+							'X-GitHub-Api-Version': '2022-11-28',
+						},
+					})
+					.then((res) => {
+						return res.data
+					})
+			}),
+		)
+		for (let i = 0; i < joinedOrganizations.length; ++i) {
+			const orgName = joinedOrganizations[i].login
+			Repositories[orgName] = joinedOrganizationsData[i].filter((repository) => {
+				if (repository.archived) {
+					console.info(`Ignoring "${repository.full_name} (archived)"`)
+					return false
+				}
 
-		const reposMap = await getOrgRepoMap(octokit, orgList, config)
+				for (const pattern of config.ignored) {
+					if (minimatch(repository.full_name, pattern)) {
+						console.info(`Ignoring "${repository.full_name}"`)
+						return false
+					}
+				}
+
+				return true
+			})
+		}
+	}
+
+	// Collect repositories from currently signed-in user.
+	{
+		const currentGitHubUser = (await octokit.rest.users.getAuthenticated()).data.login
+		const repos = []
 		for await (const { data: repositories } of octokit.paginate.iterator(
 			octokit.rest.repos.listForAuthenticatedUser,
 			{
@@ -104,160 +234,135 @@ export async function syncRepositories({ octokit, config }) {
 					continue
 				}
 
-				if (Array.isArray(reposMap.get(repository.owner.login))) {
-					reposMap.get(repository.owner.login).push(repository.name)
-				} else {
-					reposMap.set(repository.owner.login, [repository.name])
+				repos.push(repository)
+			}
+		}
+
+		Repositories[currentGitHubUser] = repos
+	}
+
+	// Check that no directories are empty
+	{
+		for (let orgStat of await fs.readdir(config.organizationsDir, {
+			withFileTypes: true,
+		})) {
+			if (
+				orgStat.isDirectory() &&
+				(await fs.readdir(path.join(orgStat.parentPath, orgStat.name))).length === 0
+			) {
+				console.error(`❌ Expected a non-empty directory: ${orgStat.name}`)
+			}
+		}
+	}
+
+	// Check that each repository directory has a corresponding GitHub repository.
+	{
+		for (let orgEntry of await fs.readdir(config.organizationsDir, {
+			withFileTypes: true,
+		})) {
+			for (let repoEntry of await fs.readdir(
+				path.join(orgEntry.parentPath, orgEntry.name),
+				{
+					withFileTypes: true,
+				},
+			)) {
+				if (!repoEntry.isDirectory()) {
+					console.error(`❌ Expected a directory: ${orgEntry.name}${repoEntry.name}`)
+				}
+
+				if (!isValidRepository(orgEntry.name, repoEntry.name)) {
+					console.error(
+						`❌ Not on GitHub (but directory exists) (was repo newly hidden?): ${orgEntry.name}/${repoEntry.name}`,
+					)
 				}
 			}
 		}
-		const reposList = []
-		for (let [orgName, repos] of reposMap.entries()) {
-			for (const repo of repos) {
-				reposList.push(`${orgName}/${repo}`)
-			}
-		}
+	}
 
-		// Check that no directories are empty
-		{
-			for (let orgStat of await fs.readdir(config.organizationsDir, {
-				withFileTypes: true,
-			})) {
-				if (
-					orgStat.isDirectory() &&
-					(await fs.readdir(path.join(orgStat.parentPath, orgStat.name))).length === 0
-				) {
-					console.error(`❌ Expected a non-empty directory: ${orgStat.name}`)
-				}
-			}
-		}
+	// Check that each GitHub repository has a corresponding cloned repository directory.
+	{
+		for (let orgName in Repositories) {
+			const repos = Repositories[orgName]
+			for (let repo of repos) {
+				let repoDir = path.join(config.organizationsDir, orgName, repo.name)
 
-		// Check that each repository directory has a corresponding GitHub repository.
-		{
-			for (let orgEntry of await fs.readdir(config.organizationsDir, {
-				withFileTypes: true,
-			})) {
-				for (let repoEntry of await fs.readdir(
-					path.join(orgEntry.parentPath, orgEntry.name),
-					{
-						withFileTypes: true,
-					},
-				)) {
-					if (!repoEntry.isDirectory()) {
-						console.error(`❌ Expected a directory: ${orgEntry.name}${repoEntry.name}`)
-					}
-
-					if (!reposList.includes(`${orgEntry.name}/${repoEntry.name}`)) {
-						console.error(
-							`❌ Not on GitHub (but directory exists) (was repo newly hidden?): ${orgEntry.name}/${repoEntry.name}`,
-						)
-					}
-				}
-			}
-		}
-
-		// Check that each GitHub repository has a corresponding cloned repository directory.
-		{
-			for (let [orgName, repos] of reposMap.entries()) {
-				for (let repo of repos) {
-					let repoDir = path.join(config.organizationsDir, orgName, repo)
-
-					if (!existsSync(repoDir)) {
-						console.log(`❌ Not cloned: ${orgName}/${repo}`)
-						const rl = readline.createInterface({
-							input: process.stdin,
-							output: process.stdout,
+				if (!existsSync(repoDir)) {
+					console.log(`❌ Not cloned: ${orgName}/${repo.name}`)
+					const rl = readline.createInterface({
+						input: process.stdin,
+						output: process.stdout,
+					})
+					const input = await rl.question('Clone? (y/n): ')
+					rl.close()
+					if (yn(input)) {
+						await execa('git', ['clone', `gh:${orgName}/${repo.name}`, repoDir], {
+							stdin: 'inherit',
+							stdout: 'inherit',
+							stderr: 'inherit',
 						})
-						const input = await rl.question('Clone? (y/n): ')
-						rl.close()
-						if (yn(input)) {
-							await execa('git', ['clone', `gh:${orgName}/${repo}`, repoDir], {
-								stdin: 'inherit',
-								stdout: 'inherit',
-								stderr: 'inherit',
-							})
-						}
 					}
 				}
 			}
 		}
+	}
 
-		// Check that each cloned organization directory has a corresponding GitHub organization.
-		{
-			for (let orgName of await fs.readdir(config.organizationsDir)) {
-				const isOnGitHub = orgList.some(
-					(orgName2) => orgName2.organization.login === orgName,
-				)
-				if (!isOnGitHub && orgName !== githubOwner) {
-					console.log(`❌ Not on GitHub: ${orgName}`)
+	// Check that each cloned GitHub repository is up to date
+	{
+		for (let orgName in Repositories) {
+			const repos = Repositories[orgName]
+			for (let repo of repos) {
+				let repoDir = path.join(config.organizationsDir, orgName, repo.name)
+				console.log(`Checking if ${orgName}/${repo.name} needs updates`)
+
+				async function uptoDate(/** @type {string} */ repoDir) {
+					await execa('git', ['-C', repoDir, 'fetch', '--all'])
+					const result = await execa('git', [
+						'-C',
+						repoDir,
+						'status',
+						'--short',
+						'--branch',
+					])
+					return !result.stdout.trim().includes('behind')
 				}
-			}
-		}
-
-		// Check that each GitHub organization has a corresponding cloned organization directory.
-		{
-			// if (repos.length === 0) {
-			// 	let orgDir = path.join(config.organizationsDir, orgName)
-			// 	let exist = existsSync(orgDir)
-			// 	if (!exist) {
-			// 		console.log(`❌ No directory for organization: ${orgName}`)
-			// 	}
-			// }
-		}
-
-		// Check that there are no empty directories that correspond to GitHub organizations.
-		{
-			for (let orgEntry of await fs.readdir(config.organizationsDir, {
-				withFileTypes: true,
-			})) {
-				const children = await fs.readdir(path.join(orgEntry.path, orgEntry.name))
-				if (children.length === 0) {
-					console.log(`❌ No repositories for organization: ${orgEntry.name}`)
+				if (!(await uptoDate(repoDir))) {
+					console.log(`❌ Not up to date: ${orgName}/${repo.name}`)
+					const rl = readline.createInterface({
+						input: process.stdin,
+						output: process.stdout,
+					})
+					const input = await rl.question('Pull? (y/n): ')
+					rl.close()
+					if (yn(input)) {
+						await execa('git', ['-C', repoDir, 'pull'], {
+							stdin: 'inherit',
+							stdout: 'inherit',
+							stderr: 'inherit',
+						})
+					}
 				}
 			}
 		}
 	}
-}
 
-/**
- * @param {Octokit} octokit
- * @param {GetResponseDataTypeFromEndpointMethod<typeof Octokit. orgs.listMembershipsForAuthenticatedUser>} allOrganizations
- * @param {Config} config
- */
-async function getOrgRepoMap(octokit, allOrganizations, config) {
-	const filteredOrgs = allOrganizations
-		.map((item) => item.organization.login)
-		.filter((orgName) => {
-			for (const pattern of config.ignored) {
-				if (minimatch(`${orgName}/*`, pattern)) {
-					console.log(`Ignoring "${orgName}"`)
-					return false
-				}
+	// Check that each cloned organization directory has a corresponding GitHub organization.
+	{
+		for (let orgName of await fs.readdir(config.organizationsDir)) {
+			if (!(orgName in Repositories)) {
+				console.log(`❌ Organization not on GitHub: ${orgName}`)
 			}
-			return true
-		})
-	const filteredRepos = await Promise.all(
-		filteredOrgs.map((orgName) => {
-			return octokit
-				.request('GET /orgs/{org}/repos', {
-					org: orgName,
-					headers: {
-						'X-GitHub-Api-Version': '2022-11-28',
-					},
-				})
-				.then((res) => {
-					return res.data.map((item) => item.name)
-				})
-		}),
-	)
-
-	const map = new Map()
-	for (let i = 0; i < filteredRepos.length; ++i) {
-		let org = filteredOrgs[i]
-		let repos = filteredRepos[i]
-
-		map.set(org, repos)
+		}
 	}
 
-	return map
+	// Check that there are no empty organization directories
+	{
+		for (let orgEntry of await fs.readdir(config.organizationsDir, {
+			withFileTypes: true,
+		})) {
+			const children = await fs.readdir(path.join(orgEntry.parentPath, orgEntry.name))
+			if (children.length === 0) {
+				console.log(`❌ Organization directory should not be empty ${orgEntry.name}`)
+			}
+		}
+	}
 }
