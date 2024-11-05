@@ -19,27 +19,17 @@ import { fileExists, octokit } from '../config/common.js'
  * @import { GetResponseDataTypeFromEndpointMethod } from '@octokit/types'
  * @typedef {GetResponseDataTypeFromEndpointMethod<typeof octokit.rest.repos.get>} GitHubRepository
  *
+ * @import { CommandReposOptions } from "../index.js";
+ *
  * @typedef Config
  * @property {string} organizationsDir
  * @property {string[]} ignored
  */
 
-export async function run(/** @type {string[]} args */ args) {
-	const { values, positionals } = util.parseArgs({
-		args,
-		allowPositionals: true,
-		options: {
-			help: {
-				type: 'boolean',
-				short: 'h',
-			},
-		},
-	})
-
-	const helpMenu = `repos <sync|run args ...>
-
-	Flags:
-	--help`
+export async function run(
+	/** @type {CommandReposOptions} */ values,
+	/** @type {string[]} */ positionals,
+) {
 	if (values.help) {
 		console.info(helpMenu)
 		process.exit(0)

@@ -12,23 +12,10 @@ import { execa } from 'execa'
 import semver from 'semver'
 
 /**
- * @typedef {Object} ProjectData
- * @property {boolean} isCloned
- * @property {boolean} isInstalled
- * @property {string} gitRef
- * @property {string} latestGitRef
- * @property {string[]} versions
- *
- * @typedef {Object} Project
- * @property {string} name
- * @property {string} url
- * @property {string} install
- * @property {string} uninstall
- * @property {() => Promise<boolean>} installed
- * @property {ProjectData} [data]
+ * @import { CommandInstallOptions, InstalledProject } from "../index.js";
  */
 
-/** @type {Project[]} */
+/** @type {InstalledProject[]} */
 const Projects = [
 	{
 		name: 'hub',
@@ -173,7 +160,10 @@ const Ctx = {
 }
 
 let ignoreKeystrokes = false
-export async function run(/** @type {string[]} */ args) {
+export async function run(
+	/** @type {CommandInstallOptions} */ values,
+	/** @type {string[]} */ positionals,
+) {
 	await fs.mkdir(Ctx.devDir, { recursive: true })
 	await fs.mkdir(Ctx.repositoryDir, { recursive: true })
 
@@ -281,7 +271,10 @@ async function renderMainScreen(/** @type {string} */ char) {
 			const scriptFile = path.join(os.tmpdir(), `dev-${crypto.randomUUID()}.sh`)
 			await fs.writeFile(scriptFile, project.install)
 			ignoreKeystrokes = true
-			await execa({ stdio: 'inherit', cwd: dir })`bash -eo pipefail ${scriptFile}`
+			await execa({
+				stdio: 'inherit',
+				cwd: dir,
+			})`bash -eo pipefail ${scriptFile}`
 			ignoreKeystrokes = false
 			await updateProjectData()
 		} else {
@@ -297,7 +290,10 @@ async function renderMainScreen(/** @type {string} */ char) {
 			const scriptFile = path.join(os.tmpdir(), `dev-${crypto.randomUUID()}.sh`)
 			await fs.writeFile(scriptFile, project.uninstall)
 			ignoreKeystrokes = true
-			await execa({ stdio: 'inherit', cwd: dir })`bash -eo pipefail ${scriptFile}`
+			await execa({
+				stdio: 'inherit',
+				cwd: dir,
+			})`bash -eo pipefail ${scriptFile}`
 			ignoreKeystrokes = false
 			await updateProjectData()
 		} else {
@@ -435,7 +431,7 @@ async function renderUpdateVersionScreen(/** @type {string} */ char) {
 async function updateProjectData() {
 	await Promise.all(Projects.map(mutateProject))
 
-	async function mutateProject(/** @type {Project} */ project) {
+	async function mutateProject(/** @type {InstalledProject} */ project) {
 		const dir = path.join(Ctx.repositoryDir, project.name)
 		const projectExists = await fileExists(dir)
 

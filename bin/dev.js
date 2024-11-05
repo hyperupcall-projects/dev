@@ -1,58 +1,153 @@
 #!/usr/bin/env node
-import * as util from 'node:util'
-import path from 'node:path'
-import enquirer from 'enquirer'
+import fs from "node:fs/promises";
+import path from "node:path";
+import { Cli, Command, Option, Builtins } from "clipanion";
 
-import { run as runExport } from '../src/_export.js'
-import { run as runNew } from '../src/new.js'
-import { run as runFix } from '../src/fix.js'
-import { run as runInstall } from '../src/install.js'
-import { run as runRepos } from '../src/repos.js'
-import { run as runScript } from '../src/script.js'
+import { run as runNew } from "../src/new.js";
+import { run as runFix } from "../src/fix.js";
+import { run as runInstall } from "../src/install.js";
+import { run as runRepos } from "../src/repos.js";
+import { run as runScript } from "../src/script.js";
+import { run as runStartServer } from "../src/start-server.js";
 
-const { prompt } = enquirer
+/**
+ * import { PackageJson } from "type-fest";
+ */
 
-if (process.argv.includes('--help')) {
-	console.info(`dev <subcommand> [args...]
-  dev export [args...]
-  dev new [args...]
-  dev fix [args...]
-  dev install [args...]
-  dev repos [args...]
-  dev script [args...]
-`)
-	process.exit(0)
-}
+/** @type {PackageJson} */
+const packageJson = JSON.parse(
+	await fs.readFile(path.join(import.meta.dirname, "../package.json"), "utf-8"),
+);
 
-let subcommand = ''
-let args = []
-if (process.argv[2]) {
-	subcommand = process.argv[2]
-	args = process.argv.slice(3)
-} else {
-	const /** @type {{ value: string }} */ { value } = await prompt({
-			type: 'select',
-			name: 'value',
-			message: 'Choose subcommand',
-			choices: ['export', 'new', 'fix', 'install', 'repos', 'script'],
-		})
-	subcommand = value
-	args = process.argv.slice(2)
-}
+const cli = new Cli({
+	binaryLabel: "dev",
+	binaryName: "dev",
+	binaryVersion: packageJson.version,
+	enableCapture: false,
+});
 
-if (subcommand === 'export') {
-	await runExport(args)
-} else if (subcommand === 'new') {
-	await runNew(args)
-} else if (subcommand === 'fix') {
-	await runFix(args)
-} else if (subcommand === 'install') {
-	await runInstall(args)
-} else if (subcommand === 'repos') {
-	await runRepos(args)
-} else if (subcommand === 'script') {
-	await runScript(args)
-} else {
-	console.error(`Unknown subcommand: "${subcommand}"`)
-	process.exit(1)
-}
+cli.register(
+	class NewCommand extends Command {
+		static paths = [[`new`]];
+		static usage = Command.Usage({
+			description: `Create a new project`,
+		});
+
+		ecosystem = Option.String({ required: false });
+		"template-name" = Option.String({ required: false });
+		"project-name" = Option.String({ required: false });
+		force = Option.Boolean("--force");
+		options = Option.String({ required: false });
+		positionals = Option.Proxy();
+
+		async execute() {
+			await runNew(
+				{
+					ecosystem: this.ecosystem,
+					templateName: this["template-name"],
+					projectName: this["project-name"],
+					force: this.force,
+					options: this.options,
+				},
+				this.positionals,
+			).catch((err) => {
+				console.error(err);
+			});
+		}
+	},
+);
+cli.register(
+	class FixCommand extends Command {
+		static paths = [[`fix`]];
+		static usage = Command.Usage({
+			description: `Lint and fix issues with code`,
+		});
+
+		yes = Option.Boolean("--yes");
+		match = Option.Array("match");
+		only = Option.Array("only");
+		exclude = Option.Array("exclude");
+		positionals = Option.Proxy();
+
+		async execute() {
+			await runFix(
+				{
+					yes: this.yes,
+					match: this.match,
+					only: this.only,
+					exclude: this.exclude,
+				},
+				this.positionals,
+			).catch((err) => {
+				console.error(err);
+			});
+		}
+	},
+);
+cli.register(
+	class InstallCommand extends Command {
+		static paths = [[`install`]];
+		static usage = Command.Usage({
+			description: `Install a program through a TUI`,
+		});
+
+		positionals = Option.Proxy();
+
+		async execute() {
+			await runInstall({}, this.positionals).catch((err) => {
+				console.error(err);
+			});
+		}
+	},
+);
+cli.register(
+	class ReposCommand extends Command {
+		static paths = [[`repos`]];
+		static usage = Command.Usage({
+			description: `Manage repositories`,
+		});
+
+		positionals = Option.Proxy();
+
+		async execute() {
+			await runRepos({}, this.positionals).catch((err) => {
+				console.error(err);
+			});
+		}
+	},
+);
+cli.register(
+	class ScriptCommand extends Command {
+		static paths = [[`script`]];
+		static usage = Command.Usage({
+			description: `Execute a script`,
+		});
+
+		positionals = Option.Proxy();
+
+		async execute() {
+			await runScript({}, this.positionals).catch((err) => {
+				console.error(err);
+			});
+		}
+	},
+);
+cli.register(
+	class StartServer extends Command {
+		static paths = [[`start-server`]];
+		static usage = Command.Usage({
+			description: `Start the server`,
+		});
+
+		positionals = Option.Proxy();
+
+		async execute() {
+			await runStartServer({}, this.positionals).catch((err) => {
+				console.error(err);
+			});
+		}
+	},
+);
+cli.register(Builtins.HelpCommand);
+
+cli.runExit(process.argv.slice(2), {});

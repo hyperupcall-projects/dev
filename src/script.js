@@ -14,17 +14,14 @@ import chalk from 'chalk'
 
 import { forEachRepository } from './util.js'
 
-export async function run(/** @type {string[]} args */ args) {
-	const { values, positionals } = util.parseArgs({
-		args,
-		allowPositionals: true,
-		options: {
-			help: {
-				type: 'boolean',
-				short: 'h',
-			},
-		},
-	})
+/**
+ * @import { CommandScriptOptions } from '../index.js'
+ */
+
+export async function run(
+	/** @type {CommandScriptOptions} */ values,
+	/** @type {string[]} */ positionals,
+) {
 	const task = positionals[0]
 
 	const helpText = `script <taskName>
@@ -230,7 +227,10 @@ export async function symlinkHiddenDirs(/** @type {string[]} */ args) {
 				const input = await rl.question(`Move? ${newHiddenDirPretty} (y/n): `)
 				rl.close()
 				if (yn(input)) {
-					await fs.mkdir(path.dirname(newHiddenDir), { recursive: true, mode: 0o755 })
+					await fs.mkdir(path.dirname(newHiddenDir), {
+						recursive: true,
+						mode: 0o755,
+					})
 					await fs.rename(oldHiddenDir, newHiddenDir)
 					await restat()
 				}

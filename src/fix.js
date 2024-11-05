@@ -2,7 +2,6 @@
 // SPDX-FileCopyrightText: Copyright 2023 Edwin Kofler
 import * as path from 'node:path'
 import * as fs from 'node:fs/promises'
-import * as util from 'node:util'
 import * as readline from 'node:readline/promises'
 import chalk from 'chalk'
 import { fileExists, pkgRoot } from '../config/common.js'
@@ -11,45 +10,14 @@ import toml from 'smol-toml'
 import { execa } from 'execa'
 
 /**
- * @typedef {import('../index.js').Project} Project
- * @typedef {import('../index.js').Config} Config
- * @typedef {import('../index.js').Options} Options
+ * @import { CommandFixOptions, Project } from '../index.js'
  */
 
-export async function run(/** @type {string[]} */ args) {
-	const { values, positionals } = util.parseArgs({
-		args,
-		allowPositionals: false,
-		options: {
-			yes: {
-				type: 'boolean',
-			},
-			match: {
-				type: 'string',
-			},
-			only: {
-				type: 'string',
-			},
-			exclude: {
-				type: 'string',
-			},
-			help: {
-				type: 'boolean',
-				short: 'h',
-			},
-		},
-	})
-
-	if (values.help) {
-		console.info(`fix --match=<MATCHER> --only=<FILTER>= --exclude=<FILTER> <DIR>
-
-Flags:
-  --help`)
-		process.exit(0)
-	}
-
+export async function run(
+	/** @type {CommandFixOptions} */ options,
+	/** @type {string[]} */ positionals,
+) {
 	if (positionals.length > 0) {
-		// @ts-expect-error
 		process.chdir(positionals[0] || '.')
 	}
 
@@ -65,13 +33,6 @@ Flags:
 			throw err
 		}
 	}
-
-	const /** @type {Options} */ options = {
-			yes: values.yes ?? false,
-			match: values.match?.split(',') ?? [],
-			exclude: values.exclude?.split(',') ?? [],
-			only: values.only?.split(',') ?? [],
-		}
 
 	if (project.type === 'dir') {
 		console.log(`${chalk.blue('Directory:')} ${process.cwd()}`)
@@ -116,7 +77,7 @@ Flags:
 
 			return false
 		}
-		await fixFromDir(dir, predicate, project, config, options)
+		await fixFromDir(dir, predicate, project, options)
 	}
 
 	// TODO: by-name
@@ -128,10 +89,9 @@ Flags:
  * @param {string} dir
  * @param {(fixId: string) => boolean | Promise<boolean>} predicate
  * @param {Project} project
- * @param {Config} config
- * @param {Options} options
+ * @param {CommandFixOptions} options
  */
-async function fixFromDir(dir, predicate, project, config, options) {
+async function fixFromDir(dir, predicate, project, options) {
 	for (const group of await fs.readdir(dir, { withFileTypes: true })) {
 		for (const fixFileEntry of await fs.readdir(path.join(group.parentPath, group.name), {
 			withFileTypes: true,
@@ -140,7 +100,7 @@ async function fixFromDir(dir, predicate, project, config, options) {
 			const fixId = `${group.name}/${fixFileEntry.name.slice(0, -3)}`
 
 			if (await predicate(fixId)) {
-				await fixFromFile(fixFile, fixId, project, config, options)
+				await fixFromFile(fixFile, fixId, project, options)
 			}
 		}
 	}
@@ -150,10 +110,9 @@ async function fixFromDir(dir, predicate, project, config, options) {
  * @param {string} fixFile
  * @param {string} fixId
  * @param {Project} project
- * @param {Config} config
- * @param {Options} options
+ * @param {CommandFixOptions} options
  */
-async function fixFromFile(fixFile, fixId, project, config, options) {
+async function fixFromFile(fixFile, fixId, project, options) {
 	const module = await import(fixFile)
 	if (!module.issues) {
 		throw new TypeError(
@@ -168,7 +127,7 @@ async function fixFromFile(fixFile, fixId, project, config, options) {
 
 	try {
 		let failed = false
-		const issues = module.issues({ project, config })
+		const issues = module.issues({ project })
 		for await (const issue of issues) {
 			console.info(`[${chalk.cyan('EVAL')}] ${fixId}: Found issue`)
 			if (Array.isArray(issue.message)) {

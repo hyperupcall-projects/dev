@@ -9,32 +9,16 @@ import { execa } from 'execa'
 import * as sqrl from 'squirrelly'
 import { fileExists } from '../config/common.js'
 
+/**
+ * @import { CommandNewOptions } from '../index.js'
+ */
+
 const { prompt } = enquirer
 
-export async function run(/** @type {string[]} */ args) {
-	const { positionals, values } = util.parseArgs({
-		args,
-		allowPositionals: true,
-		options: {
-			ecosystem: {
-				type: 'string',
-			},
-			'template-name': {
-				type: 'string',
-			},
-			'project-name': {
-				type: 'string',
-			},
-			force: {
-				type: 'boolean',
-				default: false,
-			},
-			options: {
-				type: 'string',
-			},
-		},
-	})
-
+export async function run(
+	/** @type {CommandNewOptions} */ values,
+	/** @type {string[]} */ positionals,
+) {
 	if (!values.ecosystem) {
 		const /** @type {{ value: string }} */ input = await prompt({
 				type: 'select',
@@ -50,7 +34,7 @@ export async function run(/** @type {string[]} */ args) {
 		values.ecosystem = input.value
 	}
 
-	if (!values['template-name']) {
+	if (!values.templateName) {
 		const templateData = getTemplateData()
 		const parameters = templateData[values.ecosystem].templates
 		if (!parameters) {
@@ -67,24 +51,24 @@ export async function run(/** @type {string[]} */ args) {
 				})),
 			})
 
-		values['template-name'] = value
+		values.templateName = value
 	}
 
-	if (!values['project-name']) {
+	if (!values.projectName) {
 		const /** @type {{ value: string }} */ { value } = await prompt({
 				type: 'input',
 				name: 'value',
 				message: 'What is the project name?',
 			})
 
-		values['project-name'] = value
+		values.projectName = value
 	}
 
 	await createProject({
 		dir: positionals[0] ?? '.',
 		ecosystem: values.ecosystem,
-		templateName: values['template-name'],
-		projectName: values['project-name'],
+		templateName: values.templateName,
+		projectName: values.projectName,
 		forceTemplate: values.force,
 		options: (values.options ?? '').split(','),
 	})
