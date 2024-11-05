@@ -38,21 +38,6 @@ const Projects = [
 		},
 	},
 	{
-		name: 'dev',
-		url: 'https://github.com/fox-incubating/dev',
-		install: dedent`
-			pnpm install
-			ln -sf "$PWD/bin/dev.js" ~/.local/bin/dev
-	`,
-		uninstall: dedent`
-			rm -f ~/.local/bin/dev
-			pnpm uninstall
-	`,
-		async installed() {
-			return await fileExists(path.join(os.homedir(), '.local/bin/dev'))
-		},
-	},
-	{
 		name: 'ten',
 		url: 'https://github.com/fox-incubating/ten',
 		install: dedent`
@@ -131,23 +116,6 @@ const Projects = [
 	// 		}
 	// 	}
 	// },
-	// {
-	// 	url: 'https://github.com/fox-incubating/wo',
-	// 	install: dedent`
-	// 		cargo install --path .
-	// 	`,
-	// 	uninstall: dedent`
-	// 		cargo uninstall --path .
-	// 	`,
-	// 	async installed() {
-	// 		try {
-	// 			await execa({ shell: true })`command -v wo`
-	// 			return true
-	// 		} catch (err) {
-	// 			return false
-	// 		}
-	// 	}
-	// },
 ]
 
 /**
@@ -155,10 +123,14 @@ const Projects = [
  */
 const Ctx = {
 	devDir: path.join(os.homedir(), '.dev'),
-	repositoryDir: path.join(os.homedir(), '.dev/repositories'),
+	repositoryDir: path.join(os.homedir(), '.dev/.data/installed-repositories'),
 	currentProject: 'hub',
 }
-
+export function cleanupTerminal() {
+	process.stdout.write(ansiEscapes.cursorRestorePosition)
+	process.stdout.write(ansiEscapes.cursorShow)
+	process.stdout.write(ansiEscapes.exitAlternativeScreen)
+}
 let ignoreKeystrokes = false
 export async function run(
 	/** @type {CommandInstallOptions} */ values,
@@ -172,10 +144,11 @@ export async function run(
 	process.stdout.write(ansiEscapes.cursorHide)
 	process.stdout.write(ansiEscapes.enterAlternativeScreen)
 	process.on('exit', () => {
-		process.stdout.write(ansiEscapes.cursorRestorePosition)
-		process.stdout.write(ansiEscapes.cursorShow)
-		process.stdout.write(ansiEscapes.exitAlternativeScreen)
+		if (!globalThis.skipTerminalCleanup) {
+			cleanupTerminal()
+		}
 	})
+	process.on('uncaughtException', (err) => {})
 
 	process.stdout.write(`Fetching data...\n`)
 	await updateProjectData()
