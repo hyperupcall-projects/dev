@@ -26,7 +26,7 @@ export async function run(
 	let config = {}
 	try {
 		config = toml.parse(
-			await fs.readFile(path.join(process.cwd(), 'project.toml'), 'utf-8'),
+			await fs.readFile(path.join(project.rootDir, 'project.toml'), 'utf-8'),
 		)
 	} catch (err) {
 		if (/** @type {NodeJS.Error} */ (err).code !== 'ENOENT') {
@@ -35,9 +35,9 @@ export async function run(
 	}
 
 	if (project.type === 'dir') {
-		console.log(`${chalk.blue('Directory:')} ${process.cwd()}`)
+		console.log(`${chalk.blue('Directory:')} ${project.rootDir}`)
 	} else if (project.type === 'vcs-only') {
-		console.log(`${chalk.blue('Repository:')} ${process.cwd()}`)
+		console.log(`${chalk.blue('Repository:')} ${project.rootDir}`)
 	} else if (project.type === 'vcs-with-remote') {
 		console.log(
 			`${chalk.blue(`Remote:`)} https://github.com/${project.owner}/${project.name}`,
@@ -57,7 +57,13 @@ export async function run(
 
 			return false
 		}
-		await fixFromDir(dir, predicate, project, config, options)
+		await fixFromFile(
+			path.join(pkgRoot(), 'config/fixes/by-other/other/no-code-of-conduct.js'),
+			'other/no-code-of-conduct',
+			project,
+			options,
+		)
+		await fixFromDir(dir, predicate, project, options)
 	}
 
 	{
@@ -186,6 +192,7 @@ async function getProject() {
 	if (!(await fileExists('.git'))) {
 		return {
 			type: 'dir',
+			rootDir: process.cwd(),
 		}
 	}
 
@@ -217,6 +224,7 @@ async function getProject() {
 	if (!remoteName) {
 		return {
 			type: 'vcs-only',
+			rootDir: process.cwd(),
 			branchName,
 		}
 	}
@@ -226,12 +234,14 @@ async function getProject() {
 	if (!match?.groups) {
 		return {
 			type: 'vcs-only',
+			rootDir: process.cwd(),
 			branchName,
 		}
 	}
 
 	return {
 		type: 'vcs-with-remote',
+		rootDir: process.cwd(),
 		branchName,
 		remoteName,
 		remoteUrl,

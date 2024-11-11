@@ -13,8 +13,15 @@ import { fileExists, pkgRoot, octokit } from '../../../common.js'
  * Check that various fields of the the GitHub repository metadata conforms
  * to my standards.
  */
+
 /** @type {import('../../../../index.js').Issues} */
 export const issues = async function* issues({ project }) {
+	if (project.type !== 'vcs-with-remote') {
+		throw new Error(
+			`Expected project "${project.rootDir}" to be a Git repository with a remote URL`,
+		)
+	}
+
 	const { data } = await octokit.rest.repos.get({
 		owner: project.owner,
 		repo: project.name,
@@ -103,7 +110,7 @@ export const issues = async function* issues({ project }) {
 				yield {
 					message: [
 						'Expected GitHub repository to have the "projects" tab disabled',
-						'But, the "projects" tab is enabled',
+						'But, the "projects" tab is enabled (and has no projects)',
 					],
 					fix: () =>
 						octokit.rest.repos.update({
@@ -161,7 +168,7 @@ export const issues = async function* issues({ project }) {
 				yield {
 					message: [
 						'Expected GitHub repository to have the "wiki" tab disabled',
-						'But, the "wiki" tab is enabled',
+						'But, the "wiki" tab is enabled (and has no content)',
 						'However, the wiki repository does not exist',
 					],
 					fix: () =>

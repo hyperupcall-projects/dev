@@ -1,3 +1,7 @@
+declare global {
+	var skipTerminalCleanup: boolean
+}
+
 export type CommandNewOptions = {
 	ecosystem?: string
 	templateName?: string
@@ -25,13 +29,16 @@ export type CommandStartServerOptions = {}
 export type Project =
 	| {
 			type: 'dir'
+			rootDir: string
 	  }
 	| {
 			type: 'vcs-only'
+			rootDir: string
 			branchName: string
 	  }
 	| {
 			type: 'vcs-with-remote'
+			rootDir: string
 			branchName: string
 			remoteName: string
 			remoteUrl: string

@@ -2,8 +2,9 @@
 import { globby } from 'globby'
 
 /**
- * Check if the repository does not have a code of conduct file. All code of conduct
- * files should be defined in the organization's ".github" repository.
+ * Check if the repository does not have a code of conduct file. If the repository is on GitHub,
+ * then the code of conduct file should be defined in the organization's ".github" repository. But,
+ * if the repository is not on Github, then there should be no code of conduct files.
  *
  * See more: https://docs.github.com/en/communities/setting-up-your-project-for-healthy-contributions/adding-a-code-of-conduct-to-your-project
  * See more: https://docs.github.com/en/communities/setting-up-your-project-for-healthy-contributions/creating-a-default-community-health-file

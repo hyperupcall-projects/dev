@@ -1,8 +1,6 @@
 import path from 'node:path'
 import fs from 'node:fs/promises'
 import os from 'node:os'
-import tty from 'node:tty'
-import nutil from 'node:util'
 
 import ansiEscapes from 'ansi-escapes'
 import chalk from 'chalk'
@@ -46,7 +44,7 @@ const Projects = [
 			cat <<"EOF" > ~/.local/share/systemd/user/brain.service
 				[Unit]
 				Description=Hub
-				ConditionPathIsDirectory=%h/.dev/repositories/ten/
+				ConditionPathIsDirectory=%h/.dev/.data/managed-repositories/ten/
 
 				[Service]
 				Type=simple

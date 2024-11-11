@@ -30,18 +30,8 @@ export async function run(
 	/** @type {CommandReposOptions} */ values,
 	/** @type {string[]} */ positionals,
 ) {
-	if (values.help) {
-		console.info(helpMenu)
-		process.exit(0)
-	}
-
-	if (!positionals[0]) {
-		process.stdout.write(helpMenu + '\n')
-		process.exit(1)
-	}
-
 	const config = {
-		organizationsDir: untildify('~/.dev/managed-repositories'),
+		organizationsDir: untildify('~/.dev/.data/managed-repositories'),
 		ignored: [
 			// Skip cloning from the following organizations:
 			'eshsrobotics/*',
@@ -82,10 +72,19 @@ export async function run(
 				},
 			)) {
 				const repoPath = path.join(repoEntry.parentPath, repoEntry.name)
+
+				{
+					let str = '\n'
+					str += '='.repeat(process.stdout.columns) + '\n'
+					str += chalk.green(chalk.bold(repoPath)) + chalk.reset() + '\n'
+					str += '='.repeat(process.stdout.columns) + '\n'
+					process.stdout.write(str)
+				}
+
 				const cmdName = positionals[1]
 				const cmdArgs = positionals.slice(2)
 				if (!cmdName) {
-					console.error(`Failed to pass command to run`)
+					console.error(`Failed determine command name`)
 					process.exit(1)
 				}
 				const res = await execa(cmdName, cmdArgs, {
@@ -97,11 +96,11 @@ export async function run(
 				if (res.exitCode > 1) {
 					process.exit(1)
 				}
-				console.log('='.repeat(process.stdout.rows) + '\n')
-				console.log('='.repeat(process.stdout.rows) + '\n')
-				console.log('='.repeat(process.stdout.rows) + '\n')
 			}
 		}
+	} else {
+		console.error(`Unknown command: ${positionals[0]}`)
+		process.exit(1)
 	}
 }
 

@@ -1,7 +1,7 @@
 import * as fs from 'node:fs/promises'
 import path from 'node:path'
 
-import { fileExists, pkgRoot } from '../../../common.js'
+import { pkgRoot } from '../../../common.js'
 import { globby } from 'globby'
 
 /**
@@ -14,7 +14,7 @@ import { globby } from 'globby'
 export const issues = async function* issues() {
 	const configPath = path.join(pkgRoot(), 'assets/LICENSE-MPL-2.0')
 
-	// Check that the number of, and names of licenses are correct
+	// Check that the number and names of licenses are correct
 	{
 		const files = await globby(['*license*'], { caseSensitiveMatch: false })
 		if (files.length === 0) {
@@ -29,7 +29,7 @@ export const issues = async function* issues() {
 			if (files[0] !== 'LICENSE') {
 				yield {
 					message: [
-						'Expected to find a license file with name of "LICENSE"',
+						'For a single license file, expected the file to have a name of "LICENSE"',
 						`But, found license file with name of "${files[0]}"`,
 					],
 					fix: () => fs.rename(files[0], 'LICENSE'),
@@ -59,7 +59,7 @@ export const issues = async function* issues() {
 				yield {
 					message: [
 						'Expected to find all license files with content',
-						`But, found license file "${file}" has no content`,
+						`But, found license file "${file}" with no content`,
 					],
 				}
 			}

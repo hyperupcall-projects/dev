@@ -4,7 +4,7 @@ import path from 'node:path'
 import { Cli, Command, Option, Builtins } from 'clipanion'
 
 import { run as runNew } from '../src/new.js'
-import { run as runFix } from '../src/fix.js'
+import { run as runFix } from '../src/lint.js'
 import { run as runInstall, cleanupTerminal } from '../src/install.js'
 import { run as runRepos } from '../src/repos.js'
 import { run as runScript } from '../src/script.js'
@@ -55,8 +55,8 @@ cli.register(
 	},
 )
 cli.register(
-	class FixCommand extends Command {
-		static paths = [[`fix`]]
+	class LintCommand extends Command {
+		static paths = [[`lint`]]
 		static usage = Command.Usage({
 			description: `Lint and fix issues with code`,
 		})
@@ -84,7 +84,7 @@ cli.register(
 	class InstallCommand extends Command {
 		static paths = [[`install`]]
 		static usage = Command.Usage({
-			description: `Install a program through a TUI`,
+			description: `Install or update a program through the TUI`,
 		})
 
 		positionals = Option.Proxy()
@@ -132,7 +132,7 @@ cli.register(
 	class StartServer extends Command {
 		static paths = [[`start-server`]]
 		static usage = Command.Usage({
-			description: `Start the server`,
+			description: `Start the development server`,
 		})
 
 		positionals = Option.Proxy()
@@ -144,4 +144,4 @@ cli.register(
 )
 cli.register(Builtins.HelpCommand)
 
-cli.runExit(process.argv.slice(2), {})
+cli.runExit(process.argv.slice(2))
