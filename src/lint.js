@@ -45,7 +45,7 @@ export async function run(
 	}
 
 	{
-		const dir = path.join(pkgRoot(), 'config/fixes/by-other')
+		const dir = path.join(pkgRoot(), 'config/lint-rules/by-other')
 		const predicate = async function chooseEcosystem(/** @type {string} */ fixId) {
 			if (fixId.startsWith('git/') && project.type !== 'dir') {
 				return true
@@ -58,7 +58,7 @@ export async function run(
 			return false
 		}
 		await fixFromFile(
-			path.join(pkgRoot(), 'config/fixes/by-other/other/no-code-of-conduct.js'),
+			path.join(pkgRoot(), 'config/lint-rules/by-other/other/no-code-of-conduct.js'),
 			'other/no-code-of-conduct',
 			project,
 			options,
@@ -67,7 +67,7 @@ export async function run(
 	}
 
 	{
-		const dir = path.join(pkgRoot(), 'config/fixes/by-ecosystem')
+		const dir = path.join(pkgRoot(), 'config/lint-rules/by-ecosystem')
 		const predicate = async function chooseEcosystem(/** @type {string} */ fixId) {
 			if (fixId.startsWith('all/')) {
 				return true
