@@ -16,26 +16,6 @@ import semver from 'semver'
 /** @type {InstalledProject[]} */
 const Projects = [
 	{
-		name: 'hub',
-		url: 'https://github.com/fox-incubating/hub',
-		install: dedent`
-			pnpm install
-			pnpm build
-			make install
-	`,
-		uninstall: dedent`
-			make uninstall
-	`,
-		async installed() {
-			try {
-				const { stdout } = await execa`systemctl --user is-enabled hub.service`
-				return stdout === 'enabled'
-			} catch (err) {
-				return false
-			}
-		},
-	},
-	{
 		name: 'ten',
 		url: 'https://github.com/fox-incubating/ten',
 		install: dedent`
@@ -44,7 +24,7 @@ const Projects = [
 			cat <<"EOF" > ~/.local/share/systemd/user/brain.service
 				[Unit]
 				Description=Hub
-				ConditionPathIsDirectory=%h/.dev/.data/managed-repositories/ten/
+				ConditionPathIsDirectory=%h/.dev/.data/installed-repositories/ten/
 
 				[Service]
 				Type=simple
@@ -122,7 +102,7 @@ const Projects = [
 const Ctx = {
 	devDir: path.join(os.homedir(), '.dev'),
 	repositoryDir: path.join(os.homedir(), '.dev/.data/installed-repositories'),
-	currentProject: 'hub',
+	currentProject: Projects[0].name,
 }
 export function cleanupTerminal() {
 	process.stdout.write(ansiEscapes.cursorRestorePosition)

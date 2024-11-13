@@ -72,7 +72,7 @@ export const issues = async function* issues({ project }) {
 			],
 		}
 	}
-	if (!content.match(`^# ${project.name}`)) {
+	if (!content.toLowerCase().replaceAll(' ', '-').match(`^#-${project.name}`)) {
 		yield {
 			message: [
 				'Expected readme file to have a title matching the project name',

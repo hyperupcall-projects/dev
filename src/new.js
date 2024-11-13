@@ -6,7 +6,7 @@ import enquirer from 'enquirer'
 import * as ejs from 'ejs'
 import { globby } from 'globby'
 import { execa } from 'execa'
-import * as sqrl from 'squirrelly'
+import Handlebars from 'handlebars'
 import { fileExists } from '../config/common.js'
 
 /**
@@ -124,7 +124,8 @@ export async function createProject(/** @type {Context} */ ctx) {
 				let outputContent = ''
 				{
 					const template = await fs.readFile(inputFile, 'utf-8')
-					outputContent = sqrl.render(template, {
+					const runtimeTemplate = Handlebars.compile(template)
+					outputContent = runtimeTemplate({
 						key: 'value',
 					})
 				}

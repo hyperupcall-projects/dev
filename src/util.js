@@ -1,3 +1,4 @@
+import { execa, execaCommand } from 'execa'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 
@@ -63,4 +64,44 @@ export async function forEachRepository(organizationsDir, options, fn) {
 			await fn({ orgDir, orgEntry, repoDir, repoEntry })
 		}
 	}
+}
+
+export async function getServiceData() {
+	const services = [
+		{
+			name: 'brain.service',
+			isUserService: true,
+		},
+		{ name: 'keymon.service', isUserService: false },
+	]
+
+	const data = await Promise.all(
+		services.map(async (service) => {
+			const [isActive, statusOutput] = await Promise.all([
+				execa('systemctl', [
+					...(service.isUserService ? ['--user'] : []),
+					'is-active',
+					'--quiet',
+					service.name,
+				])
+					.then(({ failed }) => !failed)
+					.catch(() => false),
+				execa('systemctl', [
+					...(service.isUserService ? ['--user'] : []),
+					'status',
+					service.name,
+				])
+					.then(({ stdout }) => stdout)
+					.catch(() => ''),
+			])
+
+			return {
+				name: service.name,
+				isActive,
+				statusOutput,
+			}
+		}),
+	)
+
+	return data
 }

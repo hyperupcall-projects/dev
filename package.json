@@ -18,7 +18,8 @@
 	},
 	"scripts": {
 		"format": "hyperupcall-scripts-nodejs format",
-		"lint": "hyperupcall-scripts-nodejs lint"
+		"lint": "hyperupcall-scripts-nodejs lint",
+		"test": "node ./test/test.js"
 	},
 	"dependencies": {
 		"@hyperupcall/configs": "^0.2.3",
@@ -38,7 +39,9 @@
 		"enquirer": "^2.4.1",
 		"execa": "^9.5.1",
 		"express": "^5.0.1",
+		"express-handlebars": "^8.0.1",
 		"globby": "^14.0.2",
+		"handlebars": "^4.7.8",
 		"ignore-walk": "^7.0.0",
 		"jsonc-parser": "^3.3.1",
 		"lodash-es": "^4.17.21",
@@ -48,7 +51,6 @@
 		"remark-parse": "^11.0.0",
 		"semver": "^7.6.3",
 		"smol-toml": "^1.3.0",
-		"squirrelly": "^9.1.0",
 		"unified": "^11.0.5",
 		"unified-lint-rule": "^3.0.0",
 		"unist-util-visit": "^5.0.0",

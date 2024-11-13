@@ -44,6 +44,14 @@ export async function run(
 		)
 	}
 
+	// TODO
+	if (project.type === 'vcs-with-remote') {
+		if (`${project.owner}/${project.name}` === 'SchemaStore/schemastore') {
+			console.log('Skipping SchemaStore/schemastore')
+			return
+		}
+	}
+
 	{
 		const dir = path.join(pkgRoot(), 'config/lint-rules/by-other')
 		const predicate = async function chooseEcosystem(/** @type {string} */ fixId) {
@@ -126,6 +134,17 @@ async function fixFromFile(fixFile, fixId, project, options) {
 		)
 	}
 
+	// TODO
+	if (`${project.owner}/${project.name}` === 'awesome-lists/awesome-bash') {
+		if (
+			fixFile.includes('github/repo-metadata') ||
+			fixFile.includes('all/editorconfig')
+		) {
+			console.info(`[${chalk.yellow('SKIP')}] ${fixId}`)
+			return
+		}
+	}
+
 	if (module.skip) {
 		console.info(`[${chalk.yellow('SKIP')}] ${fixId}`)
 		return
@@ -135,7 +154,7 @@ async function fixFromFile(fixFile, fixId, project, options) {
 		let failed = false
 		const issues = module.issues({ project })
 		for await (const issue of issues) {
-			console.info(`[${chalk.cyan('EVAL')}] ${fixId}: Found issue`)
+			console.info(`[EVAL] ${fixId}: Found issue`)
 			if (Array.isArray(issue.message)) {
 				for (const message of issue.message) {
 					console.info(` -> ${message}`)
