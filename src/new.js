@@ -7,7 +7,7 @@ import * as ejs from 'ejs'
 import { globby } from 'globby'
 import { execa } from 'execa'
 import Handlebars from 'handlebars'
-import { fileExists } from '../config/common.js'
+import { fileExists } from '#common'
 
 /**
  * @import { CommandNewOptions } from '../index.js'

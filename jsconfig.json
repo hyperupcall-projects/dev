@@ -3,9 +3,14 @@
 		"strict": true,
 		"noImplicitAny": true,
 		"checkJs": true,
-		"module": "Node16",
+		"module": "node16",
 		"moduleResolution": "node16",
 		"noUnusedLocals": false,
-		"noUnusedParameters": false
+		"noUnusedParameters": false,
+		"baseUrl": "./",
+		"forceConsistentCasingInFileNames": true,
+		"paths": {
+			"#common": ["config/common.js"]
+		}
 	}
 }

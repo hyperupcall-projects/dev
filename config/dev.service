@@ -1,0 +1,9 @@
+[Unit]
+Description=Global Development Server
+
+[Service]
+Type=notify
+ExecStart=%h/.dev/.data/bin/node start-dev-server
+
+[Install]
+WantedBy=default.target

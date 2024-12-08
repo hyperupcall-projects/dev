@@ -28,22 +28,24 @@ export type CommandStartServerOptions = {}
 // Fix.
 export type Project =
 	| {
-			type: 'dir'
+			type: 'only-directory'
 			rootDir: string
+			name: string
 	  }
 	| {
-			type: 'vcs-only'
+			type: 'under-version-control'
 			rootDir: string
+			name: string
 			branchName: string
 	  }
 	| {
-			type: 'vcs-with-remote'
+			type: 'with-remote-url'
 			rootDir: string
+			name: string
 			branchName: string
 			remoteName: string
 			remoteUrl: string
 			owner: string
-			name: string
 	  }
 
 export type Issues = (arg0: {

@@ -5,9 +5,9 @@ import os from 'node:os'
 import ansiEscapes from 'ansi-escapes'
 import chalk from 'chalk'
 import dedent from 'dedent'
-import { fileExists } from '../config/common.js'
 import { execa } from 'execa'
 import semver from 'semver'
+import { fileExists } from '#common'
 
 /**
  * @import { CommandInstallOptions, InstalledProject } from "../index.js";

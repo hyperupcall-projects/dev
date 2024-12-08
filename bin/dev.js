@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 import fs from 'node:fs/promises'
 import path from 'node:path'
+
 import { Cli, Command, Option, Builtins } from 'clipanion'
 
 import { run as runNew } from '../src/new.js'
 import { run as runFix } from '../src/lint.js'
 import { run as runInstall, cleanupTerminal } from '../src/install.js'
 import { run as runRepos } from '../src/repos.js'
-import { run as runScript } from '../src/script.js'
+import { run as runTask } from '../src/task.js'
 import { run as runStartServer } from '../src/start-server.js'
 
 /**
@@ -116,23 +117,23 @@ cli.register(
 )
 cli.register(
 	class ScriptCommand extends Command {
-		static paths = [[`script`]]
+		static paths = [[`task`]]
 		static usage = Command.Usage({
-			description: `Execute a script`,
+			description: `Run a task`,
 		})
 
 		positionals = Option.Proxy()
 
 		async execute() {
-			await runScript({}, this.positionals)
+			await runTask({}, this.positionals)
 		}
 	},
 )
 cli.register(
 	class StartServer extends Command {
-		static paths = [[`start-server`]]
+		static paths = [[`start-dev-server`]]
 		static usage = Command.Usage({
-			description: `Start the development server`,
+			description: `Start the global development server`,
 		})
 
 		positionals = Option.Proxy()

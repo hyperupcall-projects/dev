@@ -16,6 +16,9 @@
 	"bin": {
 		"dev": "./bin/dev.js"
 	},
+	"imports": {
+		"#common": "./config/common.js"
+	},
 	"scripts": {
 		"format": "hyperupcall-scripts-nodejs format",
 		"lint": "hyperupcall-scripts-nodejs lint",
@@ -23,7 +26,7 @@
 	},
 	"dependencies": {
 		"@hyperupcall/configs": "^0.2.3",
-		"@hyperupcall/ten": "^0.3.1",
+		"@hyperupcall/ten": "^0.4.0",
 		"@ltd/j-toml": "^1.38.0",
 		"@parcel/watcher": "^2.5.0",
 		"ansi-escapes": "^7.0.0",
@@ -50,7 +53,7 @@
 		"remark": "^15.0.1",
 		"remark-parse": "^11.0.0",
 		"semver": "^7.6.3",
-		"smol-toml": "^1.3.0",
+		"smol-toml": "^1.3.1",
 		"unified": "^11.0.5",
 		"unified-lint-rule": "^3.0.0",
 		"unist-util-visit": "^5.0.0",
@@ -63,8 +66,8 @@
 		"@hyperupcall/scripts-nodejs": "0.2.3",
 		"@octokit/types": "^13.6.1",
 		"@types/lodash": "^4.17.13",
-		"@types/node": "^22.9.0",
-		"type-fest": "^4.26.1"
+		"@types/node": "^22.9.3",
+		"type-fest": "^4.27.0"
 	},
 	"markdownlint-cli2": {
 		"extends": "./node_modules/@hyperupcall/markdownlint-config/.markdownlint.json"

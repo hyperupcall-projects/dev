@@ -12,6 +12,11 @@ import dedent from 'dedent'
 import * as diff from 'diff'
 import chalk from 'chalk'
 import dotenv from 'dotenv'
+import { globby } from 'globby'
+
+/**
+ * @import {Issue, Project} from '../index.js'
+ */
 
 const require = createRequire(import.meta.url)
 
@@ -19,9 +24,7 @@ dotenv.config({ path: path.join(import.meta.dirname, '../.env') })
 
 export const octokit = new Octokit({ auth: process.env.GITHUB_AUTH_TOKEN })
 
-/**
- * @typedef {import('../index.js').Issue} Issue
- */
+export const skipHyperupcallFunding = ['ecc-computing-club']
 
 /**
  * @param {Record<string, null | string>} mapping
@@ -47,13 +50,13 @@ export async function* filesMustHaveContent(mapping) {
 				const content = await fs.readFile(file, 'utf-8')
 				if (content !== expectedContent) {
 					yield {
-						message: `  -> Expected file "${file}" to have content:\n---\n${expectedContent}\n---\n  => But, the file has content:\n---\n${content}\n---\n`,
+						message: `  -> Expected file "${file}" to have content:\n---\n${expectedContent}\n---\n  -> But, the file has content:\n---\n${content}\n---\n`,
 						fix: () => fs.writeFile(file, expectedContent),
 					}
 				}
 			} else {
 				yield {
-					message: `  -> Expected file "${file}" to exist and have content:\n---\n${expectedContent}\n---\n  => But, the file does not exist`,
+					message: `  -> Expected file "${file}" to exist and have content:\n---\n${expectedContent}\n---\n  -> But, the file does not exist`,
 					fix: () => fs.writeFile(file, expectedContent),
 				}
 			}
@@ -237,5 +240,9 @@ export async function getNpmLatestVersion(/** @type {string[]} */ packages) {
 	return latestVersions
 }
 
-// TODO: Extract to package
-export function formatError() {}
+export async function findCodeOfConductFiles() {
+	return await globby(
+		['*code_of_conduct*', '.github/*code_of_conduct*', 'docs/*code_of_conduct*'],
+		{ caseSensitiveMatch: false },
+	)
+}

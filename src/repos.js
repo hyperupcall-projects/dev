@@ -6,13 +6,12 @@ import * as os from 'node:os'
 import * as readline from 'node:readline/promises'
 
 import { minimatch } from 'minimatch'
-import { globby } from 'globby'
 import { execa } from 'execa'
 import untildify from 'untildify'
 import yn from 'yn'
 import chalk from 'chalk'
 
-import { fileExists, octokit } from '../config/common.js'
+import { fileExists, octokit } from '#common'
 
 /**
  * @import { Octokit } from 'octokit'
@@ -74,9 +73,8 @@ export async function run(
 				const repoPath = path.join(repoEntry.parentPath, repoEntry.name)
 
 				{
-					let str = '\n'
-					str += '='.repeat(process.stdout.columns) + '\n'
-					str += chalk.green(chalk.bold(repoPath)) + chalk.reset() + '\n'
+					let str = '\n\n\n'
+					str += chalk.magenta.bold(repoPath) + chalk.reset() + '\n'
 					str += '='.repeat(process.stdout.columns) + '\n'
 					process.stdout.write(str)
 				}

@@ -4,10 +4,12 @@ import * as path from 'node:path'
 import * as fs from 'node:fs/promises'
 import * as readline from 'node:readline/promises'
 import chalk from 'chalk'
-import { fileExists, pkgRoot } from '../config/common.js'
+import { fileExists, pkgRoot } from '#common'
 import yn from 'yn'
 import toml from 'smol-toml'
 import { execa } from 'execa'
+import { globby } from 'globby'
+import ansiEscapes from 'ansi-escapes'
 
 /**
  * @import { CommandFixOptions, Project } from '../index.js'
@@ -34,115 +36,126 @@ export async function run(
 		}
 	}
 
-	if (project.type === 'dir') {
-		console.log(`${chalk.blue('Directory:')} ${project.rootDir}`)
-	} else if (project.type === 'vcs-only') {
-		console.log(`${chalk.blue('Repository:')} ${project.rootDir}`)
-	} else if (project.type === 'vcs-with-remote') {
-		console.log(
-			`${chalk.blue(`Remote:`)} https://github.com/${project.owner}/${project.name}`,
-		)
+	// Print metadata.
+	{
+		let str = ''
+		str += `${chalk.blue.bold('Directory:')} ${project.rootDir}\n`
+		if (project.type === 'with-remote-url') {
+			str += `${chalk.blue.bold('Project:')}   ${ansiEscapes.link(`${project.owner}/${project.name}`, `https://github.com/${project.owner}/${project.name}`)}\n`
+		}
+
+		process.stdout.write(str)
 	}
 
 	// TODO
-	if (project.type === 'vcs-with-remote') {
-		if (`${project.owner}/${project.name}` === 'SchemaStore/schemastore') {
-			console.log('Skipping SchemaStore/schemastore')
-			return
+	const skippedOrganizations = ['bash-bastion']
+	const skippedRepositories = ['SchemaStore/schemastore']
+	if (
+		skippedRepositories.includes(`${project.owner}/${project.name}`) ||
+		skippedOrganizations.includes(project.owner)
+	) {
+		console.info(`[${chalk.yellow('SKIP')}] ${project.owner}/${project.name}`)
+		return
+	}
+
+	const /** @type {string[]} */ ruleFiles = []
+	const collect = async (/** @type {string} */ pattern) => {
+		const matches = await globby(pattern, {
+			cwd: path.join(pkgRoot(), 'config/lint-rules'),
+		})
+
+		for (const match of matches) {
+			ruleFiles.push(match)
 		}
 	}
 
+	// Collect rule files that match the version control system type.
 	{
-		const dir = path.join(pkgRoot(), 'config/lint-rules/by-other')
-		const predicate = async function chooseEcosystem(/** @type {string} */ fixId) {
-			if (fixId.startsWith('git/') && project.type !== 'dir') {
-				return true
-			}
+		await collect(`100-directory/*`)
 
-			if (fixId.startsWith('github/') && project.type === 'vcs-with-remote') {
-				return true
+		if (project.type === 'under-version-control' || project.type === 'with-remote-url') {
+			if (await fileExists('.git')) {
+				await collect(`200-version-control/*`)
 			}
-
-			return false
 		}
+
+		if (project.type === 'with-remote-url') {
+			await collect(`300-remote-url/*`)
+		}
+	}
+
+	// Collect rule files that match the ecosystem.
+	{
+		if (await fileExists('package.json')) {
+			await collect(`400-ecosystem/nodejs/*`)
+		}
+
+		if (await fileExists('deno.jsonc')) {
+			await collect(`400-ecosystem/deno/*`)
+		}
+
+		await collect(`400-ecosystem/_/*`)
+	}
+
+	// Collect rule files that match the name.
+	{
+		if (project.type === 'with-remote-url') {
+			await collect(`500-name/${project.name}/_/*`)
+			await collect(`500-name/_/${project.name}/*`)
+			await collect(`500-name/${project.owner}/${project.name}/*`)
+		}
+	}
+
+	// Remove rule files that are superceded by another rule file.
+	for (let i = ruleFiles.length - 1; i >= 0; --i) {
+		const fixFile = ruleFiles[i]
+		const idx = ruleFiles.findIndex((item) => {
+			return (
+				path.parse(item).name.slice(item.indexOf('-') + 1) ===
+				path.parse(fixFile).name.slice(fixFile.indexOf('-') + 1)
+			)
+		})
+
+		if (i !== idx) {
+			ruleFiles.splice(idx, 1)
+		}
+	}
+
+	for (const fixFile of ruleFiles) {
+		const fixId = path.basename(path.dirname(fixFile)) + '/' + path.parse(fixFile).name
+		if (`${project.owner}/${project.name}` === 'awesome-lists/awesome-bash') {
+			if (
+				fixFile.includes('300-remote-url/repo-metadata') ||
+				fixFile.includes('_/editorconfig')
+			) {
+				console.info(`[${chalk.yellow('SKIP')}] ${fixId}`)
+				continue
+			}
+		}
+
 		await fixFromFile(
-			path.join(pkgRoot(), 'config/lint-rules/by-other/other/no-code-of-conduct.js'),
-			'other/no-code-of-conduct',
+			path.join(pkgRoot(), 'config/lint-rules', fixFile),
 			project,
 			options,
 		)
-		await fixFromDir(dir, predicate, project, options)
 	}
 
-	{
-		const dir = path.join(pkgRoot(), 'config/lint-rules/by-ecosystem')
-		const predicate = async function chooseEcosystem(/** @type {string} */ fixId) {
-			if (fixId.startsWith('all/')) {
-				return true
-			}
-
-			if (fixId.startsWith('nodejs/') && (await fileExists('package.json'))) {
-				return true
-			}
-
-			if (fixId.startsWith('deno/') && (await fileExists('deno.jsonc'))) {
-				return true
-			}
-
-			return false
-		}
-		await fixFromDir(dir, predicate, project, options)
-	}
-
-	// TODO: by-name
-
-	console.log('Done.')
-}
-
-/**
- * @param {string} dir
- * @param {(fixId: string) => boolean | Promise<boolean>} predicate
- * @param {Project} project
- * @param {CommandFixOptions} options
- */
-async function fixFromDir(dir, predicate, project, options) {
-	for (const group of await fs.readdir(dir, { withFileTypes: true })) {
-		for (const fixFileEntry of await fs.readdir(path.join(group.parentPath, group.name), {
-			withFileTypes: true,
-		})) {
-			const fixFile = path.join(fixFileEntry.parentPath, fixFileEntry.name)
-			const fixId = `${group.name}/${fixFileEntry.name.slice(0, -3)}`
-
-			if (await predicate(fixId)) {
-				await fixFromFile(fixFile, fixId, project, options)
-			}
-		}
-	}
+	console.info('Done.')
 }
 
 /**
  * @param {string} fixFile
- * @param {string} fixId
- * @param {Project} project
+ ] * @param {Project} project
  * @param {CommandFixOptions} options
  */
-async function fixFromFile(fixFile, fixId, project, options) {
+async function fixFromFile(fixFile, project, options) {
+	const fixId = path.basename(path.dirname(fixFile)) + '/' + path.parse(fixFile).name
+
 	const module = await import(fixFile)
 	if (!module.issues) {
 		throw new TypeError(
 			`Failed to find issues for "${fixId}" because no "issues" function was exported`,
 		)
-	}
-
-	// TODO
-	if (`${project.owner}/${project.name}` === 'awesome-lists/awesome-bash') {
-		if (
-			fixFile.includes('github/repo-metadata') ||
-			fixFile.includes('all/editorconfig')
-		) {
-			console.info(`[${chalk.yellow('SKIP')}] ${fixId}`)
-			return
-		}
 	}
 
 	if (module.skip) {
@@ -195,12 +208,15 @@ async function fixFromFile(fixFile, fixId, project, options) {
 
 		if (!failed) {
 			console.info(`[${chalk.green('PASS')}] ${fixId}`)
+		} else {
+			process.exit(1)
 		}
 	} catch (err) {
 		printWithTips(`[${chalk.red('FAIL')}] ${fixId}`, [
 			'Failed because an error was caught',
 		])
 		console.error(err)
+		process.exit(1)
 	}
 }
 
@@ -210,8 +226,9 @@ async function fixFromFile(fixFile, fixId, project, options) {
 async function getProject() {
 	if (!(await fileExists('.git'))) {
 		return {
-			type: 'dir',
+			type: 'only-directory',
 			rootDir: process.cwd(),
+			name: path.basename(process.cwd()),
 		}
 	}
 
@@ -242,30 +259,30 @@ async function getProject() {
 	})()
 	if (!remoteName) {
 		return {
-			type: 'vcs-only',
+			type: 'under-version-control',
 			rootDir: process.cwd(),
+			name: path.basename(process.cwd()),
 			branchName,
 		}
 	}
 	const { stdout: remoteUrl } = await execa('git', ['remote', 'get-url', remoteName])
-
 	const match = remoteUrl.match(/[:/](?<owner>.*?)\/(?<name>.*)$/u)
 	if (!match?.groups) {
-		return {
-			type: 'vcs-only',
-			rootDir: process.cwd(),
-			branchName,
-		}
+		printWithTips(
+			`Failed to extract repository name and owner for remote name "${remoteName}"`,
+			[`Remote name has URL of "${remoteUrl}"`],
+		)
+		process.exit(1)
 	}
 
 	return {
-		type: 'vcs-with-remote',
+		type: 'with-remote-url',
 		rootDir: process.cwd(),
+		name: match.groups.name,
 		branchName,
 		remoteName,
 		remoteUrl,
 		owner: match.groups.owner,
-		name: match.groups.name,
 	}
 }
 
