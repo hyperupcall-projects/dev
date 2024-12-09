@@ -23,7 +23,9 @@ export type CommandReposOptions = {}
 
 export type CommandScriptOptions = {}
 
-export type CommandStartServerOptions = {}
+export type CommandStartServerOptions = {
+	prebundle?: boolean
+}
 
 // Fix.
 export type Project =

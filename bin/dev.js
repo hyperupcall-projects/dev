@@ -136,10 +136,16 @@ cli.register(
 			description: `Start the global development server`,
 		})
 
+		prebundle = Option.Boolean('--prebundle')
 		positionals = Option.Proxy()
 
 		async execute() {
-			await runStartServer({}, this.positionals)
+			await runStartServer(
+				{
+					prebundle: this.prebundle,
+				},
+				this.positionals,
+			)
 		}
 	},
 )

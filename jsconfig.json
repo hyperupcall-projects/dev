@@ -5,6 +5,7 @@
 		"checkJs": true,
 		"module": "node16",
 		"moduleResolution": "node16",
+		"lib": ["es2023"],
 		"noUnusedLocals": false,
 		"noUnusedParameters": false,
 		"baseUrl": "./",
