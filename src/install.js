@@ -16,20 +16,20 @@ import { fileExists } from '#common'
 /** @type {InstalledProject[]} */
 const Projects = [
 	{
-		name: 'ten',
-		url: 'https://github.com/fox-incubating/ten',
+		name: 'sauerkraut',
+		url: 'https://github.com/fox-incubating/sauerkraut',
 		install: dedent`
 			pnpm install
-			ln -sf "$PWD/bin/ten.js" ~/.local/bin/ten
+			ln -sf "$PWD/bin/sauerkraut.js" ~/.local/bin/sauerkraut
 			cat <<"EOF" > ~/.local/share/systemd/user/brain.service
 				[Unit]
 				Description=Hub
-				ConditionPathIsDirectory=%h/.dev/.data/installed-repositories/ten/
+				ConditionPathIsDirectory=%h/.dev/.data/installed-repositories/sauerkraut/
 
 				[Service]
 				Type=simple
 				WorkingDirectory=%h/Dropbox-Maestral/Brain
-				ExecStart=%h/.local/bin/mise exec -- ten serve
+				ExecStart=%h/.local/bin/mise exec -- sauerkraut serve
 				Environment=PORT=52001
 				Restart=on-failure
 
@@ -42,11 +42,11 @@ const Projects = [
 		uninstall: dedent`
 			systemctl --user stop brain.service
 			rm -f ~/.local/share/systemd/user/brain.service
-			rm -f ~/.local/bin/ten
+			rm -f ~/.local/bin/sauerkraut
 			pnpm uninstall
 	`,
 		async installed() {
-			return await fileExists(path.join(os.homedir(), '.local/bin/ten'))
+			return await fileExists(path.join(os.homedir(), '.local/bin/sauerkraut'))
 		},
 	},
 	{
@@ -394,6 +394,10 @@ async function updateProjectData() {
 			gitRef: '',
 			latestGitRef: '',
 			versions: /** @type {string[]} */ ([]),
+		}
+		if (!projectExists) {
+			project.data = projectData
+			return
 		}
 
 		await execa`git -C ${dir} fetch --all`
