@@ -10,7 +10,6 @@ import { globby } from 'globby'
 import { execa } from 'execa'
 import untildify from 'untildify'
 import yn from 'yn'
-import chalk from 'chalk'
 
 import { forEachRepository } from './util.js'
 import { octokit } from '#common'

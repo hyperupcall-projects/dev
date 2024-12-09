@@ -3,7 +3,7 @@
 import * as path from 'node:path'
 import * as fs from 'node:fs/promises'
 import * as readline from 'node:readline/promises'
-import chalk from 'chalk'
+import util, { styleText } from 'node:util'
 import { fileExists, pkgRoot } from '#common'
 import yn from 'yn'
 import toml from 'smol-toml'
@@ -39,9 +39,9 @@ export async function run(
 	// Print metadata.
 	{
 		let str = ''
-		str += `${chalk.blue.bold('Directory:')} ${project.rootDir}\n`
+		str += `${styleText(['blue', 'bold'], 'Directory:')} ${project.rootDir}\n`
 		if (project.type === 'with-remote-url') {
-			str += `${chalk.blue.bold('Project:')}   ${ansiEscapes.link(`${project.owner}/${project.name}`, `https://github.com/${project.owner}/${project.name}`)}\n`
+			str += `${styleText(['blue', 'bold'], 'Project:')}   ${ansiEscapes.link(`${project.owner}/${project.name}`, `https://github.com/${project.owner}/${project.name}`)}\n`
 		}
 
 		process.stdout.write(str)
@@ -54,7 +54,7 @@ export async function run(
 		skippedRepositories.includes(`${project.owner}/${project.name}`) ||
 		skippedOrganizations.includes(project.owner)
 	) {
-		console.info(`[${chalk.yellow('SKIP')}] ${project.owner}/${project.name}`)
+		console.info(`[${styleText('yellow', 'SKIP')}] ${project.owner}/${project.name}`)
 		return
 	}
 
@@ -128,7 +128,7 @@ export async function run(
 				fixFile.includes('300-remote-url/repo-metadata') ||
 				fixFile.includes('_/editorconfig')
 			) {
-				console.info(`[${chalk.yellow('SKIP')}] ${fixId}`)
+				console.info(`[${styleText('yellow', 'SKIP')}] ${fixId}`)
 				continue
 			}
 		}
@@ -159,7 +159,7 @@ async function fixFromFile(fixFile, project, options) {
 	}
 
 	if (module.skip) {
-		console.info(`[${chalk.yellow('SKIP')}] ${fixId}`)
+		console.info(`[${styleText('yellow', 'SKIP')}] ${fixId}`)
 		return
 	}
 
@@ -177,7 +177,9 @@ async function fixFromFile(fixFile, project, options) {
 			}
 
 			if (!issue.fix) {
-				printWithTips(`[${chalk.red('FAIL')}] ${fixId}`, ['No fix function exists'])
+				printWithTips(`[${styleText('red', 'FAIL')}] ${fixId}`, [
+					'No fix function exists',
+				])
 				failed = true
 				break
 			}
@@ -198,7 +200,7 @@ async function fixFromFile(fixFile, project, options) {
 			if (shouldRunFix) {
 				await issue.fix()
 			} else {
-				printWithTips(`[${chalk.red('FAIL')}] ${fixId}`, [
+				printWithTips(`[${styleText('red', 'FAIL')}] ${fixId}`, [
 					'Failed because running fix function was declined',
 				])
 				failed = true
@@ -207,12 +209,12 @@ async function fixFromFile(fixFile, project, options) {
 		}
 
 		if (!failed) {
-			console.info(`[${chalk.green('PASS')}] ${fixId}`)
+			console.info(`[${styleText('green', 'PASS')}] ${fixId}`)
 		} else {
 			process.exit(1)
 		}
 	} catch (err) {
-		printWithTips(`[${chalk.red('FAIL')}] ${fixId}`, [
+		printWithTips(`[${styleText('red', 'FAIL')}] ${fixId}`, [
 			'Failed because an error was caught',
 		])
 		console.error(err)

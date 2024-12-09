@@ -1,1 +1,6 @@
-{}
+{
+	"files.exclude": {
+		"**/.git": true,
+		"**/.data": true
+	}
+}

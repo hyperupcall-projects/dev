@@ -7,7 +7,7 @@ import { globby } from 'globby'
 import * as fs from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import watcher from '@parcel/watcher'
-import { throttle, debounce } from 'lodash-es'
+import debounce from 'debounce'
 import { createProject } from './new.js'
 
 export async function run(/** @type {string[]} */ args) {

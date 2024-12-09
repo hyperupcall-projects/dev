@@ -1,9 +1,9 @@
 import path from 'node:path'
 import fs from 'node:fs/promises'
 import os from 'node:os'
+import util, { styleText } from 'node:util'
 
 import ansiEscapes from 'ansi-escapes'
-import chalk from 'chalk'
 import dedent from 'dedent'
 import { execa } from 'execa'
 import semver from 'semver'
@@ -295,20 +295,20 @@ async function renderMainScreen(/** @type {string} */ char) {
 			.replace(
 				project.data.gitRef,
 				project.data.gitRef === project.data.latestGitRef
-					? chalk.green(project.data.gitRef)
-					: chalk.red(project.data.gitRef),
+					? styleText('green', project.data.gitRef)
+					: styleText('red', project.data.gitRef),
 			)
 		str += project.data.latestGitRef
 			.padEnd(latestRef)
 			.replace(
 				project.data.latestGitRef,
 				project.data.gitRef === project.data.latestGitRef
-					? chalk.green(project.data.latestGitRef)
-					: chalk.red(project.data.latestGitRef),
+					? styleText('green', project.data.latestGitRef)
+					: styleText('red', project.data.latestGitRef),
 			)
 		str += '\n'
-		str = str.replaceAll('YES', chalk.green('yes'))
-		str = str.replaceAll('NO', chalk.red('no'))
+		str = str.replaceAll('YES', styleText('green', 'yes'))
+		str = str.replaceAll('NO', styleText('red', 'no'))
 		process.stdout.write(str)
 	}
 	process.stdout.write(`${sep}\n`)

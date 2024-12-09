@@ -1,7 +1,7 @@
 import * as fs from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import * as path from 'node:path'
-import * as util from 'node:util'
+import util, { styleText } from 'node:util'
 import * as os from 'node:os'
 import * as readline from 'node:readline/promises'
 
@@ -9,7 +9,6 @@ import { minimatch } from 'minimatch'
 import { execa } from 'execa'
 import untildify from 'untildify'
 import yn from 'yn'
-import chalk from 'chalk'
 
 import { fileExists, octokit } from '#common'
 
@@ -74,7 +73,7 @@ export async function run(
 
 				{
 					let str = '\n\n\n'
-					str += chalk.magenta.bold(repoPath) + chalk.reset() + '\n'
+					str += styleText(['magenta', 'bold'], repoPath) + styleText('reset') + '\n'
 					str += '='.repeat(process.stdout.columns) + '\n'
 					process.stdout.write(str)
 				}
@@ -116,7 +115,7 @@ export async function syncRepositories({ octokit, config }) {
 			!(await fileExists(config.organizationsDir))
 		) {
 			process.stderr.write(
-				`${chalk.red('Error:')} Symbolic link is broken: "${config.organizationsDir}"\n`,
+				`${styleText('red', 'Error:')} Symbolic link is broken: "${config.organizationsDir}"\n`,
 			)
 			process.exit(1)
 		}

@@ -1,16 +1,14 @@
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
+import util, { styleText } from 'node:util'
 import { execa } from 'execa'
 import { createRequire } from 'node:module'
 import { existsSync } from 'node:fs'
-import * as util from 'node:util'
 
 import { Octokit } from 'octokit'
 import detectIndent from 'detect-indent'
-import * as _ from 'lodash-es'
 import dedent from 'dedent'
 import * as diff from 'diff'
-import chalk from 'chalk'
 import dotenv from 'dotenv'
 import { globby } from 'globby'
 
@@ -88,9 +86,9 @@ export async function* filesMustHaveShape(mapping) {
 				JSON.stringify(expected, null, 2),
 			)) {
 				if (part.added) {
-					difference += chalk.green(part.value)
+					difference += styleText('green', part.value)
 				} else if (part.removed) {
-					difference += chalk.red(part.value)
+					difference += styleText('red', part.value)
 				} else {
 					difference += part.value
 				}
@@ -103,8 +101,8 @@ export async function* filesMustHaveShape(mapping) {
 			})
 			const patch = rawPatch
 				.replace(/^[\s\S]*\n.*?=\n/, '')
-				.replaceAll(/\n\+(?!\+)/g, '\n' + chalk.green('+'))
-				.replaceAll(/\n-(?!\-)/g, '\n' + chalk.red('-'))
+				.replaceAll(/\n\+(?!\+)/g, '\n' + styleText('green', '+'))
+				.replaceAll(/\n-(?!\-)/g, '\n' + styleText('red', '-'))
 
 			yield {
 				message:
