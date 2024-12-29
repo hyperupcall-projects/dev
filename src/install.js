@@ -23,13 +23,13 @@ const Projects = [
 			ln -sf "$PWD/bin/sauerkraut.js" ~/.local/bin/sauerkraut
 			cat <<"EOF" > ~/.local/share/systemd/user/brain.service
 				[Unit]
-				Description=Hub
+				Description=Brain
 				ConditionPathIsDirectory=%h/.dev/.data/installed-repositories/sauerkraut/
 
 				[Service]
 				Type=simple
-				WorkingDirectory=%h/Dropbox-Maestral/Brain
-				ExecStart=%h/.local/bin/mise exec -- sauerkraut serve
+				WorkingDirectory=%h/Documents/BrainSite
+				ExecStart=%h/.dotfiles/.data/node %h/.dev/.data/installed-repositories/sauerkraut/bin/sauerkraut.js serve
 				Environment=PORT=52001
 				Restart=on-failure
 

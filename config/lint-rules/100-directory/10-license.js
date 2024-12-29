@@ -11,7 +11,7 @@ export const issues = async function* issues() {
 	const files = await globby(['*license*', '.github/*readme*'], {
 		caseSensitiveMatch: false,
 	})
-	if (files.length === 0) {
+	if (files.length > 0) {
 		yield {
 			message: [
 				'Expected to find no license files',

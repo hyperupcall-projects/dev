@@ -1,7 +1,9 @@
 import { h } from 'preact'
+import * as child_process from 'node:child_process'
 import { useState, useCallback } from 'preact/hooks'
 import { html } from 'htm/preact'
 import { Nav } from '../static/isomorphic/components.js'
+import { execa } from 'execa'
 
 function Counter() {
 	const [value, setValue] = useState(0)
@@ -19,12 +21,26 @@ export function Head() {
 	return `<link rel="stylesheet" href="/vendor/bulma.css" />`
 }
 
-export function Page() {
+export async function Server() {
+	const [lsblkCommand, uptimeCommand] = await Promise.all([
+		execa('lsblk'),
+		execa('uptime', ['--pretty']),
+	])
+
+	return {
+		lsblkOutput: lsblkCommand.stdout,
+		uptimeOutput: uptimeCommand.stdout,
+	}
+}
+
+export function Page({ lsblkOutput, uptimeOutput }) {
 	return html`
 		<div>
 			<${Nav} />
 			<div class="mx-1">
 				<h1 class="title mb-0">Global Dev Server</h1>
+				<pre>${lsblkOutput}</pre>
+				<pre>${uptimeOutput}</pre>
 				<p>My one-stop-shop for managing my computer and projects on my computer.</p>
 				<hr />
 				<${Counter} />

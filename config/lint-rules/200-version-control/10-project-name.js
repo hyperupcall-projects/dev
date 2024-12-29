@@ -10,6 +10,8 @@ import { execa } from 'execa'
 export async function* issues({ project }) {
 	// Loop through all remotes instead of just `project.name`.
 	const output = await execa('git', ['remote', '--verbose'])
+	if (!output.stdout) return
+
 	for (const line of output.stdout.split('\n')) {
 		const [, remoteUrl] = line.split(/\s+/)
 		const localProjectName = path.basename(project.rootDir)

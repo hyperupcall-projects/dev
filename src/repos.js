@@ -30,14 +30,36 @@ export async function run(
 ) {
 	const config = {
 		organizationsDir: untildify('~/.dev/.data/managed-repositories'),
+		repositoryGroups: [
+			{
+				name: 'bpkg',
+				repositories: ['bpkg/*'],
+			},
+			// {
+			// 	name: 'Foxium Browser',
+			// 	repositories: ['foxium-browser/*'],
+			// },
+			{
+				name: 'hacks.guide',
+				repositories: ['hacks-guide/*'],
+			},
+			{
+				name: 'Bash Bastion',
+				repoitories: ['bash-bastion/*'],
+			},
+			{
+				name: 'SchemaStore',
+				repositories: ['SchemaStore/*', '!SchemaStore/json-validator'],
+			},
+		],
 		ignored: [
 			// Skip cloning from the following organizations:
 			'eshsrobotics/*',
 			'hackclub/*',
-			'bpkg/*',
+			// 'bpkg/*',
 			'replit-discord/*',
 			'gamedevunite-at-smc/*',
-			'foxium-browser/*',
+			// 'foxium-browser/*',
 			'cs-club-smc/*',
 			'ecc-cs-club/*',
 			'quasipanacea/*',
@@ -73,7 +95,7 @@ export async function run(
 
 				{
 					let str = '\n\n\n'
-					str += styleText(['magenta', 'bold'], repoPath) + styleText('reset') + '\n'
+					str += styleText(['magenta', 'bold'], repoPath) + styleText('reset', '') + '\n'
 					str += '='.repeat(process.stdout.columns) + '\n'
 					process.stdout.write(str)
 				}

@@ -1,14 +1,10 @@
 import * as fs from 'node:fs/promises'
-import { existsSync } from 'node:fs'
 import * as path from 'node:path'
 import * as os from 'node:os'
 import * as readline from 'node:readline/promises'
 import * as util from 'node:util'
 
 import { minimatch } from 'minimatch'
-import { globby } from 'globby'
-import { execa } from 'execa'
-import untildify from 'untildify'
 import yn from 'yn'
 
 import { forEachRepository } from './util.js'

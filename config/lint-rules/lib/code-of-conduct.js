@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: MPL-2.0
-import { globby } from 'globby'
 import { findCodeOfConductFiles } from '#common'
 
 // TODO: What to do with this file?

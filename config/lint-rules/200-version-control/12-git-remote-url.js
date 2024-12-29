@@ -6,6 +6,8 @@ import { execa } from 'execa'
 /** @type {import('../../../index.js').Issues} */
 export async function* issues({ project }) {
 	const output = await execa('git', ['remote', '--verbose'])
+	if (!output.stdout) return
+
 	for (const line of output.stdout.split('\n')) {
 		const [remoteName, remoteUrl] = line.split(/\s+/)
 		if (remoteUrl.endsWith('.git')) {
