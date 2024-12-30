@@ -1,9 +1,9 @@
 import request from 'supertest'
 import faker from 'faker'
 import httpStatus from 'http-status'
-import app from '../../source/app.js'
+import app from '../../commands/app.js'
 import setupTestDB from '../utils/setupTestDB.js'
-import { User } from '../../source/models.js'
+import { User } from '../../commands/models.js'
 import { userOne, userTwo, admin, insertUsers } from '../fixtures/user.fixture.js'
 import { userOneAccessToken, adminAccessToken } from '../fixtures/token.fixture.js'
 

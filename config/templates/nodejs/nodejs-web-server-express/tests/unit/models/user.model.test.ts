@@ -1,5 +1,5 @@
 import faker from 'faker'
-import { User } from '../../../source/models.js'
+import { User } from '../../../commands/models.js'
 
 describe('User model', () => {
 	describe('User validation', () => {
