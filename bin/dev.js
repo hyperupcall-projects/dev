@@ -4,12 +4,12 @@ import path from 'node:path'
 
 import { Cli, Command, Option, Builtins } from 'clipanion'
 
-import { run as runNew } from '../src/new.js'
-import { run as runFix } from '../src/lint.js'
-import { run as runInstall, cleanupTerminal } from '../src/install.js'
-import { run as runRepos } from '../src/repos.js'
-import { run as runTask } from '../src/task.js'
-import { run as runStartServer } from '../src/start-server.js'
+import { run as runNew } from '../source/new.js'
+import { run as runFix } from '../source/lint.js'
+import { run as runInstall, cleanupTerminal } from '../source/install.js'
+import { run as runRepos } from '../source/repos.js'
+import { run as runTask } from '../source/task.js'
+import { run as runStartServer } from '../source/start-server.js'
 
 /**
  * @import { PackageJson } from "type-fest";

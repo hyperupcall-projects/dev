@@ -3,7 +3,7 @@ import path from 'node:path'
 import render from 'preact-render-to-string'
 import { h } from 'preact'
 import express from 'express'
-import { getServiceData } from '../src/util.js'
+import { getServiceData } from '../source/util.js'
 
 import dedent from 'dedent'
 import { rm } from 'node:fs'
