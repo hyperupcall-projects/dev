@@ -7,7 +7,7 @@ import * as util from 'node:util'
 import { minimatch } from 'minimatch'
 import yn from 'yn'
 
-import { forEachRepository } from './util.js'
+import { forEachRepository } from '../utilities/util.js'
 import { octokit } from '#common'
 
 /**
