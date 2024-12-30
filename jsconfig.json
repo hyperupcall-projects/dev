@@ -10,6 +10,7 @@
 		"noUnusedParameters": false,
 		"baseUrl": "./",
 		"forceConsistentCasingInFileNames": true,
+		"allowImportingTsExtensions": true,
 		"paths": {
 			"#common": ["config/common.js"]
 		}

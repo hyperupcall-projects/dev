@@ -5,7 +5,7 @@ import { html } from 'htm/preact'
 export function Nav() {
 	const [isActive, setActive] = useState(false)
 	function activate() {
-		console.log('working')
+		console.error('working')
 		setActive(!isActive)
 	}
 	return html`<nav class="navbar" role="navigation" aria-label="main navigation">
@@ -37,6 +37,7 @@ export function Nav() {
 				<a class="navbar-item" href="/">Home</a>
 				<a class="navbar-item" href="/services">Services</a>
 				<a class="navbar-item" href="/lint">Lint</a>
+				<a class="navbar-item" href="/repositories">Repositories</a>
 			</div>
 
 			<div class="navbar-end">

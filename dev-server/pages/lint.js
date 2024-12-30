@@ -1,4 +1,4 @@
-import { Nav } from '../static/isomorphic/components.js'
+import { Nav } from '#components/Nav.js'
 import { execa } from 'execa'
 import { html } from 'htm/preact'
 import stripAnsi from 'strip-ansi'

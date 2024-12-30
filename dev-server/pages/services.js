@@ -1,6 +1,6 @@
 import { html } from 'htm/preact'
 import { useState } from 'preact/hooks'
-import { Nav } from '../static/isomorphic/components.js'
+import { Nav } from '#components/Nav.js'
 
 export function Page() {
 	const [services, setServices] = useState([])

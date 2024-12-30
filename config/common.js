@@ -228,7 +228,7 @@ export async function getNpmLatestVersion(/** @type {string[]} */ packages) {
 	)
 	const latestVersions = latestVersionsObjects.map((result) => {
 		if (result.exitCode !== 0) {
-			console.log(result.stderr)
+			console.error(result.stderr)
 			throw new Error(result)
 		}
 

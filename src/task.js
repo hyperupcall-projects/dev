@@ -242,7 +242,7 @@ export async function symlinkHiddenDirs(/** @type {string[]} */ args) {
 	)
 }
 
-async function validateFoxArchives(/** @type {string} */ args) {
+async function validateFoxArchives(/** @type {string[]} */ args) {
 	for await (const { data: repositories } of octokit.paginate.iterator(
 		octokit.rest.repos.listForOrg,
 		{

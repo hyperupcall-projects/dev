@@ -11,6 +11,7 @@ import untildify from 'untildify'
 import yn from 'yn'
 
 import { fileExists, octokit } from '#common'
+import { collectGitHubRepositories } from '#utilities/repositories.js'
 
 /**
  * @import { Octokit } from 'octokit'
@@ -145,110 +146,7 @@ export async function syncRepositories({ octokit, config }) {
 	await fs.mkdir(config.organizationsDir, { recursive: true })
 
 	/** @type {Record<string, GitHubRepository[]>} */
-	const Repositories = {}
-	function isValidRepository(
-		/** @type {string} */ ownerName,
-		/** @type {string} */ repoName,
-	) {
-		if (!(ownerName in Repositories)) {
-			return false
-		}
-
-		for (const repository of Repositories[ownerName]) {
-			if (repository.name === repoName) {
-				return true
-			}
-		}
-
-		return false
-	}
-
-	// Collect repositories from organizations.
-	{
-		const joinedOrganizations = []
-		for await (const { data: memberships } of octokit.paginate.iterator(
-			octokit.rest.orgs.listMembershipsForAuthenticatedUser,
-			{
-				per_page: 100,
-			},
-		)) {
-			for (const membership of memberships) {
-				// If user has joined the organization.
-				if (membership.state !== 'active') {
-					console.info(`Ignoring org "${membership.organization.login}" (not active)`)
-					continue
-				}
-
-				if (
-					config.ignored.some(
-						(pattern) => `${membership.organization.login}/*` === pattern,
-					)
-				) {
-					console.info(`Ignoring org "${membership.organization.login}"`)
-					continue
-				}
-
-				joinedOrganizations.push(membership.organization)
-			}
-		}
-		const joinedOrganizationsData = await Promise.all(
-			joinedOrganizations.map(async (organization) => {
-				return await octokit
-					.request('GET /orgs/{org}/repos', {
-						org: organization.login,
-						headers: {
-							'X-GitHub-Api-Version': '2022-11-28',
-						},
-					})
-					.then((res) => {
-						return res.data
-					})
-			}),
-		)
-		for (let i = 0; i < joinedOrganizations.length; ++i) {
-			const orgName = joinedOrganizations[i].login
-			Repositories[orgName] = joinedOrganizationsData[i].filter((repository) => {
-				if (repository.archived) {
-					console.info(`Ignoring "${repository.full_name} (archived)"`)
-					return false
-				}
-
-				for (const pattern of config.ignored) {
-					if (minimatch(repository.full_name, pattern)) {
-						console.info(`Ignoring "${repository.full_name}"`)
-						return false
-					}
-				}
-
-				return true
-			})
-		}
-	}
-
-	// Collect repositories from currently signed-in user.
-	{
-		const currentGitHubUser = (await octokit.rest.users.getAuthenticated()).data.login
-		const repos = []
-		for await (const { data: repositories } of octokit.paginate.iterator(
-			octokit.rest.repos.listForAuthenticatedUser,
-			{
-				affiliation: 'owner',
-				per_page: 100,
-			},
-		)) {
-			for (const repository of repositories) {
-				if (config.ignored.some((pattern) => minimatch(repository.full_name, pattern))) {
-					console.log(`Ignoring "${repository.full_name}"`)
-					continue
-				}
-
-				repos.push(repository)
-			}
-		}
-
-		Repositories[currentGitHubUser] = repos
-	}
-
+	const Repositories = await collectGitHubRepositories()
 	// Check that no directories are empty
 	{
 		for (let orgStat of await fs.readdir(config.organizationsDir, {
@@ -278,6 +176,22 @@ export async function syncRepositories({ octokit, config }) {
 					console.error(`❌ Expected a directory: ${orgEntry.name}${repoEntry.name}`)
 				}
 
+				function isValidRepository(
+					/** @type {string} */ ownerName,
+					/** @type {string} */ repoName,
+				) {
+					if (!(ownerName in Repositories)) {
+						return false
+					}
+
+					for (const repository of Repositories[ownerName]) {
+						if (repository.name === repoName) {
+							return true
+						}
+					}
+
+					return false
+				}
 				if (!isValidRepository(orgEntry.name, repoEntry.name)) {
 					console.error(
 						`❌ Not on GitHub (but directory exists) (was repo newly hidden?): ${orgEntry.name}/${repoEntry.name}`,

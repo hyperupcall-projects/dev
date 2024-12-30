@@ -2,7 +2,7 @@ import { h } from 'preact'
 import * as child_process from 'node:child_process'
 import { useState, useCallback } from 'preact/hooks'
 import { html } from 'htm/preact'
-import { Nav } from '../static/isomorphic/components.js'
+import { Nav } from '#components/Nav.js'
 import { execa } from 'execa'
 
 function Counter() {
@@ -18,7 +18,7 @@ function Counter() {
 }
 
 export function Head() {
-	return `<link rel="stylesheet" href="/vendor/bulma.css" />`
+	return `<link rel="stylesheet" href="/vendor/bulma-v1.0.2/css/bulma.css" />`
 }
 
 export async function Server() {

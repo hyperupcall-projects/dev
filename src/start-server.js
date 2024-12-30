@@ -18,7 +18,6 @@ export async function run(
 	/** @type {Server} */
 	let server
 	process.on('SIGINT', () => {
-		console.log('int')
 		if (server) {
 			server.close(() => {
 				process.exit(0)
@@ -38,24 +37,24 @@ export async function run(
 	}
 	createServer()
 
-	watcher.subscribe(
-		'./dev-server',
-		(err, events) => {
-			if (err) return console.error(err)
+	// watcher.subscribe(
+	// 	'./dev-server',
+	// 	(err, events) => {
+	// 		if (err) return console.error(err)
 
-			for (const event of events) {
-				if (event.path.includes('/server.js')) {
-					console.info('Rollup bundling...')
-					prebundle(positionals)
-				}
-			}
+	// 		for (const event of events) {
+	// 			if (event.path.includes('/server.js')) {
+	// 				console.info('Rollup bundling...')
+	// 				prebundle(positionals)
+	// 			}
+	// 		}
 
-			if (events.length > 0) {
-				debounce(createServer, 250)
-			}
-		},
-		{},
-	)
+	// 		if (events.length > 0) {
+	// 			debounce(createServer, 250)
+	// 		}
+	// 	},
+	// 	{},
+	// )
 }
 
 async function prebundle(/** @type {string[]} */ positionals) {
@@ -64,7 +63,7 @@ async function prebundle(/** @type {string[]} */ positionals) {
 		let bundle
 		try {
 			bundle = await rollup({
-				input: ['preact', 'htm'],
+				input: ['preact', 'htm', '@preact/signals'],
 				plugins: [nodeResolve()],
 			})
 			await bundle.write({
