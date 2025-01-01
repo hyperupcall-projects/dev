@@ -17,14 +17,14 @@
 		"dev": "./bin/dev.js"
 	},
 	"imports": {
-		"#common": "./config/common.js",
+		"#common": "./config/common.ts",
 		"#components/*": "./dev-server/components/*",
 		"#utilities/*": "./utilities/*"
 	},
 	"scripts": {
 		"format": "hyperupcall-scripts-nodejs format",
 		"lint": "hyperupcall-scripts-nodejs lint",
-		"test": "node ./test/test.js"
+		"test": "node ./test/test.ts"
 	},
 	"dependencies": {
 		"@hyperupcall/configs": "^0.2.3",
@@ -59,6 +59,7 @@
 		"semver": "^7.6.3",
 		"smol-toml": "^1.3.1",
 		"strip-ansi": "^7.1.0",
+		"ts-blank-space": "^0.4.4",
 		"unified": "^11.0.5",
 		"unified-lint-rule": "^3.0.0",
 		"unist-util-visit": "^5.0.0",

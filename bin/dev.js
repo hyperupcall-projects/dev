@@ -1,15 +1,15 @@
-#!/usr/bin/env node
+#!/usr/bin/env -S node --experimental-strip-types
 import fs from 'node:fs/promises'
 import path from 'node:path'
 
 import { Cli, Command, Option, Builtins } from 'clipanion'
 
-import { run as runNew } from '../commands/new.js'
-import { run as runFix } from '../commands/lint.js'
-import { run as runInstall, cleanupTerminal } from '../commands/install.js'
-import { run as runRepos } from '../commands/repos.js'
-import { run as runTask } from '../commands/task.js'
-import { run as runStartServer } from '../commands/start-server.js'
+import { run as runNew } from '../commands/new.ts'
+import { run as runFix } from '../commands/lint.ts'
+import { run as runInstall, cleanupTerminal } from '../commands/install.ts'
+import { run as runRepos } from '../commands/repos.ts'
+import { run as runTask } from '../commands/task.ts'
+import { run as runStartServer } from '../commands/start-server.ts'
 
 /**
  * @import { PackageJson } from "type-fest";
