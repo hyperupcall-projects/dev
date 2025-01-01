@@ -6,7 +6,7 @@ import express from 'express'
 import { getServiceData } from '../utilities/util.js'
 
 import dedent from 'dedent'
-import { rm } from 'node:fs'
+import { getRepositoryConfig } from '#utilities/repositories.js'
 
 const importMap = {
 	imports: {
@@ -60,6 +60,13 @@ export async function createApp() {
 	app.get('/api/services', async (req, res) => {
 		const serviceData = await getServiceData()
 		res.json(serviceData)
+	})
+	app.post('/api/repositories/refresh', async (req, res) => {
+		const cachePath = path.join(import.meta.dirname, 'static/repositories.json') // TODO
+		const json = await getRepositoryConfig()
+		await fs.mkdir(path.dirname(cachePath), { recursive: true })
+		await fs.writeFile(cachePath, JSON.stringify(json, null, '\t'))
+		res.json({ success: true })
 	})
 
 	return app

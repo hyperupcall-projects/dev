@@ -4,7 +4,7 @@ import * as path from 'node:path'
 import util, { styleText } from 'node:util'
 import * as os from 'node:os'
 import * as readline from 'node:readline/promises'
-import { octokit } from '#common'
+import { fileExists, octokit } from '#common'
 import untildify from 'untildify'
 import { minimatch } from 'minimatch'
 
@@ -14,67 +14,120 @@ import { minimatch } from 'minimatch'
  * @typedef {GetResponseDataTypeFromEndpointMethod<typeof octokit.rest.repos.get>} GitHubRepository
  */
 
-// type RepositoryGroup = {
-// 	name: string
-// 	repositories: string[]
-// }
+export async function getCachedRepositoryConfig() {
+	const cachePath = path.join(
+		import.meta.dirname,
+		'../dev-server/static/repositories.json',
+	)
+
+	let json
+	try {
+		json = JSON.parse(await fs.readFile(cachePath, 'utf-8'))
+	} catch (err) {
+		if (err.code === 'ENOENT') {
+			json = await getRepositoryConfig()
+			await fs.mkdir(path.dirname(cachePath), { recursive: true })
+			await fs.writeFile(cachePath, JSON.stringify(json, null, '\t'))
+		} else {
+			throw err
+		}
+	}
+
+	return json
+}
 
 export async function getRepositoryConfig() {
 	const config = {
-		// The following directories are associated with repositories. They either
-		// contain cloned repositories or Git worktrees to cloned repositories.
-		cloneDir: untildify('~/.dev/.data/managed-repositories'),
-		repositoriesDir: untildify('~/Documents/Repositories'),
-		machineRepositoriesDir: untildify('~/.dev/.data/machine-repositories'),
-		ignored: [
+		ignoredRepos: [
 			// Skip cloning from the following organizations:
 			'eshsrobotics/*',
 			'hackclub/*',
-			// 'bpkg/*',
 			'replit-discord/*',
 			'gamedevunite-at-smc/*',
-			// 'foxium-browser/*',
 			'cs-club-smc/*',
 			'ecc-cs-club/*',
-			'quasipanacea/*',
-			'semantic-hotkeys/*',
+			'GameDevUniteAtECC/*',
+			'EpicGames/*',
 			'fox-archives/*',
 			'fox-templates/*',
 			'fox-forks/*',
 			'asdf-contrib-hyperupcall/*',
-			'fix-js/*',
-			'big-blocks/*',
-			'GameDevUniteAtECC/*',
-			'swallowjs/*',
-			'EpicGames/*',
 			// Skip cloning from the following repositories:
-			'SchemaStore/json-validator',
 			'hyperupcall/hidden',
 			'hyperupcall/secrets',
+			'hyperupcall/dotfiles',
+			'fox-incubating/dev',
 		],
 	}
+
 	const repositories = await collectGitHubRepositories(config)
-	const /** @type {string[]} */ repositoryFullnames = []
+	const /** @type {string[]} */ allRepositoryFullnames = []
 	for (const orgName in repositories) {
 		for (const repo of repositories[orgName]) {
-			repositoryFullnames.push(repo.full_name)
+			allRepositoryFullnames.push(repo.full_name)
 		}
 	}
-	console.log(repositoryFullnames)
-	function matchAndTake(/** @type {string[]} */ globs) {
+
+	function matchAndTake(
+		/** @type {string[]} */ globs,
+		/** @type {{ not: string[] }} */ { not } = { not: [] },
+	) {
 		const taken = []
-		for (const fullname of Array.from(repositoryFullnames)) {
-			const matches = globs.every((glob) => minimatch(fullname, glob, { dot: true }))
+		for (const fullname of Array.from(allRepositoryFullnames)) {
+			let matches = false
+			for (const pattern of globs) {
+				if (minimatch(fullname, pattern, { dot: true })) {
+					matches = true
+					continue
+				}
+			}
+			if (!matches) {
+				continue
+			}
+			for (const pattern of not) {
+				if (minimatch(fullname, pattern, { dot: true })) {
+					matches = false
+					continue
+				}
+			}
 			if (matches) {
-				const idx = repositoryFullnames.findIndex((m) => m === fullname)
-				repositoryFullnames.splice(idx, 1)
+				const idx = allRepositoryFullnames.findIndex((m) => m === fullname)
+				allRepositoryFullnames.splice(idx, 1)
 				taken.push(fullname)
 			}
 		}
 		return taken
 	}
+
 	return {
+		cloneDir: untildify('~/.dev/.data/cloned-repositories'),
+		symlinkedRepositoriesDir: untildify('~/Documents/Repositories'),
 		repositoryGroups: [
+			{
+				name: 'Personal',
+				repositories: matchAndTake([
+					'fox-incubating/sauerkraut',
+					'fox-incubating/event-horizon',
+					'fox-incubating/antarctica',
+					'fox-incubating/font-finder',
+					'fox-incubating/apfelstrudel',
+					'fox-incubating/link-tracker',
+					'fox-projects/pick-sticker',
+				]),
+			},
+			{
+				name: 'JSON Schema',
+				repositories: matchAndTake(
+					['SchemaStore/*', 'fox-projects/jsonschema-extractor'],
+					{
+						not: ['SchemaStore/json-validator'],
+					},
+				),
+			},
+			{
+				name: 'Maintain',
+				repositories: matchAndTake(['tj/git-extras']),
+			},
 			{
 				name: 'bpkg',
 				repositories: matchAndTake(['bpkg/*']),
@@ -90,10 +143,6 @@ export async function getRepositoryConfig() {
 			{
 				name: 'Bash Bastion',
 				repositories: matchAndTake(['bash-bastion/*']),
-			},
-			{
-				name: 'SchemaStore',
-				repositories: matchAndTake(['SchemaStore/*', '!SchemaStore/json-validator']),
 			},
 			{
 				name: 'El Camino Computing Club',
@@ -129,13 +178,11 @@ export async function getRepositoryConfig() {
 			},
 			{
 				name: 'Other',
-				repositories: repositoryFullnames,
+				repositories: allRepositoryFullnames,
 			},
 		],
 	}
 }
-
-export function setupRepositoryGroup(repositoryGroup) {}
 
 export async function collectGitHubRepositories(config) {
 	// TODO
@@ -166,18 +213,18 @@ export async function collectGitHubRepositories(config) {
 			for (const membership of memberships) {
 				// If user has joined the organization.
 				if (membership.state !== 'active') {
-					console.info(`Ignoring org "${membership.organization.login}" (not active)`)
 					continue
 				}
 
-				if (
-					config.ignored.some(
-						(pattern) => `${membership.organization.login}/*` === pattern,
-					)
-				) {
-					console.info(`Ignoring org "${membership.organization.login}"`)
-					continue
-				}
+				// TODO
+				// if (
+				// 	config.ignored.some(
+				// 		(pattern) => `${membership.organization.login}/*` === pattern,
+				// 	)
+				// ) {
+				// 	console.info(`Ignoring org "${membership.organization.login}"`)
+				// 	continue
+				// }
 
 				joinedOrganizations.push(membership.organization)
 			}
@@ -200,12 +247,12 @@ export async function collectGitHubRepositories(config) {
 			const orgName = joinedOrganizations[i].login
 			repositories[orgName] = joinedOrganizationsData[i].filter((repository) => {
 				if (repository.archived) {
-					console.info(`Ignoring "${repository.full_name} (archived)"`)
+					// console.info(`Ignoring "${repository.full_name} (archived)"`)
 					return false
 				}
 
-				for (const pattern of config.ignored) {
-					if (minimatch(repository.full_name, pattern)) {
+				for (const pattern of config.ignoredRepos) {
+					if (minimatch(repository.full_name, pattern, { dot: true })) {
 						console.info(`Ignoring "${repository.full_name}"`)
 						return false
 					}
@@ -228,7 +275,9 @@ export async function collectGitHubRepositories(config) {
 			},
 		)) {
 			for (const repository of repositories) {
-				if (config.ignored.some((pattern) => minimatch(repository.full_name, pattern))) {
+				if (
+					config.ignoredRepos.some((pattern) => minimatch(repository.full_name, pattern))
+				) {
 					console.log(`Ignoring "${repository.full_name}"`)
 					continue
 				}

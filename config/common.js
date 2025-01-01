@@ -186,8 +186,8 @@ export async function fileExists(filepath) {
  * @returns {string}
  */
 export function pkgRoot(packageName) {
-	if (packageName === void 0) {
-		return path.dirname(path.dirname(new URL(import.meta.url).pathname))
+	if (!packageName) {
+		return path.dirname(import.meta.dirname)
 	} else {
 		return path.dirname(require.resolve(packageName))
 	}

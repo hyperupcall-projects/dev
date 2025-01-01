@@ -6,8 +6,11 @@ import child_process from 'node:child_process'
 
 import detectIndent from 'detect-indent'
 import { execa } from 'execa'
+import enquirer from 'enquirer'
 
 import { fileExists, pkgRoot, octokit } from '#common'
+
+const { prompt } = enquirer
 
 /**
  * Check that various fields of the the GitHub repository metadata conforms
@@ -20,7 +23,7 @@ export const issues = async function* issues({ project }) {
 		throw new Error(`Expected project to be associated with a remote`)
 	}
 
-	const { data } = await octokit.rest.repos.get({
+	let { data } = await octokit.rest.repos.get({
 		owner: project.owner,
 		repo: project.name,
 	})
@@ -32,6 +35,22 @@ export const issues = async function* issues({ project }) {
 				'Expected GitHub repository to have a description',
 				'But, no description was found',
 			],
+			fix: async () => {
+				const /** @type {{ value: string }} */ input = await prompt({
+						type: 'input',
+						name: 'value',
+						message: 'Choose a description',
+					})
+				await octokit.rest.repos.update({
+					owner: project.owner,
+					repo: project.name,
+					description: input.value,
+				})
+				;({ data } = await octokit.rest.repos.get({
+					owner: project.owner,
+					repo: project.name,
+				}))
+			},
 		}
 	}
 	if (!data.description)

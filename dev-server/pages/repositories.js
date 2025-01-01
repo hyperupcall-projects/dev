@@ -3,12 +3,11 @@ import { Nav } from '#components/Nav.js'
 import { execa } from 'execa'
 import { html } from 'htm/preact'
 import { useState } from 'preact/hooks'
-import stripAnsi from 'strip-ansi'
-import { getRepositoryConfig } from '#utilities/repositories.js'
+import { getCachedRepositoryConfig } from '#utilities/repositories.js'
 
 export async function Server() {
 	return {
-		RepositoryConfig: await getRepositoryConfig(),
+		RepositoryConfig: await getCachedRepositoryConfig(),
 	}
 }
 
@@ -26,8 +25,20 @@ export function Page({ RepositoryConfig }) {
 		<div>
 			<${Nav} />
 			<div class="mx-1">
-				<div style="display: grid; grid-template-columns: auto 1fr;">
-					<aside>
+				<button
+					class="button"
+					onClick=${() => {
+						fetch('/api/repositories/refresh', { method: 'POST' }).then(() => {
+							alert('Done')
+						})
+					}}
+				>
+					Refresh Repository List
+				</button>
+				<div style="display: grid; grid-template-columns: 220px 1fr;">
+					<aside
+						style="border-inline-end: 1px solid lightgray; padding-inline-end: 2px; margin-inline-end: 2px;"
+					>
 						${RepositoryConfig.repositoryGroups.map((group) => {
 							return group.name === selectedRepository
 								? html`<b style="cursor: pointer" onClick=${() => onClick(group.name)}

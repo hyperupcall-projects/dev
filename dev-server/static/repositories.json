@@ -1,0 +1,241 @@
+{
+	"cloneDir": "/home/edwin/.dev/.data/cloned-repositories",
+	"symlinkedRepositoriesDir": "/home/edwin/Documents/Repositories",
+	"repositoryGroups": [
+		{
+			"name": "Personal",
+			"repositories": [
+				"fox-projects/pick-sticker",
+				"fox-incubating/apfelstrudel",
+				"fox-incubating/antarctica",
+				"fox-incubating/link-tracker",
+				"fox-incubating/event-horizon",
+				"fox-incubating/sauerkraut",
+				"fox-incubating/font-finder"
+			]
+		},
+		{
+			"name": "JSON Schema",
+			"repositories": [
+				"SchemaStore/schemastore",
+				"fox-projects/jsonschema-extractor"
+			]
+		},
+		{
+			"name": "Maintain",
+			"repositories": []
+		},
+		{
+			"name": "bpkg",
+			"repositories": [
+				"bpkg/umq",
+				"bpkg/rtail",
+				"bpkg/recho",
+				"bpkg/clip",
+				"bpkg/nman",
+				"bpkg/term",
+				"bpkg/bpkg",
+				"bpkg/wifi",
+				"bpkg/JSON.sh",
+				"bpkg/github",
+				"bpkg/dbu",
+				"bpkg/osx-screencast",
+				"bpkg/bpkg.github.io",
+				"bpkg/dots",
+				"bpkg/now.sh",
+				"bpkg/bats",
+				"bpkg/markdown.bash",
+				"bpkg/sha1dir",
+				"bpkg/semver-tool",
+				"bpkg/macos-virtualbox",
+				"bpkg/get.bpkg.sh",
+				"bpkg/asdf",
+				"bpkg/asdf-bpkg",
+				"bpkg/nave",
+				"bpkg/bpkg-start",
+				"bpkg/setup-bpkg-action",
+				"bpkg/oh-my-bash"
+			]
+		},
+		{
+			"name": "hacks.guide",
+			"repositories": []
+		},
+		{
+			"name": "Bash Bastion",
+			"repositories": [
+				"bash-bastion/bash-args",
+				"bash-bastion/basalt",
+				"bash-bastion/bash-object",
+				"bash-bastion/bash-toml",
+				"bash-bastion/awesome-basalt",
+				"bash-bastion/bats-all",
+				"bash-bastion/bash-algo",
+				"bash-bastion/shelltest",
+				"bash-bastion/bash-core",
+				"bash-bastion/bash-str",
+				"bash-bastion/bash-term",
+				"bash-bastion/toml-subset",
+				"bash-bastion/bash-utility",
+				"bash-bastion/bash-json",
+				"bash-bastion/shelld",
+				"bash-bastion/bash_config",
+				"bash-bastion/bash-tui",
+				"bash-bastion/JSONPath.sh",
+				"bash-bastion/JSON.sh",
+				"bash-bastion/TickTick",
+				"bash-bastion/bash-oo-framework",
+				"bash-bastion/bocker",
+				"bash-bastion/mkdkr",
+				"bash-bastion/bpm",
+				"bash-bastion/assert.sh",
+				"bash-bastion/bashful",
+				"bash-bastion/.github",
+				"bash-bastion/shunit2",
+				"bash-bastion/fff"
+			]
+		},
+		{
+			"name": "El Camino Computing Club",
+			"repositories": [
+				"ecc-computing-club/.github",
+				"ecc-computing-club/slides",
+				"ecc-computing-club/resume-interview-workshop",
+				"ecc-computing-club/sci-calc",
+				"ecc-computing-club/website"
+			]
+		},
+		{
+			"name": "Language Language",
+			"repositories": [
+				"language-language/.github",
+				"language-language/language",
+				"language-language/vscode-foxlang"
+			]
+		},
+		{
+			"name": "Version Manager",
+			"repositories": [
+				"version-manager/woof",
+				"version-manager/woof-plugin-ancillary",
+				"version-manager/woof-plugin-hashicorp",
+				"version-manager/documents",
+				"version-manager/woof-plugin-core",
+				"version-manager/.github"
+			]
+		},
+		{
+			"name": "Fox Lists",
+			"repositories": [
+				"fox-lists/catalog-developer-surveys",
+				"fox-lists/.github",
+				"fox-lists/catalog-job-preparation",
+				"fox-lists/catalog-tool-comments",
+				"fox-lists/catalog-conferences",
+				"fox-lists/catalog-knowledge-tools"
+			]
+		},
+		{
+			"name": "Fox Configuration",
+			"repositories": [
+				"fox-self/eslint-config-hyperupcall",
+				"fox-self/eslint-plugin-hyperupcall",
+				"fox-self/stylelint-config-hyperupcall",
+				"fox-self/stylelint-hyperupcall",
+				"fox-self/lefthook-config-hyperupcall",
+				"fox-self/prettier-config-hyperupcall",
+				"fox-self/markdownlint-config-hyperupcall",
+				"fox-self/hyperupcall-scripts-nodejs",
+				"fox-self/hyperupcall-config-utils"
+			]
+		},
+		{
+			"name": "VSCode Extensions",
+			"repositories": [
+				"fox-projects/vscode-assorted-languages",
+				"fox-projects/vscode-cppcheck",
+				"fox-self/vscode-hyperupcall",
+				"fox-self/vscode-hyperupcall-packs"
+			]
+		},
+		{
+			"name": "Other",
+			"repositories": [
+				"awesome-lists/awesome-bash",
+				"SchemaStore/json-validator",
+				"foxium-browser/foxium",
+				"semantic-hotkeys/.github",
+				"semantic-hotkeys/config",
+				"fox-projects/fox-css",
+				"fox-projects/edwinkofler.com",
+				"fox-projects/babel-improved-piped-pipelines",
+				"fox-projects/babel-plugin-improved-gulp-pipelines",
+				"fox-projects/xdgbasedirectoryspecification.com",
+				"fox-projects/autocomplete",
+				"fox-projects/showenv",
+				"fox-projects/frontend-mentor",
+				"fox-projects/opensourceetiquette.com",
+				"fox-projects/.github",
+				"fox-incubating/tree-sitter-tcsh",
+				"fox-incubating/run",
+				"fox-incubating/logs",
+				"fox-incubating/pass-rs",
+				"fox-incubating/os-tutorial",
+				"fox-incubating/job",
+				"fox-incubating/lefthook-packages",
+				"fox-incubating/proposal-string-remove-prefix-suffix",
+				"fox-incubating/check-organization-links-action",
+				"fox-incubating/code-editor-config-generator",
+				"fox-incubating/obsidian-emoji-tools",
+				"fox-incubating/list-lint",
+				"fox-incubating/ajv-formats-draft2019",
+				"fox-incubating/app-favicon-generator",
+				"fox-incubating/jade",
+				"fox-incubating/h-pell",
+				"fox-incubating/h-notie",
+				"fix-js/rhino",
+				"fix-js/WebKit",
+				"fix-js/v8",
+				"fix-js/graaljs",
+				"fix-js/duktape",
+				"fix-js/hermes",
+				"fix-js/mujs",
+				"fix-js/jerryscript",
+				"fix-js/mjs",
+				"fix-js/test262",
+				"big-blocks/.github",
+				"big-blocks/marked-penrose",
+				"big-blocks/examples",
+				"big-blocks/marked-lichess",
+				"big-blocks/marked-chesscom",
+				"swallowjs/findup-sync",
+				"swallowjs/swallow",
+				"swallowjs/glob-stream",
+				"swallowjs/swallow-util",
+				"swallowjs/init",
+				"fox-self/slides",
+				"fox-self/containers",
+				"fox-self/devcontainers",
+				"fox-self/stars",
+				"fox-self/virtual-machines",
+				"fox-self/.github",
+				"fox-self/webext-hyperupcall",
+				"fox-self/hyperupcall-action",
+				"fox-self/android-app-hyperupcall",
+				"fox-self/obsidian-hyperupcall",
+				"fox-self/packages",
+				"fox-self/sublime-hyperupcall",
+				"fox-self/npm-package-json-lint-config-hyperupcall",
+				"hyperupcall/.github",
+				"hyperupcall/autoenv",
+				"hyperupcall/awesome-mastodon",
+				"hyperupcall/bake",
+				"hyperupcall/blog",
+				"hyperupcall/challenges",
+				"hyperupcall/config",
+				"hyperupcall/ensure",
+				"hyperupcall/hyperupcall"
+			]
+		}
+	]
+}
