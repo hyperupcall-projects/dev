@@ -12,8 +12,9 @@ import {
 export const issues = async function* issues() {
 	// Check that there is only one configuration file.
 	{
-		// TODO: Move to @hyperupcall/configs
-		const configContent = `export { default } from '@hyperupcall/scripts-nodejs/config-eslint.ts'\n`
+		const configFile = 'eslint.config.js'
+		const configPath = path.join(pkgRoot(), 'config', configFile)
+		const configContent = await fs.readFile(configPath, 'utf-8')
 
 		// https://eslint.org/docs/latest/use/configure/configuration-files-deprecated
 		// https://eslint.org/docs/latest/use/configure/configuration-files

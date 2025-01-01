@@ -181,33 +181,12 @@ export async function fileExists(filepath) {
 		.catch(() => false)
 }
 
-/**
- * @param {string} [packageName]
- * @returns {string}
- */
-export function pkgRoot(packageName) {
+export function pkgRoot(packageName?: string) {
 	if (!packageName) {
 		return path.dirname(import.meta.dirname)
 	} else {
 		return path.dirname(require.resolve(packageName))
 	}
-}
-
-/**
- * @param {string} configFileName
- */
-export function getConfigPath(configFileName) {
-	const thisLocation = path.join(pkgRoot(), configFileName)
-	if (existsSync(thisLocation)) {
-		return thisLocation
-	}
-
-	const thatLocation = path.join(pkgRoot('@hyperupcall/configs'), configFileName)
-	if (existsSync(thatLocation)) {
-		return thatLocation
-	}
-
-	throw new Error(`Failed to find config file with name: ${configFileName}`)
 }
 
 /**

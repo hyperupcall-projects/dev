@@ -11,7 +11,7 @@ import { fileExists, pkgRoot } from '#common'
 /** @type {import('../../../../index.ts').Issues} */
 export const issues = async function* issues() {
 	const configFile = '.editorconfig'
-	const configPath = path.join(pkgRoot('@hyperupcall/configs'), configFile)
+	const configPath = path.join(pkgRoot(), 'config', configFile)
 	const configContent = await fs.readFile(configPath, 'utf-8')
 
 	if (!(await fileExists(configFile))) {

@@ -8,9 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@hyperupcall/configs':
-        specifier: ^0.2.3
-        version: 0.2.3
       '@ltd/j-toml':
         specifier: ^1.38.0
         version: 1.38.0
@@ -215,9 +212,6 @@ packages:
 
   '@hyperupcall/config-utils@0.4.0':
     resolution: {integrity: sha512-EhKjgJChTmd/yplvqno7r3b13US0u0QzBxUCEyQ4jqKm/gSl2eYD3XlbnVGLjFzf8pg72cf3DwSg6Cy7G4Q6ag==}
-
-  '@hyperupcall/configs@0.2.3':
-    resolution: {integrity: sha512-5gT2aKPJ7+iOayud+5f3HHUTpvIskEc/rwEY7ny+1udCSz8u0eh/ZMAd84JLUDz0gXkVCjGBG8kRPFcWFg4QTw==}
 
   '@hyperupcall/eslint-config@1.0.0':
     resolution: {integrity: sha512-24dzcjJbGry9Ja0e1KHi4yZAtsZ2DxJWTtbwykudPQd1o0nKg6+nGLrb+fNt44akSkC0DJQEvdRZ9sYCmfYQVw==}
@@ -2828,8 +2822,6 @@ snapshots:
   '@humanwhocodes/retry@0.3.0': {}
 
   '@hyperupcall/config-utils@0.4.0': {}
-
-  '@hyperupcall/configs@0.2.3': {}
 
   '@hyperupcall/eslint-config@1.0.0(@eslint-community/eslint-plugin-eslint-comments@4.4.0(eslint@9.10.0(jiti@2.4.0)))(@eslint/js@9.10.0)(eslint-config-prettier@9.1.0(eslint@9.10.0(jiti@2.4.0)))(eslint-plugin-import@2.30.0(eslint@9.10.0(jiti@2.4.0)))(eslint-plugin-markdown@3.0.1(eslint@9.10.0(jiti@2.4.0)))(eslint-plugin-mdx@3.1.5(eslint@9.10.0(jiti@2.4.0)))(eslint-plugin-n@17.10.2(eslint@9.10.0(jiti@2.4.0)))(eslint-plugin-no-unsanitized@4.1.0(eslint@9.10.0(jiti@2.4.0)))(eslint-plugin-perfectionist@3.5.0(eslint@9.10.0(jiti@2.4.0))(typescript@5.3.3))(eslint-plugin-promise@7.1.0(eslint@9.10.0(jiti@2.4.0)))(eslint-plugin-regexp@2.6.0(eslint@9.10.0(jiti@2.4.0)))(eslint-plugin-security@3.0.1)(eslint-plugin-unicorn@55.0.0(eslint@9.10.0(jiti@2.4.0)))(eslint@9.10.0(jiti@2.4.0))':
     dependencies:

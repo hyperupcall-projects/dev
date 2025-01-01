@@ -27,7 +27,6 @@
 		"test": "node ./test/test.ts"
 	},
 	"dependencies": {
-		"@hyperupcall/configs": "^0.2.3",
 		"@ltd/j-toml": "^1.38.0",
 		"@parcel/watcher": "^2.5.0",
 		"@preact/signals": "^2.0.0",
