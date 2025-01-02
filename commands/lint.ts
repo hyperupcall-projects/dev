@@ -10,6 +10,7 @@ import toml from 'smol-toml'
 import { execa } from 'execa'
 import { globby } from 'globby'
 import ansiEscapes from 'ansi-escapes'
+import process from 'node:process'
 
 /**
  * @import { CommandFixOptions, Project } from '../index.ts'

@@ -105,6 +105,7 @@ export async function getRepositoryConfig() {
 		repositoryGroups: [
 			{
 				name: 'Personal',
+				id: 'personal',
 				repositories: matchAndTake([
 					'fox-incubating/sauerkraut',
 					'fox-incubating/event-horizon',
@@ -117,6 +118,7 @@ export async function getRepositoryConfig() {
 			},
 			{
 				name: 'JSON Schema',
+				id: 'json-schema',
 				repositories: matchAndTake(
 					['SchemaStore/*', 'fox-projects/jsonschema-extractor'],
 					{
@@ -125,11 +127,13 @@ export async function getRepositoryConfig() {
 				),
 			},
 			{
-				name: 'Maintain',
+				name: 'Maintainer',
+				id: 'maintainer',
 				repositories: matchAndTake(['tj/git-extras']),
 			},
 			{
 				name: 'bpkg',
+				id: 'bpkg',
 				repositories: matchAndTake(['bpkg/*']),
 			},
 			// {
@@ -138,30 +142,37 @@ export async function getRepositoryConfig() {
 			// },
 			{
 				name: 'hacks.guide',
+				id: 'hacks-guide',
 				repositories: matchAndTake(['hacks-guide/*']),
 			},
 			{
 				name: 'Bash Bastion',
+				id: 'bash-bastion',
 				repositories: matchAndTake(['bash-bastion/*']),
 			},
 			{
 				name: 'El Camino Computing Club',
+				id: 'ecc-computing-club',
 				repositories: matchAndTake(['ecc-computing-club/*']),
 			},
 			{
 				name: 'Language Language',
+				id: 'language-language',
 				repositories: matchAndTake(['language-language/*']),
 			},
 			{
 				name: 'Version Manager',
+				id: 'version-manager',
 				repositories: matchAndTake(['version-manager/*']),
 			},
 			{
 				name: 'Fox Lists',
+				id: 'fox-lists',
 				repositories: matchAndTake(['fox-lists/*']),
 			},
 			{
 				name: 'Fox Configuration',
+				id: 'configuration-repos',
 				repositories: matchAndTake([
 					'fox-self/*prettier*',
 					'fox-self/*eslint*',

@@ -75,7 +75,7 @@ export async function createApp() {
 
 async function serveJs(req, res, relPath) {
 	const pageId = req.url.slice(1)
-	const file = `${relPath}/${pageId}`
+	const file = `${relPath}/${pageId}`.replace(/\.js$/, '.ts')
 	try {
 		let text = await fs.readFile(file, 'utf-8')
 		text = tsBlankSpace(text)
