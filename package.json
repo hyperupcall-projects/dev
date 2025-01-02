@@ -18,6 +18,7 @@
 	},
 	"imports": {
 		"#common": "./config/common.ts",
+		"#types": "./index.d.ts",
 		"#components/*": "./dev-server/components/*",
 		"#utilities/*": "./utilities/*"
 	},
@@ -79,3 +80,4 @@
 	},
 	"prettier": "@hyperupcall/scripts-nodejs/config-prettier.js"
 }
+

@@ -1,5 +1,6 @@
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
+import type { Issues } from '#types'
 
 import {
 	getNpmLatestVersion,
@@ -8,8 +9,7 @@ import {
 	filesMustHaveShape,
 } from '#common'
 
-/** @type {import('../../../../index.ts').Issues} */
-export const issues = async function* issues() {
+export const issues: Issues = async function* issues({ project }) {
 	// Check that there is only one configuration file.
 	{
 		const configFile = 'eslint.config.js'

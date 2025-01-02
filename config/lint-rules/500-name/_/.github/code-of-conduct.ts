@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 import * as fs from 'node:fs/promises'
+import type { Issues } from '#types'
 
 import { globby } from 'globby'
 import { findCodeOfConductFiles } from '#common'
@@ -11,8 +12,7 @@ import { findCodeOfConductFiles } from '#common'
  * the code of conduct file must exist in the organization's ".github" repository.
  */
 
-/** @type {import('../../../../index.ts').Issues} */
-export const issues = async function* issues() {
+export const issues: Issues = async function* issues({ project }) {
 	const files = await findCodeOfConductFiles()
 
 	for (const file of files) {

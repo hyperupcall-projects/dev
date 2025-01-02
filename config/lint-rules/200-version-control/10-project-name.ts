@@ -1,13 +1,13 @@
 import path from 'node:path'
 
 import { execa } from 'execa'
+import type { Issues } from '#types'
 
 /**
  * Check that the name of the remote repository matches the local directory name.
  */
 
-/** @type {import('../../../index.ts').Issues} */
-export async function* issues({ project }) {
+export const issues: Issues = async function* issues({ project }) {
 	// Loop through all remotes instead of just `project.name`.
 	const output = await execa('git', ['remote', '--verbose'])
 	if (!output.stdout) return

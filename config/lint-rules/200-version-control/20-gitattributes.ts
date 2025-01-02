@@ -2,11 +2,11 @@ import * as fs from 'node:fs/promises'
 import path from 'node:path'
 
 import { fileExists } from '#common'
+import type { Issues } from '#types'
 
 export const skip = true
 
-/** @type {import('../../../index.ts').Issues} */
-export async function* issues({ project }) {
+export const issues: Issues = async function* issues({ project }) {
 	const configFile = '.gitattributes'
 
 	// TODO

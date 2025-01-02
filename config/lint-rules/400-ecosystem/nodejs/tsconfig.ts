@@ -1,5 +1,6 @@
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
+import type { Issues } from '#types'
 
 import {
 	getNpmLatestVersion,
@@ -10,8 +11,7 @@ import {
 
 import { TsConfigJson } from 'type-fest'
 
-/** @type {import('../../../../index.ts').Issues} */
-export const issues = async function* issues() {
+export const issues: Issues = async function* issues({ project }) {
 	const configs = await Promise.all([
 		fs
 			.readFile('tsconfig.json', 'utf-8')

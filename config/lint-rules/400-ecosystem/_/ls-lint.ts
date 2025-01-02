@@ -3,13 +3,13 @@ import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 
 import { fileExists, pkgRoot } from '#common'
+import type { Issues } from '#types'
 
 /**
  * Check that the EditorConfig file exists and has the correct content.
  */
 
-/** @type {import('../../../../index.ts').Issues} */
-export const issues = async function* issues() {
+export const issues: Issues = async function* issues({ project }) {
 	const configFile = '.ls-lint.yml'
 	const configPath = path.join(pkgRoot(), 'config', configFile)
 	const configContent = await fs.readFile(configPath, 'utf-8')

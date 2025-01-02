@@ -5,14 +5,18 @@
 		"checkJs": true,
 		"module": "node16",
 		"moduleResolution": "node16",
-		"lib": ["es2023"],
+		"lib": ["es2022"],
 		"noUnusedLocals": false,
 		"noUnusedParameters": false,
 		"baseUrl": "./",
 		"forceConsistentCasingInFileNames": true,
+		"noEmit": true,
 		"allowImportingTsExtensions": true,
 		"paths": {
-			"#common": ["config/common.js"]
+			"#common": ["config/common.ts"],
+			"#types": ["./index.d.ts"],
+			"#components/*": ["./dev-server/components/*"],
+			"#utilities/*": ["./utilities/*"]
 		}
 	}
 }

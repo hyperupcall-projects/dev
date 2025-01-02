@@ -3,6 +3,7 @@ import path from 'node:path'
 import { globby } from 'globby'
 
 import { fileExists, pkgRoot } from '#common'
+import type { Issues } from '#types'
 
 /**
  * Check if the existing README file conforms to my standards.
@@ -14,8 +15,7 @@ import { fileExists, pkgRoot } from '#common'
  * See more: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-readmes
  */
 
-/** @type {import('../../../index.ts').Issues} */
-export const issues = async function* issues({ project }) {
+export const issues: Issues = async function* issues({ project }) {
 	// Checks for the ".github" directory
 	{
 		const files = await globby('.github/*readme*', { caseSensitiveMatch: false })

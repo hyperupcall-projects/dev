@@ -1,6 +1,13 @@
-// SPDX-License-Identifier: MPL-2.0
-import * as fs from 'node:fs/promises'
 import type { Issues } from '#types'
 
-// TODO: No readme
+;`{
+	"fmt": {
+		"options": {
+			"indentWidth": 3,
+			"useTabs": true
+		}
+	}
+}
+`
+
 export const issues: Issues = async function* issues({ project }) {}

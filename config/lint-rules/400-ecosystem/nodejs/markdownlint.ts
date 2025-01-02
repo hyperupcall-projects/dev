@@ -2,9 +2,9 @@ import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 
 import { pkgRoot, filesMustHaveShape, filesMustHaveContent } from '#common'
+import type { Issues } from '#types'
 
-/** @type {import('../../../../index.ts').Issues} */
-export const issues = async function* issues() {
+export const issues: Issues = async function* issues({ project }) {
 	const markdownlintConfig = {
 		extends: './node_modules/@hyperupcall/markdownlint-config/.markdownlint.json',
 	}

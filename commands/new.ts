@@ -9,7 +9,7 @@ import { execa } from 'execa'
 import Handlebars from 'handlebars'
 import { fileExists } from '#common'
 
-import type { CommandNewOptions } from '../index.js'
+import type { CommandNewOptions } from '#types'
 
 const { prompt } = enquirer
 

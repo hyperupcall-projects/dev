@@ -9,6 +9,7 @@ import { execa } from 'execa'
 import enquirer from 'enquirer'
 
 import { fileExists, pkgRoot, octokit } from '#common'
+import type { Issues } from '#types'
 
 const { prompt } = enquirer
 
@@ -17,8 +18,7 @@ const { prompt } = enquirer
  * to my standards.
  */
 
-/** @type {import('../../../index.ts').Issues} */
-export const issues = async function* issues({ project }) {
+export const issues: Issues = async function* issues({ project }) {
 	if (project.type !== 'with-remote-url') {
 		throw new Error(`Expected project to be associated with a remote`)
 	}

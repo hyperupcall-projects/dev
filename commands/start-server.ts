@@ -1,5 +1,5 @@
 import watcher from '@parcel/watcher'
-import { Server } from 'http'
+import { Server } from 'node:http'
 import debounce from 'debounce'
 import { nodeResolve } from '@rollup/plugin-node-resolve'
 import { rollup } from 'rollup'
@@ -10,8 +10,7 @@ export async function run(values: CommandStartServerOptions, positionals: string
 	const { createApp } = await import('../dev-server/server.ts')
 	const app = await createApp()
 
-	/** @type {Server} */
-	let server
+	let server: Server | null = null
 	process.on('SIGINT', () => {
 		if (server) {
 			server.close(() => {

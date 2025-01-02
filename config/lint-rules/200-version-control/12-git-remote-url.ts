@@ -2,9 +2,9 @@ import path from 'node:path'
 
 import { fileExists } from '#common'
 import { execa } from 'execa'
+import type { Issues } from '#types'
 
-/** @type {import('../../../index.ts').Issues} */
-export async function* issues({ project }) {
+export const issues: Issues = async function* issues({ project }) {
 	const output = await execa('git', ['remote', '--verbose'])
 	if (!output.stdout) return
 

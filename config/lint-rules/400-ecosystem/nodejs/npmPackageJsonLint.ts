@@ -2,11 +2,11 @@ import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 
 import { pkgRoot, filesMustHaveShape, filesMustHaveContent } from '#common'
+import type { Issues } from '#types'
 
 export const skip = true
 
-/** @type {import('../../../../index.ts').Issues} */
-export const issues = async function* issues() {
+export const issues: Issues = async function* issues({ project }) {
 	const npmPackageJsonLintConfig = {
 		extends:
 			'./node_modules/@hyperupcall/npm-package-json-lint-config/npmpackagejsonlintrc.json',

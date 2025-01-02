@@ -7,9 +7,9 @@ import {
 	filesMustHaveShape,
 	filesMustHaveContent,
 } from '#common'
+import type { Issues } from '#types'
 
-/** @type {import('../../../../index.ts').Issues} */
-export const issues = async function* issues() {
+export const issues: Issues = async function* issues({ project }) {
 	// Check that there is only one configuration file.
 	{
 		// https://prettier.io/docs/en/configuration.html

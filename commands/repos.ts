@@ -14,7 +14,7 @@ import { fileExists, octokit } from '#common'
 import { collectGitHubRepositories } from '#utilities/repositories.ts'
 import type { Octokit } from 'octokit'
 import type { GetResponseDataTypeFromEndpointMethod } from '@octokit/types'
-import type { CommandReposOptions } from '../index.js'
+import type { CommandReposOptions } from '#types'
 
 type Config = {
 	organizationsDir: string

@@ -1,9 +1,9 @@
 import { execa } from 'execa'
+import type { Issues } from '#types'
 
 export const skip = true
 
-/** @type {import('../../../../index.ts').Issues} */
-export const issues = async function* issues() {
+export const issues: Issues = async function* issues({ project }) {
 	const { stdout, stderr, exitCode } = await execa('npx', ['publint'])
 	if (!stdout.includes('All good!')) {
 		console.log(stdout)
