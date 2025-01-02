@@ -1,0 +1,12 @@
+{
+	"tasks": {
+		"run": "deno run --allow-all ./bin/dev.js",
+	},
+	"imports": {
+		"#common": "./config/common.ts",
+		"#types": "./index.d.ts",
+		"#components/": "./dev-server/components/",
+		"#utilities/": "./utilities/",
+		"std": "https://deno.land/std/http/mod.ts",
+	},
+}
