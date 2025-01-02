@@ -12,23 +12,16 @@ import yn from 'yn'
 
 import { fileExists, octokit } from '#common'
 import { collectGitHubRepositories } from '#utilities/repositories.ts'
+import type { Octokit } from 'octokit'
+import type { GetResponseDataTypeFromEndpointMethod } from '@octokit/types'
+import type { CommandReposOptions } from '../index.js'
 
-/**
- * @import { Octokit } from 'octokit'
- * @import { GetResponseDataTypeFromEndpointMethod } from '@octokit/types'
- * @typedef {GetResponseDataTypeFromEndpointMethod<typeof octokit.rest.repos.get>} GitHubRepository
- *
- * @import { CommandReposOptions } from "../index.js";
- *
- * @typedef Config
- * @property {string} organizationsDir
- * @property {string[]} ignored
- */
+type Config = {
+	organizationsDir: string
+	ignored: string[]
+}
 
-export async function run(
-	/** @type {CommandReposOptions} */ values,
-	/** @type {string[]} */ positionals,
-) {
+export async function run(values: CommandReposOptions, positionals: string[]) {
 	const config = {
 		organizationsDir: untildify('~/.dev/.data/managed-repositories'),
 		repositoryGroups: [
@@ -124,14 +117,13 @@ export async function run(
 	}
 }
 
-/**
- * @typedef SyncRepositoriesParams
- * @property {Octokit} octokit
- * @property {Config} config
- *
- * @param {SyncRepositoriesParams} options
- */
-export async function syncRepositories({ octokit, config }) {
+export async function syncRepositories({
+	octokit,
+	config,
+}: {
+	octokit: Octokit
+	config: Config
+}) {
 	{
 		if (
 			(await fs.lstat(config.organizationsDir)).isSymbolicLink() &&
@@ -145,7 +137,6 @@ export async function syncRepositories({ octokit, config }) {
 	}
 	await fs.mkdir(config.organizationsDir, { recursive: true })
 
-	/** @type {Record<string, GitHubRepository[]>} */
 	const Repositories = await collectGitHubRepositories()
 	// Check that no directories are empty
 	{
@@ -176,10 +167,7 @@ export async function syncRepositories({ octokit, config }) {
 					console.error(`❌ Expected a directory: ${orgEntry.name}${repoEntry.name}`)
 				}
 
-				function isValidRepository(
-					/** @type {string} */ ownerName,
-					/** @type {string} */ repoName,
-				) {
+				function isValidRepository(ownerName: string, repoName: string) {
 					if (!(ownerName in Repositories)) {
 						return false
 					}
@@ -236,7 +224,7 @@ export async function syncRepositories({ octokit, config }) {
 				let repoDir = path.join(config.organizationsDir, orgName, repo.name)
 				console.log(`Checking if ${orgName}/${repo.name} needs updates`)
 
-				async function uptoDate(/** @type {string} */ repoDir) {
+				async function uptoDate(repoDir: string) {
 					await execa('git', ['-C', repoDir, 'fetch', '--all'])
 					const result = await execa('git', [
 						'-C',

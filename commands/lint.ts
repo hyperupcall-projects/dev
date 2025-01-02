@@ -12,14 +12,9 @@ import { globby } from 'globby'
 import ansiEscapes from 'ansi-escapes'
 import process from 'node:process'
 
-/**
- * @import { CommandFixOptions, Project } from '../index.ts'
- */
+import type { CommandFixOptions, Project } from '../index.ts'
 
-export async function run(
-	/** @type {CommandFixOptions} */ options,
-	/** @type {string[]} */ positionals,
-) {
+export async function run(options: CommandFixOptions, positionals: string[]) {
 	if (positionals.length > 0) {
 		process.chdir(positionals[0] || '.')
 	}
@@ -31,8 +26,8 @@ export async function run(
 		config = toml.parse(
 			await fs.readFile(path.join(project.rootDir, 'project.toml'), 'utf-8'),
 		)
-	} catch (err) {
-		if (/** @type {NodeJS.Error} */ err.code !== 'ENOENT') {
+	} catch (err: NodeJS.Error) {
+		if (err.code !== 'ENOENT') {
 			throw err
 		}
 	}
@@ -59,8 +54,8 @@ export async function run(
 		return
 	}
 
-	const /** @type {string[]} */ ruleFiles = []
-	const collect = async (/** @type {string} */ pattern) => {
+	const ruleFiles: string[] = []
+	const collect = async (pattern: string) => {
 		const matches = await globby(pattern, {
 			cwd: path.join(pkgRoot(), 'config/lint-rules'),
 		})
@@ -289,7 +284,7 @@ async function getProject() {
 	}
 }
 
-function printWithTips(/** @type {string} */ str, /** @type {string[]} */ tips) {
+function printWithTips(str: string, tips: string[]) {
 	console.info(str)
 	for (const tip of tips) {
 		console.info(` -> ${tip}`)

@@ -6,22 +6,22 @@ import path from 'node:path'
  * @typedef {import('node:fs').Dirent} Dirent
  */
 
-/**
- * @typedef RunnerParam
- * @property {string} orgDir
- * @property {Dirent} orgEntry
- * @property {string} repoDir
- * @property {Dirent} repoEntry
- *
- * @typedef RunnerOptions
- * @property {string[]} [ignores]
- *
- *
- * @param {string} organizationsDir
- * @param {RunnerOptions} options
- * @param {(arg0: RunnerParam) => Promise<void>} fn
- */
-export async function forEachRepository(organizationsDir, options, fn) {
+type RunnerParam = {
+	orgDir: string
+	orgEntry: Dirent
+	repoDir: string
+	repoEntry: Dirent
+}
+
+type RunnerOptions = {
+	ignores?: string[]
+}
+
+export async function forEachRepository(
+	organizationsDir: string,
+	options: RunnerOptions,
+	fn: (arg0: RunnerParam) => Promise<void>,
+) {
 	if (typeof options === 'function') {
 		fn = options
 		options = {}

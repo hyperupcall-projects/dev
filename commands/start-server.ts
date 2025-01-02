@@ -4,14 +4,9 @@ import debounce from 'debounce'
 import { nodeResolve } from '@rollup/plugin-node-resolve'
 import { rollup } from 'rollup'
 
-/**
- * @import { CommandStartServerOptions } from '../index.ts'
- */
+import type { CommandStartServerOptions } from '../index.ts'
 
-export async function run(
-	/** @type {CommandStartServerOptions} */ values,
-	/** @type {string[]} */ positionals,
-) {
+export async function run(values: CommandStartServerOptions, positionals: string[]) {
 	const { createApp } = await import('../dev-server/server.ts')
 	const app = await createApp()
 
@@ -57,7 +52,7 @@ export async function run(
 	// )
 }
 
-async function prebundle(/** @type {string[]} */ positionals) {
+async function prebundle(positionals: string[]) {
 	if (true || positionals.includes('--prebundle')) {
 		// TODO
 		let bundle

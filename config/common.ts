@@ -13,9 +13,7 @@ import * as diff from 'diff'
 import dotenv from 'dotenv'
 import { globby } from 'globby'
 
-/**
- * @import {Issue, Project} from '../index.ts'
- */
+import type { Issue, Project } from '../index.ts'
 
 const require = createRequire(import.meta.url)
 
@@ -202,7 +200,7 @@ export async function writeTrees(trees) {
 	}
 }
 
-export async function getNpmLatestVersion(/** @type {string[]} */ packages) {
+export async function getNpmLatestVersion(packages: string[]) {
 	const latestVersionsObjects = await Promise.all(
 		packages.map((packageName) => execa('npm', ['view', '--json', packageName])),
 	)

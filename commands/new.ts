@@ -9,28 +9,23 @@ import { execa } from 'execa'
 import Handlebars from 'handlebars'
 import { fileExists } from '#common'
 
-/**
- * @import { CommandNewOptions } from '../index.ts'
- */
+import type { CommandNewOptions } from '../index.js'
 
 const { prompt } = enquirer
 
-export async function run(
-	/** @type {CommandNewOptions} */ values,
-	/** @type {string[]} */ positionals,
-) {
+export async function run(values: CommandNewOptions, positionals: string[]) {
 	if (!values.ecosystem) {
-		const /** @type {{ value: string }} */ input = await prompt({
-				type: 'select',
-				name: 'value',
-				message: 'Choose an ecosystem',
-				choices: [
-					{ message: 'NodeJS', name: 'nodejs' },
-					{ message: 'Rust', name: 'rust' },
-					{ message: 'Go', name: 'go' },
-					{ message: 'C++', name: 'cpp' },
-				],
-			})
+		const input = (await prompt({
+			type: 'select',
+			name: 'value',
+			message: 'Choose an ecosystem',
+			choices: [
+				{ message: 'NodeJS', name: 'nodejs' },
+				{ message: 'Rust', name: 'rust' },
+				{ message: 'Go', name: 'go' },
+				{ message: 'C++', name: 'cpp' },
+			],
+		})) as { value: string }
 		values.ecosystem = input.value
 	}
 
@@ -41,25 +36,25 @@ export async function run(
 			throw new Error(`Ecosystem "${values.ecosystem}" not supported`)
 		}
 
-		const /** @type {{ value: string }} */ { value } = await prompt({
-				type: 'select',
-				name: 'value',
-				message: `Choose a "${values.ecosystem}" template`,
-				choices: Object.entries(parameters).map(([id, { name }]) => ({
-					name: id,
-					message: name,
-				})),
-			})
+		const { value } = (await prompt({
+			type: 'select',
+			name: 'value',
+			message: `Choose a "${values.ecosystem}" template`,
+			choices: Object.entries(parameters).map(([id, { name }]) => ({
+				name: id,
+				message: name,
+			})),
+		})) as { value: string }
 
 		values.templateName = value
 	}
 
 	if (!values.projectName) {
-		const /** @type {{ value: string }} */ { value } = await prompt({
-				type: 'input',
-				name: 'value',
-				message: 'What is the project name?',
-			})
+		const { value } = (await prompt({
+			type: 'input',
+			name: 'value',
+			message: 'What is the project name?',
+		})) as { value: string }
 
 		values.projectName = value
 	}
@@ -74,19 +69,16 @@ export async function run(
 	})
 }
 
-/**
- * @typedef _Context
- * @property {string} dir
- * @property {string} ecosystem
- * @property {string} templateName
- * @property {string} projectName
- * @property {boolean} forceTemplate
- * @property {string[]} options
- *
- * @typedef {Readonly<_Context>} Context
- */
+type Context = Readonly<{
+	dir: string
+	ecosystem: string
+	templateName: string
+	projectName: string
+	forceTemplate: boolean
+	options: string[]
+}>
 
-export async function createProject(/** @type {Context} */ ctx) {
+export async function createProject(ctx: Context) {
 	const outputDir = path.resolve(process.cwd(), ctx.dir)
 
 	if (!(await fileExists(outputDir))) {
@@ -108,7 +100,7 @@ export async function createProject(/** @type {Context} */ ctx) {
 	)
 
 	await walk(templateDir)
-	async function walk(/** @type {string} */ dir) {
+	async function walk(dir: string) {
 		for (const dirent of await fs.readdir(dir, { withFileTypes: true })) {
 			if (dirent.isDirectory()) {
 				if (['node_modules', '__pycache__'].includes(dirent.name)) {

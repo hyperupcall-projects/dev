@@ -10,14 +10,9 @@ import yn from 'yn'
 import { forEachRepository } from '../utilities/util.ts'
 import { octokit } from '#common'
 
-/**
- * @import { CommandScriptOptions } from '../index.ts'
- */
+import type { CommandScriptOptions } from '../index.ts'
 
-export async function run(
-	/** @type {CommandScriptOptions} */ values,
-	/** @type {string[]} */ positionals,
-) {
+export async function run(values: CommandScriptOptions, positionals: string[]) {
 	const task = positionals[0]
 
 	const helpText = `script <taskName>
@@ -45,7 +40,7 @@ check-license-headers
 	}
 }
 
-export async function checkLicenseHeaders(/** @type {string[]} */ args) {
+export async function checkLicenseHeaders(args: string[]) {
 	await forEachRepository(
 		config.organizationsDir,
 		{ ignores: config.ignoredOrganizations },
@@ -78,7 +73,7 @@ export async function checkLicenseHeaders(/** @type {string[]} */ args) {
 		},
 	)
 
-	async function onFile(/** @type {string} */ filepath) {
+	async function onFile(filepath: string) {
 		const filename = path.basename(filepath)
 
 		if (
@@ -161,7 +156,7 @@ export async function checkLicenseHeaders(/** @type {string[]} */ args) {
 	}
 }
 
-export async function symlinkHiddenDirs(/** @type {string[]} */ args) {
+export async function symlinkHiddenDirs(args: string[]) {
 	await forEachRepository(
 		config.organizationsDir,
 		async function run({ orgDir, orgEntry, repoDir, repoEntry }) {
@@ -242,7 +237,7 @@ export async function symlinkHiddenDirs(/** @type {string[]} */ args) {
 	)
 }
 
-async function validateFoxArchives(/** @type {string[]} */ args) {
+async function validateFoxArchives(args: string[]) {
 	for await (const { data: repositories } of octokit.paginate.iterator(
 		octokit.rest.repos.listForOrg,
 		{

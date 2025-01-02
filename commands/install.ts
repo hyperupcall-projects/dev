@@ -8,13 +8,9 @@ import dedent from 'dedent'
 import { execa } from 'execa'
 import semver from 'semver'
 import { fileExists } from '#common'
+import type { CommandInstallOptions, InstalledProject } from '../index.js'
 
-/**
- * @import { CommandInstallOptions, InstalledProject } from "../index.js";
- */
-
-/** @type {InstalledProject[]} */
-const Projects = [
+const Projects: InstalledProject[] = [
 	{
 		name: 'sauerkraut',
 		url: 'https://github.com/fox-incubating/sauerkraut',
@@ -96,9 +92,8 @@ const Projects = [
 	// },
 ]
 
-/**
- * @typedef {'main' | 'update-version'} Screen
- */
+type Screen = 'main' | 'update-version'
+
 const Ctx = {
 	devDir: path.join(os.homedir(), '.dev'),
 	repositoryDir: path.join(os.homedir(), '.dev/.data/installed-repositories'),
@@ -110,10 +105,7 @@ export function cleanupTerminal() {
 	process.stdout.write(ansiEscapes.exitAlternativeScreen)
 }
 let ignoreKeystrokes = false
-export async function run(
-	/** @type {CommandInstallOptions} */ values,
-	/** @type {string[]} */ positionals,
-) {
+export async function run(values: CommandInstallOptions, positionals: string[]) {
 	await fs.mkdir(Ctx.devDir, { recursive: true })
 	await fs.mkdir(Ctx.repositoryDir, { recursive: true })
 
@@ -142,8 +134,8 @@ export async function run(
 	})
 }
 
-let /** @type {Screen} */ currentScreen = 'main'
-async function render(/** @type {string} */ char) {
+let currentScreen: Screen = 'main'
+async function render(char: string) {
 	if (currentScreen === 'main') {
 		await renderMainScreen(char)
 	} else if (currentScreen === 'update-version') {
@@ -151,7 +143,7 @@ async function render(/** @type {string} */ char) {
 	}
 }
 
-async function renderMainScreen(/** @type {string} */ char) {
+async function renderMainScreen(char: string) {
 	const project = Projects.find((project) => project.name === Ctx.currentProject)
 	if (!project?.data) {
 		throw new Error(`Failed to find project with name: \"${Ctx.currentProject}\"`)
@@ -326,7 +318,7 @@ async function renderMainScreen(/** @type {string} */ char) {
 }
 
 let currentVersion = 0
-async function renderUpdateVersionScreen(/** @type {string} */ char) {
+async function renderUpdateVersionScreen(char: string) {
 	const project = Projects.find((project) => project.name === Ctx.currentProject)
 	if (!project?.data) {
 		throw new Error(`Failed to find project with name: \"${Ctx.currentProject}\"`)
@@ -382,7 +374,7 @@ async function renderUpdateVersionScreen(/** @type {string} */ char) {
 async function updateProjectData() {
 	await Promise.all(Projects.map(mutateProject))
 
-	async function mutateProject(/** @type {InstalledProject} */ project) {
+	async function mutateProject(project: InstalledProject) {
 		const dir = path.join(Ctx.repositoryDir, project.name)
 		const projectExists = await fileExists(dir)
 
@@ -393,7 +385,7 @@ async function updateProjectData() {
 			isInstalled,
 			gitRef: '',
 			latestGitRef: '',
-			versions: /** @type {string[]} */ ([]),
+			versions: [] as string[],
 		}
 		if (!projectExists) {
 			project.data = projectData

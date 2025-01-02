@@ -30,7 +30,7 @@ export async function* issues({ project }) {
 	// }
 	//
 	// async function fix() {
-	// 	let /** @type {string} */ attributes = ''
+	// 	let attributes: string = ''
 	// 	try {
 	// 		attributes = await fs.readFile(configFile, 'utf-8')
 	// 	} catch (err) {
@@ -53,7 +53,7 @@ export async function* issues({ project }) {
 	// }
 }
 
-async function minimalGitAttributes(/** @type {string} */ input) {
+async function minimalGitAttributes(input: string) {
 	let content = input
 	content = content.replaceAll(/# foxxo /gu, '#section:fox-tools/fix ')
 

@@ -8,11 +8,11 @@ import { fileExists, octokit } from '#common'
 import untildify from 'untildify'
 import { minimatch } from 'minimatch'
 
-/**
- * @import { Octokit } from 'octokit'
- * @import { GetResponseDataTypeFromEndpointMethod } from '@octokit/types'
- * @typedef {GetResponseDataTypeFromEndpointMethod<typeof octokit.rest.repos.get>} GitHubRepository
- */
+import type { Octokit } from 'octokit'
+import type { GetResponseDataTypeFromEndpointMethod } from '@octokit/types'
+type GitHubRepository = GetResponseDataTypeFromEndpointMethod<
+	typeof octokit.rest.repos.get
+>
 
 export async function getCachedRepositoryConfig() {
 	const cachePath = path.join(
@@ -36,7 +36,21 @@ export async function getCachedRepositoryConfig() {
 	return json
 }
 
-export async function getRepositoryConfig() {
+export type ClonedReposConfig = {
+	cloneDir: string
+	symlinkedRepositoriesDir: string
+	repositoryGroups: {
+		name: string
+		id: string
+		repositories: string[]
+	}[]
+}
+
+type OriginalConfig = {
+	ignoredRepos: string[]
+}
+
+export async function getRepositoryConfig(): Promise<ClonedReposConfig> {
 	const config = {
 		ignoredRepos: [
 			// Skip cloning from the following organizations:
@@ -61,17 +75,14 @@ export async function getRepositoryConfig() {
 	}
 
 	const repositories = await collectGitHubRepositories(config)
-	const /** @type {string[]} */ allRepositoryFullnames = []
+	const allRepositoryFullnames: string[] = []
 	for (const orgName in repositories) {
 		for (const repo of repositories[orgName]) {
 			allRepositoryFullnames.push(repo.full_name)
 		}
 	}
 
-	function matchAndTake(
-		/** @type {string[]} */ globs,
-		/** @type {{ not: string[] }} */ { not } = { not: [] },
-	) {
+	function matchAndTake(globs: string[], options: { not: string[] } = { not: [] }) {
 		const taken = []
 		for (const fullname of Array.from(allRepositoryFullnames)) {
 			let matches = false
@@ -84,7 +95,7 @@ export async function getRepositoryConfig() {
 			if (!matches) {
 				continue
 			}
-			for (const pattern of not) {
+			for (const pattern of options.not) {
 				if (minimatch(fullname, pattern, { dot: true })) {
 					matches = false
 					continue
@@ -185,17 +196,25 @@ export async function getRepositoryConfig() {
 			},
 			{
 				name: 'VSCode Extensions',
+				id: 'vscode-extensions',
 				repositories: matchAndTake(['fox-self/vscode-*', 'fox-projects/vscode-*']),
 			},
 			{
 				name: 'Other',
+				id: 'other',
 				repositories: allRepositoryFullnames,
 			},
 		],
 	}
 }
 
-export async function collectGitHubRepositories(config) {
+type GitHubRepository = GetResponseDataTypeFromEndpointMethod<
+	typeof octokit.rest.repos.get
+>
+
+export async function collectGitHubRepositories(
+	config: OriginalConfig,
+): Record<string, GitHubRepository[]> {
 	// TODO
 	const orgsToFetch = [
 		'refined-github',

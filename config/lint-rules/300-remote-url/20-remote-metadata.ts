@@ -168,7 +168,7 @@ export const issues = async function* issues({ project }) {
 				)
 				// If we get a valid response, then the wiki repository exists (and has content). Therefore,
 				// we should not automatically disable the wiki tab and let the user decide what to do.
-			} catch (/** @type {any} */ err) {
+			} catch (err: any) {
 				if (!err.killed && err.stderr.includes('fatal: could not read Username')) {
 					// We attempt to access the wiki repository. As per security best practices, GitHub will
 					// ask for authentication, if either the wiki repository either does not exist, or is private.
