@@ -1,4 +1,4 @@
-import { Nav } from '#components/Nav.ts'
+import { Navigation } from '#components/Navigation.ts'
 import { execa } from 'execa'
 import { html } from 'htm/preact'
 import stripAnsi from 'strip-ansi'
@@ -18,7 +18,7 @@ export async function Server() {
 export function Page({ devCommand }) {
 	return html`
 		<div>
-			<${Nav} />
+			<${Navigation} />
 			<div class="mx-1">
 				<pre>${devCommand}</pre>
 			</div>

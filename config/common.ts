@@ -4,7 +4,6 @@ import util, { styleText } from 'node:util'
 import { execa } from 'execa'
 import { createRequire } from 'node:module'
 import { existsSync } from 'node:fs'
-import process from 'node:process'
 
 import { Octokit } from 'octokit'
 import detectIndent from 'detect-indent'

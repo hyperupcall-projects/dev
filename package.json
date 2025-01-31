@@ -29,7 +29,6 @@
 	},
 	"dependencies": {
 		"@ltd/j-toml": "^1.38.0",
-		"@parcel/watcher": "^2.5.0",
 		"@preact/signals": "^2.0.0",
 		"@rollup/plugin-node-resolve": "^16.0.0",
 		"ansi-escapes": "^7.0.0",
@@ -71,8 +70,10 @@
 		"@hyperupcall/prettier-config": "^0.9.1",
 		"@hyperupcall/scripts-nodejs": "0.2.3",
 		"@octokit/types": "^13.6.2",
+		"@types/express": "^5.0.0",
 		"@types/lodash": "^4.17.13",
 		"@types/node": "^22.10.2",
+		"@types/semver": "^7.5.8",
 		"type-fest": "^4.31.0"
 	},
 	"markdownlint-cli2": {
@@ -80,4 +81,3 @@
 	},
 	"prettier": "@hyperupcall/scripts-nodejs/config-prettier.js"
 }
-

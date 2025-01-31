@@ -7,7 +7,12 @@ import { getServiceData } from '../utilities/util.ts'
 import tsBlankSpace from 'ts-blank-space'
 
 import dedent from 'dedent'
-import { getRepositoryConfig } from '#utilities/repositories.ts'
+import {
+	getCachedRepositoryConfig,
+	getRepositoryConfig,
+	getRepositoryData,
+} from '#utilities/repositories.ts'
+import { execa } from 'execa'
 
 const importMap = {
 	imports: {
@@ -26,6 +31,7 @@ export function bundledDependencies() {
 
 export async function createApp() {
 	const app = express()
+	app.use(express.json())
 	app.use((req, res, next) => {
 		console.info(req.method + ' ' + req.url)
 		next()
@@ -64,10 +70,29 @@ export async function createApp() {
 	})
 	app.post('/api/repositories/refresh', async (req, res) => {
 		const cachePath = path.join(import.meta.dirname, 'static/repositories.json') // TODO
-		const json = await getRepositoryConfig()
+		const cachePath2 = path.join(import.meta.dirname, 'static/repositories2.json') // TODO
+		const [json, json2] = await Promise.all([getRepositoryConfig(), getRepositoryData()])
 		await fs.mkdir(path.dirname(cachePath), { recursive: true })
+		await fs.mkdir(path.dirname(cachePath2), { recursive: true })
 		await fs.writeFile(cachePath, JSON.stringify(json, null, '\t'))
+		await fs.writeFile(cachePath2, JSON.stringify(json, null, '\t'))
 		res.json({ success: true })
+	})
+	app.post('/api/repositories/open', async (req, res) => {
+		const { owner, name } = req.body
+		const json = await getCachedRepositoryConfig()
+		await execa('zed', ['--new', path.join(json.cloneDir, owner, name)], {
+			stdio: 'inherit',
+		})
+		res.send(200)
+	})
+	app.post('/api/repositories/clone', async (req, res) => {
+		const { owner, name } = req.body
+		const json = await getCachedRepositoryConfig()
+		await fs.mkdir(path.join(json.cloneDir, owner), { recursive: true })
+		await execa('git', ['clone', path.join(json.cloneDir, owner, name)], {
+			stdio: 'inherit',
+		})
 	})
 
 	return app

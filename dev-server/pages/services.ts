@@ -1,6 +1,6 @@
 import { html } from 'htm/preact'
 import { useState } from 'preact/hooks'
-import { Nav } from '#components/Nav.ts'
+import { Navigation } from '#components/Navigation.ts'
 
 export function Page() {
 	const [services, setServices] = useState([])
@@ -18,7 +18,7 @@ export function Page() {
 	getServices()
 
 	return html`<div>
-		<${Nav} />
+		<${Navigation} />
 		<div class="mx-1">
 			<h1 class="title mb-0">Services</h1>
 			<p class="mb-0">Tools to manage my user-level systemd services.</p>

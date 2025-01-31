@@ -1,10 +1,7 @@
-import { execa, execaCommand } from 'execa'
+import { execa } from 'execa'
 import fs from 'node:fs/promises'
 import path from 'node:path'
-
-/**
- * @typedef {import('node:fs').Dirent} Dirent
- */
+import type { Dirent } from 'node:fs'
 
 type RunnerParam = {
 	orgDir: string

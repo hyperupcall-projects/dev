@@ -4,7 +4,6 @@ My development tool. It helps with creating new projects from a template, managi
 
 ## TODO
 
-- currently implementing  'utility.ts', and managing repositories through dev start-dev-server website gui
 - default manager?
 
 **Linting**

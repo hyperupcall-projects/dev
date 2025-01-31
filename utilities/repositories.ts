@@ -14,7 +14,7 @@ type GitHubRepository = GetResponseDataTypeFromEndpointMethod<
 	typeof octokit.rest.repos.get
 >
 
-export async function getCachedRepositoryConfig() {
+export async function getCachedRepositoryConfig(): Promise<ClonedReposConfig> {
 	const cachePath = path.join(
 		import.meta.dirname,
 		'../dev-server/static/repositories.json',
@@ -44,6 +44,41 @@ export type ClonedReposConfig = {
 		id: string
 		repositories: string[]
 	}[]
+}
+
+export type RepositoryData = Record<
+	string,
+	{
+		full_name: string
+		status: 'noexist' | 'cloned'
+		hasUnsavedChanges: true
+		tags: { name: string; isAnnotated: string; ref: string; link: string }[]
+		currentBranch: string
+		localBranches: string[]
+		worktrees: string[]
+	}
+>
+
+export async function getCachedRepositoryData() {
+	const cachePath = path.join(
+		import.meta.dirname,
+		'../dev-server/static/repositories2.json',
+	)
+
+	let json
+	try {
+		json = JSON.parse(await fs.readFile(cachePath, 'utf-8'))
+	} catch (err) {
+		if (err.code === 'ENOENT') {
+			json = await getRepositoryData()
+			await fs.mkdir(path.dirname(cachePath), { recursive: true })
+			await fs.writeFile(cachePath, JSON.stringify(json, null, '\t'))
+		} else {
+			throw err
+		}
+	}
+
+	return json
 }
 
 type OriginalConfig = {
@@ -208,13 +243,23 @@ export async function getRepositoryConfig(): Promise<ClonedReposConfig> {
 	}
 }
 
-type GitHubRepository = GetResponseDataTypeFromEndpointMethod<
-	typeof octokit.rest.repos.get
->
+export async function getRepositoryData(): Promise<RepositoryData> {
+	return {
+		'fox-projects/pick-sticker': {
+			status: 'noexist',
+			// status: noexist' | 'cloned',
+			hasUnsavedChanges: false,
+			tags: [],
+			currentBranch: '',
+			localBranches: [],
+			worktrees: [],
+		},
+	}
+}
 
 export async function collectGitHubRepositories(
 	config: OriginalConfig,
-): Record<string, GitHubRepository[]> {
+): Promise<Record<string, GitHubRepository[]>> {
 	// TODO
 	const orgsToFetch = [
 		'refined-github',
@@ -228,8 +273,7 @@ export async function collectGitHubRepositories(
 		'pallets',
 	]
 
-	/** @type {Record<string, GitHubRepository[]>} */
-	const repositories = {}
+	const repositories: Record<string, GitHubRepository[]> = {}
 
 	// Collect repositories from organizations.
 	{

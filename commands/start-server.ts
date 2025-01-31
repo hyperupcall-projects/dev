@@ -1,4 +1,3 @@
-import watcher from '@parcel/watcher'
 import { Server } from 'node:http'
 import debounce from 'debounce'
 import { nodeResolve } from '@rollup/plugin-node-resolve'
@@ -11,44 +10,22 @@ export async function run(values: CommandStartServerOptions, positionals: string
 	const app = await createApp()
 
 	let server: Server | null = null
-	process.on('SIGINT', () => {
-		if (server) {
-			server.close(() => {
-				process.exit(0)
-			})
-		}
-	})
-
 	function createServer() {
 		if (server) {
 			server.close()
 		}
 
-		const port = Number(process.env.PORT) || 40008
-		server = app.listen(port, () => {
+		const port = Number(process.env.PORT) || 3000
+		server = app.listen(port)
+		server.on('error', (err) => {
+			console.error(err)
+			process.exit(1)
+		})
+		server.on('listening', () => {
 			console.log(`Listening on http://localhost:${port}`)
 		})
 	}
 	createServer()
-
-	// watcher.subscribe(
-	// 	'./dev-server',
-	// 	(err, events) => {
-	// 		if (err) return console.error(err)
-
-	// 		for (const event of events) {
-	// 			if (event.path.includes('/server.ts')) {
-	// 				console.info('Rollup bundling...')
-	// 				prebundle(positionals)
-	// 			}
-	// 		}
-
-	// 		if (events.length > 0) {
-	// 			debounce(createServer, 250)
-	// 		}
-	// 	},
-	// 	{},
-	// )
 }
 
 async function prebundle(positionals: string[]) {

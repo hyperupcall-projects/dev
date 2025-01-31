@@ -2,18 +2,20 @@ import { h } from 'preact'
 import { useState, useCallback } from 'preact/hooks'
 import { html } from 'htm/preact'
 
-export function Nav() {
+export function Navigation() {
 	const [isActive, setActive] = useState(false)
 	function activate() {
 		console.error('working')
 		setActive(!isActive)
 	}
-	return html`<nav class="navbar" role="navigation" aria-label="main navigation">
-		<div class="navbar-brand">
-			<a class="navbar-item">
-				<b>Dev</b>
-			</a>
 
+	return html`<nav
+		class="navbar"
+		role="navigation"
+		aria-label="main navigation"
+		style="border-bottom: 1px solid lightgray"
+	>
+		<div class="navbar-brand">
 			<a
 				role="button"
 				class="navbar-burger"

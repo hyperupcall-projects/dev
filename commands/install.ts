@@ -2,7 +2,6 @@ import path from 'node:path'
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import util, { styleText } from 'node:util'
-import process from 'node:process'
 
 import ansiEscapes from 'ansi-escapes'
 import dedent from 'dedent'

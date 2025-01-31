@@ -78,5 +78,5 @@ export type InstalledProject = {
 	install: string
 	uninstall: string
 	installed: () => Promise<boolean>
-	data?: ProjectData
+	data?: InstalledProjectData
 }

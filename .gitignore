@@ -1,3 +1,5 @@
 node_modules/
 .env
 .data/
+dev-server/static/repositories.json
+dev-server/static/repositories2.json

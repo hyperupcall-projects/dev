@@ -1,6 +1,6 @@
 {
 	"tasks": {
-		"run": "deno run --allow-all ./bin/dev.js",
+		"dev": "deno run --watch --allow-all ./bin/dev.js",
 	},
 	"imports": {
 		"#common": "./config/common.ts",

@@ -1,4 +1,4 @@
-#!/usr/bin/env -S node --experimental-strip-types --disable-warning=ExperimentalWarning
+#!/usr/bin/env -S node --disable-warning=ExperimentalWarning
 import fs from 'node:fs/promises'
 import path from 'node:path'
 

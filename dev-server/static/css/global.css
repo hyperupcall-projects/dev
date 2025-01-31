@@ -7,3 +7,20 @@
 	--bulma-primary-s: 100% !important;
 	--bulma-primary-l: 80% !important;
 }
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	height: 100%;
+	/* Bulma Hack. */
+	overflow: auto !important;
+}
+
+.hover-bold:hover {
+	font-weight: bold;
+}
