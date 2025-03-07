@@ -3,10 +3,10 @@ import debounce from 'debounce'
 import { nodeResolve } from '@rollup/plugin-node-resolve'
 import { rollup } from 'rollup'
 
-import type { CommandStartServerOptions } from '../index.ts'
+import type { CommandStartServerOptions } from '../index.js'
 
 export async function startServer() {
-	const { createApp } = await import('../dev-server/server.ts')
+	const { createApp } = await import('./server.ts')
 	const app = await createApp()
 	let server: Server | null = null
 	function createServer() {
@@ -36,7 +36,7 @@ async function prebundle(positionals: string[]) {
 				plugins: [nodeResolve()],
 			})
 			await bundle.write({
-				dir: './dev-server/static/bundled',
+				dir: './devserver/static/bundled',
 				format: 'es',
 			})
 		} catch (error) {

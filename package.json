@@ -20,8 +20,8 @@
 	"imports": {
 		"#common": "./config/common.ts",
 		"#types": "./index.d.ts",
-		"#pages/*": "./dev-server/pages/*",
-		"#components/*": "./dev-server/components/*",
+		"#pages/*": "./devserver/pages/*",
+		"#components/*": "./devserver/components/*",
 		"#utilities/*": "./utilities/*"
 	},
 	"scripts": {

@@ -35,8 +35,8 @@ export async function createApp() {
 		next()
 	})
 
-	app.get('/components/*path', (req, res) => serveJs(req, res, './dev-server'))
-	app.get('/pages/*path', (req, res) => serveJs(req, res, './dev-server'))
+	app.get('/components/*path', (req, res) => serveJs(req, res, './devserver'))
+	app.get('/pages/*path', (req, res) => serveJs(req, res, './devserver'))
 	app.post('/pages/*page', async (req, res) => {
 		const pageId = req.params.page.join('/')
 		const body = req.body
@@ -54,7 +54,7 @@ export async function createApp() {
 			}
 		}
 	})
-	app.use(express.static('./dev-server/static'))
+	app.use(express.static('./devserver/static'))
 	app.get('/utilities/*path', (req, res) => serveJs(req, res, '.'))
 
 	app.get('/', renderPage)
@@ -99,7 +99,7 @@ export async function renderPage(req, res) {
 	let head
 	let page
 	// try {
-	const module = await import(`../dev-server/pages/${id}.ts`)
+	const module = await import(`../devserver/pages/${id}.ts`)
 	head = module?.Head?.() ?? ''
 	const result = (await module?.Server?.()) ?? {}
 	page = render(h(() => module.Page(result)))
