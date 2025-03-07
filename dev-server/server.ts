@@ -3,16 +3,13 @@ import path from 'node:path'
 import render from 'preact-render-to-string'
 import { h } from 'preact'
 import express from 'express'
-import { getServiceData } from '../utilities/util.ts'
 import tsBlankSpace from 'ts-blank-space'
 
 import dedent from 'dedent'
-import {
-	getCachedRepositoryConfig,
-	getRepositoryConfig,
-	getRepositoryData,
-} from '#utilities/repositories.ts'
-import { execa } from 'execa'
+import { getServiceData } from '#utilities/util.ts'
+import { Api as repositoriesApi } from './pages/repositories.server.ts'
+import { Api as servicesApi } from './pages/services.server.ts'
+import { Api as repositoriesSettingsApi } from './pages/repositories/settings.server.ts'
 
 const importMap = {
 	imports: {
@@ -20,6 +17,7 @@ const importMap = {
 		'preact/hooks': 'https://esm.sh/preact@10.25.1/hooks',
 		'htm/preact': 'https://esm.sh/htm@3.1.1/preact?external=preact',
 		'@preact/signals': '/bundled/signals.js',
+		'#pages/': '/pages/',
 		'#components/': '/components/',
 		'#utilities/': '/utilities/',
 	},
@@ -39,8 +37,8 @@ export async function createApp() {
 
 	app.get('/components/*path', (req, res) => serveJs(req, res, './dev-server'))
 	app.get('/pages/*path', (req, res) => serveJs(req, res, './dev-server'))
-	app.post('/pages/:page', async (req, res) => {
-		const pageId = req.params.page
+	app.post('/pages/*page', async (req, res) => {
+		const pageId = req.params.page.join('/')
 		const body = req.body
 		try {
 			let module = await import(`./pages/${pageId}.ts`)
@@ -61,39 +59,15 @@ export async function createApp() {
 
 	app.get('/', renderPage)
 	app.get('/lint', renderPage)
-	app.get('/repositories', renderPage)
-	app.get('/services', renderPage)
 
-	app.get('/api/services', async (req, res) => {
-		const serviceData = await getServiceData()
-		res.json(serviceData)
-	})
-	app.post('/api/repositories/refresh', async (req, res) => {
-		const cachePath = path.join(import.meta.dirname, 'static/repositories.json') // TODO
-		const cachePath2 = path.join(import.meta.dirname, 'static/repositories2.json') // TODO
-		const [json, json2] = await Promise.all([getRepositoryConfig(), getRepositoryData()])
-		await fs.mkdir(path.dirname(cachePath), { recursive: true })
-		await fs.mkdir(path.dirname(cachePath2), { recursive: true })
-		await fs.writeFile(cachePath, JSON.stringify(json, null, '\t'))
-		await fs.writeFile(cachePath2, JSON.stringify(json, null, '\t'))
-		res.json({ success: true })
-	})
-	app.post('/api/repositories/open', async (req, res) => {
-		const { owner, name } = req.body
-		const json = await getCachedRepositoryConfig()
-		await execa('zed', ['--new', path.join(json.cloneDir, owner, name)], {
-			stdio: 'inherit',
-		})
-		res.send(200)
-	})
-	app.post('/api/repositories/clone', async (req, res) => {
-		const { owner, name } = req.body
-		const json = await getCachedRepositoryConfig()
-		await fs.mkdir(path.join(json.cloneDir, owner), { recursive: true })
-		await execa('git', ['clone', path.join(json.cloneDir, owner, name)], {
-			stdio: 'inherit',
-		})
-	})
+	app.get('/services', renderPage)
+	servicesApi(app)
+
+	app.get('/repositories', renderPage)
+	repositoriesApi(app)
+
+	app.get('/repositories/settings', renderPage)
+	repositoriesSettingsApi(app)
 
 	return app
 }
@@ -118,7 +92,7 @@ async function serveJs(req, res, relPath) {
 	}
 }
 
-async function renderPage(req, res) {
+export async function renderPage(req, res) {
 	let id = req.url.slice(1)
 	if (id === '') id = 'index'
 
@@ -170,7 +144,7 @@ async function renderPage(req, res) {
 
 function stripImports(text) {
 	return text.replaceAll(
-		/(?:^|\n)import.*?from[ \t]*['"](.*?)['"]/g,
+		/(?:^|\n)import.*?from[ \t]*['"](.*?)['"].*?\n/g,
 		(match, importId) => {
 			if (importId in importMap.imports) {
 				return match

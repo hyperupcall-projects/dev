@@ -1,43 +1,39 @@
-import { signal } from '@preact/signals'
 import { Navigation } from '#components/Navigation.ts'
 import { execa } from 'execa'
 import { html } from 'htm/preact'
-import { useState } from 'preact/hooks'
-import {
-	getCachedRepositoryConfig,
-	getCachedRepositoryData,
-} from '#utilities/repositories.ts'
-import type { ClonedReposConfig, RepositoryData } from '#utilities/repositories.ts'
+import { useRef, useState } from 'preact/hooks'
+
+import type { RepoDetails, RepoGroups } from '#utilities/repositories.ts'
 import { Fragment } from 'preact'
 
 export async function Server() {
-	const [repositoryConfig, repositoryData] = await Promise.all([
-		getCachedRepositoryConfig(),
-		getCachedRepositoryData(),
+	const { getCachedRepositoryGroups, getCachedRepositoryDetails } = await import(
+		'#utilities/repositories.ts'
+	)
+
+	const [repoGroups, repoDetails] = await Promise.all([
+		getCachedRepositoryGroups(),
+		getCachedRepositoryDetails(),
 	])
 
 	return {
-		repositoryConfig,
-		repositoryData,
+		repoGroups,
+		repoDetails,
 	}
 }
 
 export function Page({
-	repositoryConfig,
-	repositoryData,
+	repoGroups,
+	repoDetails,
 }: {
-	repositoryConfig: ClonedReposConfig
-	repositoryData: RepositoryData
+	repoGroups: RepoGroups
+	repoDetails: RepoDetails
 }) {
-	const [selectedRepository, setSelectedRepository] = useState(
-		repositoryConfig.repositoryGroups[0].name,
-	)
-	const selectedRepositoryGroup = repositoryConfig.repositoryGroups.find(
-		(group) => group.name === selectedRepository,
-	)
-	function onClick(newName: string) {
-		setSelectedRepository(newName)
-	}
+	const [selectedRepoGroupId, setSelectedRepoGroupId] = useState(repoGroups[0].groupId)
+	const selectedRepoGroup = repoGroups.find(
+		({ groupId }) => groupId === selectedRepoGroupId,
+	) ?? { repos: [] }
+
 	function cloneAll() {}
 	function cloneRepository(repository: string) {
 		const [owner, name] = repository.split('/')
@@ -60,9 +56,6 @@ export function Page({
 		})
 	}
 
-	const [dialogInfo, setDialogInfo] = useState({
-		repository: '',
-	})
 	function showInfo(repository: string) {
 		const [owner, name] = repository.split('/')
 		alert('WIP')
@@ -70,7 +63,7 @@ export function Page({
 
 	return html`<${Fragment}>
 		<dialog>
-			<h1>${dialogInfo.repository}</h1>
+			<h1>repo</h1>
 			<p>Behind 2 ahead 1</p>
 			<p>Lint Result (and output)</p>
 			<p>Braches (delete/add/see remote)</p>
@@ -87,20 +80,20 @@ export function Page({
 					class="p-1"
 					style="background-color: lavender; border-radius: 4px; margin-block-start: 4px; margin-inline-start: 4px;"
 				>
-					${repositoryConfig.repositoryGroups.map((group) => {
-						return group.name === selectedRepository
+					${repoGroups.map(({ groupName, groupId, repos }) => {
+						return groupId === selectedRepoGroupId
 							? html`<b
 									class="hover-bold"
 									style="cursor: pointer"
-									onClick=${() => onClick(group.name)}
-									>${group.name}</b
+									onClick=${() => setSelectedRepoGroupId(groupId)}
+									>${groupName}</b
 								>`
 							: html`<p
 									class="hover-bold"
 									style="cursor: pointer"
-									onClick=${() => onClick(group.name)}
+									onClick=${() => setSelectedRepoGroupId(groupId)}
 								>
-									${group.name}
+									${groupName}
 								</p>`
 					})}
 				</aside>
@@ -120,29 +113,60 @@ export function Page({
 						>
 							Refresh ALL Repositories
 						</button>
+						<button
+							class="button"
+							onClick=${() => {
+								fetch('/api/repositories/info', {
+									method: 'POST',
+									headers: {
+										'Content-Type': 'application/json',
+									},
+									body: JSON.stringify({
+										repos: selectedRepoGroup?.repos ?? [],
+									}),
+								})
+									.then((res) => {
+										return res.json()
+									})
+									.then((json) => {
+										alert('Done')
+									})
+							}}
+						>
+							Refresh This Info
+						</button>
+
+						<button
+							class="button"
+							onClick=${() => {
+								setDirsDialog(true)
+							}}
+						>
+							Configure Clone Destinations
+						</button>
 					</div>
 					<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
-						${selectedRepositoryGroup.repositories.map((repo) => {
+						${selectedRepoGroup.repos.map((fullName) => {
 							return html`
 									<div class="p-1" style="border: 1px solid lightgray; border-radius: 4px;">
-										<h3 class="title is-5 mb-1">${repo}</h3>
+										<h3 class="title is-5 mb-1">${fullName}</h3>
 										${
-											repositoryData[repo]?.status === 'noexist'
+											repoDetails.find((detail) => detail.fullName === fullName)?.isCloned
 												? html`<button
 														class="button is-primary mr-1"
-														onClick=${() => cloneRepository(repo)}
-													>
-														Clone
-													</button>`
-												: html`<button
-														class="button is-primary mr-1"
-														onClick=${() => openRepository(repo)}
+														onClick=${() => openRepository(fullName)}
 													>
 														Open
 													</button>`
+												: html`<button
+														class="button is-primary mr-1"
+														onClick=${() => cloneRepository(fullName)}
+													>
+														Clone
+													</button>`
 										}
 
-										<button class="button mr-1" disabled onClick=${() => showInfo(repo)}>Info</button>
+										<button class="button mr-1" disabled onClick=${() => showInfo(fullName)}>Info</button>
 
 										<p>Behind 1 ahead 2</p>
 

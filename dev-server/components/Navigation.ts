@@ -4,10 +4,6 @@ import { html } from 'htm/preact'
 
 export function Navigation() {
 	const [isActive, setActive] = useState(false)
-	function activate() {
-		console.error('working')
-		setActive(!isActive)
-	}
 
 	return html`<nav
 		class="navbar"
@@ -35,21 +31,17 @@ export function Navigation() {
 			id="navbarBasicExample"
 			class="${isActive ? 'navbar-menu is-active' : 'navbar-menu'}"
 		>
-			<div class="navbar-start">
+			<div class="navbar-start has-dropdown">
 				<a class="navbar-item" href="/">Home</a>
 				<a class="navbar-item" href="/services">Services</a>
 				<a class="navbar-item" href="/lint">Lint</a>
 				<a class="navbar-item" href="/repositories">Repositories</a>
-			</div>
+				<div class="navbar-item has-dropdown is-hoverable">
+					<a href="/repositories" class="navbar-link">Repositories</a>
 
-			<div class="navbar-end">
-				<div class="navbar-item">
-					<!-- <div class="buttons">
-						<a class="button is-primary">
-							<strong>Sign up</strong>
-						</a>
-						<a class="button is-light"> Log in </a>
-					</div> -->
+					<div class="navbar-dropdown">
+						<a href="/repositories/settings" class="navbar-item">Settings</a>
+					</div>
 				</div>
 			</div>
 		</div>

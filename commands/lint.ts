@@ -85,7 +85,7 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 			await collect(`400-ecosystem/nodejs/*`)
 		}
 
-		if (await fileExists('deno.jsonc')) {
+		if ((await fileExists('deno.jsonc')) || (await fileExists('deno.json'))) {
 			await collect(`400-ecosystem/deno/*`)
 		}
 

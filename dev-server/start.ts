@@ -5,16 +5,14 @@ import { rollup } from 'rollup'
 
 import type { CommandStartServerOptions } from '../index.ts'
 
-export async function run(values: CommandStartServerOptions, positionals: string[]) {
+export async function startServer() {
 	const { createApp } = await import('../dev-server/server.ts')
 	const app = await createApp()
-
 	let server: Server | null = null
 	function createServer() {
 		if (server) {
 			server.close()
 		}
-
 		const port = Number(process.env.PORT) || 3000
 		server = app.listen(port)
 		server.on('error', (err) => {

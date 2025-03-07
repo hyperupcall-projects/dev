@@ -14,11 +14,13 @@
 	"license": "MPL-2.0",
 	"private": false,
 	"bin": {
-		"dev": "./bin/dev.js"
+		"dev": "./bin/dev.js",
+		"devserver": "./bin/devserver.ts"
 	},
 	"imports": {
 		"#common": "./config/common.ts",
 		"#types": "./index.d.ts",
+		"#pages/*": "./dev-server/pages/*",
 		"#components/*": "./dev-server/components/*",
 		"#utilities/*": "./utilities/*"
 	},

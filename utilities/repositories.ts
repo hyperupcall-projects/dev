@@ -5,27 +5,43 @@ import util, { styleText } from 'node:util'
 import * as os from 'node:os'
 import * as readline from 'node:readline/promises'
 import { fileExists, octokit } from '#common'
-import untildify from 'untildify'
 import { minimatch } from 'minimatch'
+import { Ctx } from '#pages/repositories.util.ts'
 
-import type { Octokit } from 'octokit'
+export { Ctx }
+
 import type { GetResponseDataTypeFromEndpointMethod } from '@octokit/types'
 type GitHubRepository = GetResponseDataTypeFromEndpointMethod<
 	typeof octokit.rest.repos.get
 >
 
-export async function getCachedRepositoryConfig(): Promise<ClonedReposConfig> {
-	const cachePath = path.join(
-		import.meta.dirname,
-		'../dev-server/static/repositories.json',
-	)
+export type RepoGroups = Array<{
+	groupName: string
+	groupId: string
+	repos: string[]
+}>
+
+export type Repos = RepoDetails[]
+
+export type RepoDetails = Array<{
+	fullName: string
+	isCloned: boolean
+	// hasUnsavedChanges: true
+	// tags: { name: string; isAnnotated: string; ref: string; link: string }[]
+	// currentBranch: string
+	// localBranches: string[]
+	// worktrees: string[]
+}>
+
+export async function getCachedRepositoryGroups(): Promise<RepoGroups> {
+	const cachePath = path.join(import.meta.dirname, '../.data/repository-groups.json')
 
 	let json
 	try {
 		json = JSON.parse(await fs.readFile(cachePath, 'utf-8'))
 	} catch (err) {
 		if (err.code === 'ENOENT') {
-			json = await getRepositoryConfig()
+			json = await getRepositoryGroups()
 			await fs.mkdir(path.dirname(cachePath), { recursive: true })
 			await fs.writeFile(cachePath, JSON.stringify(json, null, '\t'))
 		} else {
@@ -36,80 +52,8 @@ export async function getCachedRepositoryConfig(): Promise<ClonedReposConfig> {
 	return json
 }
 
-export type ClonedReposConfig = {
-	cloneDir: string
-	symlinkedRepositoriesDir: string
-	repositoryGroups: {
-		name: string
-		id: string
-		repositories: string[]
-	}[]
-}
-
-export type RepositoryData = Record<
-	string,
-	{
-		full_name: string
-		status: 'noexist' | 'cloned'
-		hasUnsavedChanges: true
-		tags: { name: string; isAnnotated: string; ref: string; link: string }[]
-		currentBranch: string
-		localBranches: string[]
-		worktrees: string[]
-	}
->
-
-export async function getCachedRepositoryData() {
-	const cachePath = path.join(
-		import.meta.dirname,
-		'../dev-server/static/repositories2.json',
-	)
-
-	let json
-	try {
-		json = JSON.parse(await fs.readFile(cachePath, 'utf-8'))
-	} catch (err) {
-		if (err.code === 'ENOENT') {
-			json = await getRepositoryData()
-			await fs.mkdir(path.dirname(cachePath), { recursive: true })
-			await fs.writeFile(cachePath, JSON.stringify(json, null, '\t'))
-		} else {
-			throw err
-		}
-	}
-
-	return json
-}
-
-type OriginalConfig = {
-	ignoredRepos: string[]
-}
-
-export async function getRepositoryConfig(): Promise<ClonedReposConfig> {
-	const config = {
-		ignoredRepos: [
-			// Skip cloning from the following organizations:
-			'eshsrobotics/*',
-			'hackclub/*',
-			'replit-discord/*',
-			'gamedevunite-at-smc/*',
-			'cs-club-smc/*',
-			'ecc-cs-club/*',
-			'GameDevUniteAtECC/*',
-			'EpicGames/*',
-			'fox-archives/*',
-			'fox-templates/*',
-			'fox-forks/*',
-			'asdf-contrib-hyperupcall/*',
-			// Skip cloning from the following repositories:
-			'hyperupcall/hidden',
-			'hyperupcall/secrets',
-			'hyperupcall/dotfiles',
-			'fox-incubating/dev',
-		],
-	}
-
-	const repositories = await collectGitHubRepositories(config)
+export async function getRepositoryGroups(): Promise<RepoGroups> {
+	const repositories = await collectGitHubRepositories()
 	const allRepositoryFullnames: string[] = []
 	for (const orgName in repositories) {
 		for (const repo of repositories[orgName]) {
@@ -145,121 +89,146 @@ export async function getRepositoryConfig(): Promise<ClonedReposConfig> {
 		return taken
 	}
 
-	return {
-		cloneDir: untildify('~/.dev/.data/cloned-repositories'),
-		symlinkedRepositoriesDir: untildify('~/Documents/Repositories'),
-		repositoryGroups: [
-			{
-				name: 'Personal',
-				id: 'personal',
-				repositories: matchAndTake([
-					'fox-incubating/sauerkraut',
-					'fox-incubating/event-horizon',
-					'fox-incubating/antarctica',
-					'fox-incubating/font-finder',
-					'fox-incubating/apfelstrudel',
-					'fox-incubating/link-tracker',
-					'fox-projects/pick-sticker',
-				]),
-			},
-			{
-				name: 'JSON Schema',
-				id: 'json-schema',
-				repositories: matchAndTake(
-					['SchemaStore/*', 'fox-projects/jsonschema-extractor'],
-					{
-						not: ['SchemaStore/json-validator'],
-					},
-				),
-			},
-			{
-				name: 'Maintainer',
-				id: 'maintainer',
-				repositories: matchAndTake(['tj/git-extras']),
-			},
-			{
-				name: 'bpkg',
-				id: 'bpkg',
-				repositories: matchAndTake(['bpkg/*']),
-			},
-			// {
-			// 	name: 'Foxium Browser',
-			// 	repositories: ['foxium-browser/*'],
-			// },
-			{
-				name: 'hacks.guide',
-				id: 'hacks-guide',
-				repositories: matchAndTake(['hacks-guide/*']),
-			},
-			{
-				name: 'Bash Bastion',
-				id: 'bash-bastion',
-				repositories: matchAndTake(['bash-bastion/*']),
-			},
-			{
-				name: 'El Camino Computing Club',
-				id: 'ecc-computing-club',
-				repositories: matchAndTake(['ecc-computing-club/*']),
-			},
-			{
-				name: 'Language Language',
-				id: 'language-language',
-				repositories: matchAndTake(['language-language/*']),
-			},
-			{
-				name: 'Version Manager',
-				id: 'version-manager',
-				repositories: matchAndTake(['version-manager/*']),
-			},
-			{
-				name: 'Fox Lists',
-				id: 'fox-lists',
-				repositories: matchAndTake(['fox-lists/*']),
-			},
-			{
-				name: 'Fox Configuration',
-				id: 'configuration-repos',
-				repositories: matchAndTake([
-					'fox-self/*prettier*',
-					'fox-self/*eslint*',
-					'fox-self/*stylelint*',
-					'fox-self/*lefthook*',
-					'fox-self/*markdownlint*',
-					'fox-self/hyperupcall-scripts-*',
-					'fox-self/hyperupcall-config-utils',
-				]),
-			},
-			{
-				name: 'VSCode Extensions',
-				id: 'vscode-extensions',
-				repositories: matchAndTake(['fox-self/vscode-*', 'fox-projects/vscode-*']),
-			},
-			{
-				name: 'Other',
-				id: 'other',
-				repositories: allRepositoryFullnames,
-			},
-		],
-	}
-}
-
-export async function getRepositoryData(): Promise<RepositoryData> {
-	return {
-		'fox-projects/pick-sticker': {
-			status: 'noexist',
-			// status: noexist' | 'cloned',
-			hasUnsavedChanges: false,
-			tags: [],
-			currentBranch: '',
-			localBranches: [],
-			worktrees: [],
+	return [
+		{
+			groupName: 'Personal',
+			groupId: 'personal',
+			repos: matchAndTake([
+				'fox-incubating/sauerkraut',
+				'fox-incubating/event-horizon',
+				'fox-incubating/antarctica',
+				'fox-incubating/font-finder',
+				'fox-incubating/apfelstrudel',
+				'fox-incubating/link-tracker',
+				'fox-projects/pick-sticker',
+			]),
 		},
+		{
+			groupName: 'JSON Schema',
+			groupId: 'json-schema',
+			repos: matchAndTake(['SchemaStore/*', 'fox-projects/jsonschema-extractor'], {
+				not: ['SchemaStore/json-validator'],
+			}),
+		},
+		{
+			groupName: 'Maintainer',
+			groupId: 'maintainer',
+			repos: matchAndTake(['tj/git-extras']),
+		},
+		{
+			groupName: 'bpkg',
+			groupId: 'bpkg',
+			repos: matchAndTake(['bpkg/*']),
+		},
+		// {
+		// 	name: 'Foxium Browser',
+		// 	repositories: ['foxium-browser/*'],
+		// },
+		{
+			groupName: 'hacks.guide',
+			groupId: 'hacks-guide',
+			repos: matchAndTake(['hacks-guide/*']),
+		},
+		{
+			groupName: 'Bash Bastion',
+			groupId: 'bash-bastion',
+			repos: matchAndTake(['bash-bastion/*']),
+		},
+		{
+			groupName: 'El Camino Computing Club',
+			groupId: 'ecc-computing-club',
+			repos: matchAndTake(['ecc-computing-club/*']),
+		},
+		{
+			groupName: 'Language Language',
+			groupId: 'language-language',
+			repos: matchAndTake(['language-language/*']),
+		},
+		{
+			groupName: 'Version Manager',
+			groupId: 'version-manager',
+			repos: matchAndTake(['version-manager/*']),
+		},
+		{
+			groupName: 'Fox Lists',
+			groupId: 'fox-lists',
+			repos: matchAndTake(['fox-lists/*']),
+		},
+		{
+			groupName: 'Fox Configuration',
+			groupId: 'configuration-repos',
+			repos: matchAndTake([
+				'fox-self/*prettier*',
+				'fox-self/*eslint*',
+				'fox-self/*stylelint*',
+				'fox-self/*lefthook*',
+				'fox-self/*markdownlint*',
+				'fox-self/hyperupcall-scripts-*',
+				'fox-self/hyperupcall-config-utils',
+			]),
+		},
+		{
+			groupName: 'VSCode Extensions',
+			groupId: 'vscode-extensions',
+			repos: matchAndTake(['fox-self/vscode-*', 'fox-projects/vscode-*']),
+		},
+		{
+			groupName: 'Other',
+			groupId: 'other',
+			repos: allRepositoryFullnames,
+		},
+	]
+}
+
+export async function getCachedRepositoryDetails() {
+	const cachePath = path.join(import.meta.dirname, '../.data/repository-details.json')
+
+	let json
+	try {
+		json = JSON.parse(await fs.readFile(cachePath, 'utf-8'))
+	} catch (err) {
+		if (err.code === 'ENOENT') {
+			json = await getAllRepositoryDetails()
+			await fs.mkdir(path.dirname(cachePath), { recursive: true })
+			await fs.writeFile(cachePath, JSON.stringify(json, null, '\t'))
+		} else {
+			throw err
+		}
+	}
+
+	return json
+}
+
+export async function getRepositoryDetails(fullName: string): Promise<RepoDetails> {
+	return {
+		fullName,
+		isCloned: await fs
+			.stat(path.join(Ctx.cloneDir, fullName))
+			.then((stat) => stat.isDirectory())
+			.catch((err) => {
+				if (err.code === 'ENOENT') return false
+				throw err
+			}),
 	}
 }
 
-export async function collectGitHubRepositories(
-	config: OriginalConfig,
-): Promise<Record<string, GitHubRepository[]>> {
+export async function getAllRepositoryDetails(): Promise<RepoDetails[]> {
+	const groups = await getCachedRepositoryGroups()
+	const details = await Promise.all(
+		groups
+			.map((group) => {
+				return group.repos.map((fullName) => {
+					return getRepositoryDetails(fullName)
+				})
+			})
+			.flat(),
+	)
+	return details
+}
+
+export async function collectGitHubRepositories(): Promise<
+	Record<string, GitHubRepository[]>
+> {
 	// TODO
 	const orgsToFetch = [
 		'refined-github',
@@ -325,7 +294,7 @@ export async function collectGitHubRepositories(
 					return false
 				}
 
-				for (const pattern of config.ignoredRepos) {
+				for (const pattern of Ctx.ignoredRepos) {
 					if (minimatch(repository.full_name, pattern, { dot: true })) {
 						console.info(`Ignoring "${repository.full_name}"`)
 						return false
@@ -350,7 +319,7 @@ export async function collectGitHubRepositories(
 		)) {
 			for (const repository of repositories) {
 				if (
-					config.ignoredRepos.some((pattern) => minimatch(repository.full_name, pattern))
+					Ctx.ignoredRepos.some((pattern) => minimatch(repository.full_name, pattern))
 				) {
 					console.log(`Ignoring "${repository.full_name}"`)
 					continue

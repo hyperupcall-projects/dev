@@ -10,6 +10,7 @@ import type { Issues } from '#types'
  */
 
 export const issues: Issues = async function* issues({ project }) {
+	return // TODO
 	const configFile = '.ls-lint.yml'
 	const configPath = path.join(pkgRoot(), 'config', configFile)
 	const configContent = await fs.readFile(configPath, 'utf-8')
