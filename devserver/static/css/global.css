@@ -21,6 +21,10 @@ body {
 	overflow: auto !important;
 }
 
+#root {
+	height: 100%;
+}
+
 .hover-bold:hover {
 	font-weight: bold;
 }

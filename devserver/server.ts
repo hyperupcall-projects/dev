@@ -6,7 +6,6 @@ import express from 'express'
 import tsBlankSpace from 'ts-blank-space'
 
 import dedent from 'dedent'
-import { getServiceData } from '#utilities/util.ts'
 import { Api as repositoriesApi } from './pages/repositories.server.ts'
 import { Api as servicesApi } from './pages/services.server.ts'
 import { Api as repositoriesSettingsApi } from './pages/repositories/settings.server.ts'
@@ -41,14 +40,15 @@ export async function createApp() {
 		const pageId = req.params.page.join('/')
 		const body = req.body
 		try {
-			let module = await import(`./pages/${pageId}.ts`)
-			const result = (await module?.Server?.(body)) ?? {}
+			let module = await import(`./pages/${pageId}.server.ts`)
+			const result = (await module?.PageData?.(body)) ?? {}
 			res.setHeader('Content-Type', 'application/json')
 			res.send(result)
 		} catch (err) {
 			console.error(err)
 			if (err.code === 'ENOENT') {
-				res.status(404).send('Not Found')
+				res.setHeader('Content-Type', 'application/json')
+				res.send('{}\n')
 			} else {
 				res.status(500)
 			}
@@ -98,11 +98,20 @@ export async function renderPage(req, res) {
 
 	let head
 	let page
-	// try {
-	const module = await import(`../devserver/pages/${id}.ts`)
-	head = module?.Head?.() ?? ''
-	const result = (await module?.Server?.()) ?? {}
-	page = render(h(() => module.Page(result)))
+	const module1 = await import(`../devserver/pages/${id}.ts`)
+	let module2 = {}
+	try {
+		module2 = await import(`../devserver/pages/${id}.server.ts`)
+	} catch (err) {
+		if (err.code !== 'ENOENT') {
+			console.error(err)
+			res.stsatus(500)
+		}
+	}
+	head = module1?.Head?.() ?? ''
+	const result = (await module2?.PageData?.()) ?? {}
+	console.log(module2)
+	page = render(h(() => module1.Page(result)))
 
 	res.setHeader('Content-Type', 'text/html')
 	res.send(

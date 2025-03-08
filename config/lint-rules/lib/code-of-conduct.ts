@@ -12,8 +12,8 @@ import { findCodeOfConductFiles } from '#common'
  * See more: https://docs.github.com/en/communities/setting-up-your-project-for-healthy-contributions/creating-a-default-community-health-file
  */
 
-/** @type {import('../../../index.ts').Issues} */
-export const issues = async function* issues() {
+import type { Issues } from '#types'
+export const issues: Issues = async function* issues() {
 	const files = await findCodeOfConductFiles()
 
 	if (files.length > 0) {

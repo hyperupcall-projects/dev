@@ -3,7 +3,7 @@ import debounce from 'debounce'
 import { nodeResolve } from '@rollup/plugin-node-resolve'
 import { rollup } from 'rollup'
 
-import type { CommandStartServerOptions } from '../index.js'
+import type { CommandStartServerOptions } from '#types'
 
 export async function startServer() {
 	const { createApp } = await import('./server.ts')

@@ -4,8 +4,8 @@ import { octokit } from '#common'
 import detectIndent from 'detect-indent'
 import { filesMustHaveShape } from '#common'
 
-/** @type {import('../../../../index.ts').Issues} */
-export const issues = async function* issues({ project }) {
+import type { Issues } from '#types'
+export const issues: Issues = async function* issues({ project }) {
 	let packageJsonText = await fs.readFile('package.json', 'utf-8')
 	/** @type {import('type-fest').PackageJson} */
 	let packageJson = JSON.parse(packageJsonText)

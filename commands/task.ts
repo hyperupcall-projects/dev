@@ -10,7 +10,7 @@ import yn from 'yn'
 import { forEachRepository } from '../utilities/util.ts'
 import { octokit } from '#common'
 
-import type { CommandScriptOptions } from '../index.ts'
+import type { CommandScriptOptions } from '#types'
 
 export async function run(values: CommandScriptOptions, positionals: string[]) {
 	const task = positionals[0]

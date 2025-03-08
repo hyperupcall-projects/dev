@@ -10,8 +10,8 @@ import { globby } from 'globby'
  * See more: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/licensing-a-repository
  */
 
-/** @type {import('../../../index.ts').Issues} */
-export const issues = async function* issues() {
+import type { Issues } from '#types'
+export const issues: Issues = async function* issues() {
 	const configPath = path.join(pkgRoot(), 'assets/LICENSE-MPL-2.0')
 
 	// Check that the number and names of licenses are correct

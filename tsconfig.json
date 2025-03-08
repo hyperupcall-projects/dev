@@ -15,8 +15,8 @@
 		"useUnknownInCatchVariables": false,
 		"paths": {
 			"#common": ["config/common.ts"],
-			"#types": ["./index.d.ts"],
-			"#components/*": ["./dev-server/components/*"],
+			"#types": ["./types.d.ts"],
+			"#components/*": ["devserver/components/*"],
 			"#utilities/*": ["./utilities/*"]
 		}
 	}

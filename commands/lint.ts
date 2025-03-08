@@ -11,7 +11,7 @@ import { execa } from 'execa'
 import { globby } from 'globby'
 import ansiEscapes from 'ansi-escapes'
 
-import type { CommandFixOptions, Project } from '../index.ts'
+import type { CommandFixOptions, Project } from '#types'
 
 export async function run(options: CommandFixOptions, positionals: string[]) {
 	if (positionals.length > 0) {

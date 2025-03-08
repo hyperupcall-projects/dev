@@ -1,4 +1,4 @@
-/** @type {import('../../../../../index.ts').Issues} */
-export const issues = async function* issues() {
+import type { Issues } from '#types'
+export const issues: Issues = async function* issues() {
 	return []
 }

@@ -1,26 +1,9 @@
 import { Navigation } from '#components/Navigation.ts'
-import { execa } from 'execa'
 import { html } from 'htm/preact'
 import { useRef, useState } from 'preact/hooks'
 
 import type { RepoDetails, RepoGroups } from '#utilities/repositories.ts'
 import { Fragment } from 'preact'
-
-export async function Server() {
-	const { getCachedRepositoryGroups, getCachedRepositoryDetails } = await import(
-		'#utilities/repositories.ts'
-	)
-
-	const [repoGroups, repoDetails] = await Promise.all([
-		getCachedRepositoryGroups(),
-		getCachedRepositoryDetails(),
-	])
-
-	return {
-		repoGroups,
-		repoDetails,
-	}
-}
 
 export function Page({
 	repoGroups,
@@ -71,10 +54,10 @@ export function Page({
 			<p>Age/size of repository</p>
 			<p>Hidden directory?</p>
 		</dialog>
-		<div>
+		<div style="display: grid; grid-template-rows: auto 1fr; height: 100%">
 			<${Navigation} />
 			<div
-				style="display: grid; grid-template-columns: 230px 1fr; gap: 4px; margin-block-end: 4px;"
+				style="display: grid; grid-template-columns: 230px 1fr; gap: 4px; padding-block-end: 4px; height: 100%;"
 			>
 				<aside
 					class="p-1"
@@ -97,57 +80,49 @@ export function Page({
 								</p>`
 					})}
 				</aside>
-				<div
-					class="pr-1"
-					style="display: flex; flex-direction: column; gap: 4px; margin-block-start: 4px;"
-				>
-					<div style="display: flex; gap: 4px;">
+				<div style="height: 100%; position: relative;">
+					<div
+						class="pr-1"
+						style="display: flex; flex-direction: column; gap: 4px; padding-block-start: 4px; position: absolute; inset: 0; overflow: auto;"
+					>
+						<!-- <div style="display: flex; gap: 4px;">
 						<button class="button" onClick=${cloneAll}>Clone All</button>
 						<button
 							class="button"
 							onClick=${() => {
-								fetch('/api/repositories/refresh', { method: 'POST' }).then(() => {
-									alert('Done')
-								})
-							}}
+							fetch('/api/repositories/refresh', { method: 'POST' }).then(() => {
+								alert('Done')
+							})
+						}}
 						>
 							Refresh ALL Repositories
 						</button>
 						<button
 							class="button"
 							onClick=${() => {
-								fetch('/api/repositories/info', {
-									method: 'POST',
-									headers: {
-										'Content-Type': 'application/json',
-									},
-									body: JSON.stringify({
-										repos: selectedRepoGroup?.repos ?? [],
-									}),
+							fetch('/api/repositories/info', {
+								method: 'POST',
+								headers: {
+									'Content-Type': 'application/json',
+								},
+								body: JSON.stringify({
+									repos: selectedRepoGroup?.repos ?? [],
+								}),
+							})
+								.then((res) => {
+									return res.json()
 								})
-									.then((res) => {
-										return res.json()
-									})
-									.then((json) => {
-										alert('Done')
-									})
-							}}
+								.then((json) => {
+									alert('Done')
+								})
+						}}
 						>
 							Refresh This Info
 						</button>
-
-						<button
-							class="button"
-							onClick=${() => {
-								setDirsDialog(true)
-							}}
-						>
-							Configure Clone Destinations
-						</button>
-					</div>
-					<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
-						${selectedRepoGroup.repos.map((fullName) => {
-							return html`
+					</div> -->
+						<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
+							${selectedRepoGroup.repos.map((fullName) => {
+								return html`
 									<div class="p-1" style="border: 1px solid lightgray; border-radius: 4px;">
 										<h3 class="title is-5 mb-1">${fullName}</h3>
 										${
@@ -171,7 +146,8 @@ export function Page({
 										<p>Behind 1 ahead 2</p>
 
 								</li>`
-						})}
+							})}
+						</div>
 					</div>
 				</div>
 			</div>

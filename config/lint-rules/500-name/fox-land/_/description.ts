@@ -11,7 +11,7 @@ import { visit } from 'unist-util-visit'
 
 import { pkgRoot, octokit } from '#common'
 
-/** @type {import('../../../../../index.ts').Issues} */
+import type { Issues } from '#types'
 export const issues = async function* issues() {
 	return []
 

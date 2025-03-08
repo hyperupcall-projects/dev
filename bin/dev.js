@@ -9,7 +9,7 @@ import { run as runFix } from '../commands/lint.ts'
 import { run as runInstall, cleanupTerminal } from '../commands/install.ts'
 import { run as runRepos } from '../commands/repos.ts'
 import { run as runTask } from '../commands/task.ts'
-import { run as runStartServer } from '../commands/start-server.ts'
+import { startServer } from '../devserver/start.ts'
 
 /**
  * @import { PackageJson } from "type-fest";
@@ -140,12 +140,7 @@ cli.register(
 		positionals = Option.Proxy()
 
 		async execute() {
-			await runStartServer(
-				{
-					prebundle: this.prebundle,
-				},
-				this.positionals,
-			)
+			await startServer()
 		}
 	},
 )

@@ -2,8 +2,8 @@
 import * as fs from 'node:fs/promises'
 import { fileExists, filesMustHaveContent, skipHyperupcallFunding } from '#common'
 
-/** @type {import('../../../../../index.ts').Issues} */
-export const issues = async function* issues({ project }) {
+import type { Issues } from '#types'
+export const issues: Issues = async function* issues({ project }) {
 	const fundingFile = 'FUNDING.yml'
 
 	if (!skipHyperupcallFunding.includes(project.owner)) {

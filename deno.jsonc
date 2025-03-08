@@ -4,7 +4,7 @@
 	},
 	"imports": {
 		"#common": "./config/common.ts",
-		"#types": "./index.d.ts",
+		"#types": "./types.d.ts",
 		"#components/": "./devserver/components/",
 		"#utilities/": "./utilities/",
 		"std": "https://deno.land/std/http/mod.ts",

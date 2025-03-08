@@ -12,7 +12,7 @@ import * as diff from 'diff'
 import dotenv from 'dotenv'
 import { globby } from 'globby'
 
-import type { Issue, Project } from '../index.ts'
+import type { Issue, Project } from '#types'
 
 const require = createRequire(import.meta.url)
 
