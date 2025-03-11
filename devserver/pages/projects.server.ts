@@ -14,4 +14,4 @@ export async function PageData() {
 	}
 }
 
-export function Api() {}
+export function Api(express: Express) {}

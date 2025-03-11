@@ -34,6 +34,7 @@
 		"@preact/signals": "^2.0.1",
 		"@rollup/plugin-node-resolve": "^16.0.0",
 		"ansi-escapes": "^7.0.0",
+		"better-sqlite3": "^11.8.1",
 		"clipanion": "4.0.0-rc.4",
 		"debounce": "^2.2.0",
 		"dedent": "^1.5.3",

@@ -1,7 +1,14 @@
+import type { VNode } from 'preact'
+
 declare global {
 	var skipTerminalCleanup: boolean
 }
 
+// Server.
+export type PageDataFn<T> = () => Promise<T>
+export type PageFn<T> = (props: T) => VNode
+
+// Commands.
 export type CommandNewOptions = {
 	ecosystem?: string
 	templateName?: string

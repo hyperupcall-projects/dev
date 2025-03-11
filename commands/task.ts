@@ -248,7 +248,7 @@ async function validateFoxArchives(args: string[]) {
 			if (repository.name === '.github') {
 				continue
 			}
-			console.log(`Checking ${repository.name}`)
+			console.info(`Checking ${repository.name}`)
 
 			if (!repository.archived) {
 				console.error(`Error: Repository is not archived: ${repository.name}`)

@@ -197,7 +197,7 @@ export async function syncRepositories({
 				let repoDir = path.join(config.organizationsDir, orgName, repo.name)
 
 				if (!existsSync(repoDir)) {
-					console.log(`❌ Not cloned: ${orgName}/${repo.name}`)
+					console.info(`❌ Not cloned: ${orgName}/${repo.name}`)
 					const rl = readline.createInterface({
 						input: process.stdin,
 						output: process.stdout,
@@ -222,7 +222,7 @@ export async function syncRepositories({
 			const repos = Repositories[orgName]
 			for (let repo of repos) {
 				let repoDir = path.join(config.organizationsDir, orgName, repo.name)
-				console.log(`Checking if ${orgName}/${repo.name} needs updates`)
+				console.info(`Checking if ${orgName}/${repo.name} needs updates`)
 
 				async function uptoDate(repoDir: string) {
 					await execa('git', ['-C', repoDir, 'fetch', '--all'])
@@ -236,7 +236,7 @@ export async function syncRepositories({
 					return !result.stdout.trim().includes('behind')
 				}
 				if (!(await uptoDate(repoDir))) {
-					console.log(`❌ Not up to date: ${orgName}/${repo.name}`)
+					console.info(`❌ Not up to date: ${orgName}/${repo.name}`)
 					const rl = readline.createInterface({
 						input: process.stdin,
 						output: process.stdout,
@@ -259,7 +259,7 @@ export async function syncRepositories({
 	{
 		for (let orgName of await fs.readdir(config.organizationsDir)) {
 			if (!(orgName in Repositories)) {
-				console.log(`❌ Organization not on GitHub: ${orgName}`)
+				console.info(`❌ Organization not on GitHub: ${orgName}`)
 			}
 		}
 	}
@@ -271,7 +271,7 @@ export async function syncRepositories({
 		})) {
 			const children = await fs.readdir(path.join(orgEntry.parentPath, orgEntry.name))
 			if (children.length === 0) {
-				console.log(`❌ Organization directory should not be empty ${orgEntry.name}`)
+				console.info(`❌ Organization directory should not be empty ${orgEntry.name}`)
 			}
 		}
 	}

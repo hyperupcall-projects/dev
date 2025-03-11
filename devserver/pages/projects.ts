@@ -20,7 +20,7 @@ export function Page({
 	function cloneAll() {}
 	function cloneRepository(repository: string) {
 		const [owner, name] = repository.split('/')
-		fetch('/api/repositories/clone', {
+		fetch('/api/projects/clone', {
 			method: 'POST',
 			body: JSON.stringify({ owner, name }),
 			headers: {
@@ -30,7 +30,7 @@ export function Page({
 	}
 	function openRepository(repository: string) {
 		const [owner, name] = repository.split('/')
-		fetch('/api/repositories/open', {
+		fetch('/api/projects/open', {
 			method: 'POST',
 			body: JSON.stringify({ owner, name }),
 			headers: {
@@ -90,7 +90,7 @@ export function Page({
 						<button
 							class="button"
 							onClick=${() => {
-							fetch('/api/repositories/refresh', { method: 'POST' }).then(() => {
+							fetch('/api/projects/refresh', { method: 'POST' }).then(() => {
 								alert('Done')
 							})
 						}}
@@ -100,7 +100,7 @@ export function Page({
 						<button
 							class="button"
 							onClick=${() => {
-							fetch('/api/repositories/info', {
+							fetch('/api/projects/info', {
 								method: 'POST',
 								headers: {
 									'Content-Type': 'application/json',

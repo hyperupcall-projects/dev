@@ -35,10 +35,11 @@ export function Navigation() {
 				<a class="navbar-item" href="/">Home</a>
 				<a class="navbar-item" href="/services">Services</a>
 				<div class="navbar-item has-dropdown is-hoverable">
-					<a href="/repositories" class="navbar-link">Repositories</a>
+					<a href="/projects" class="navbar-link">Projects</a>
 
 					<div class="navbar-dropdown">
-						<a href="/repositories/settings" class="navbar-item">Settings</a>
+						<a href="/projects/edit-sources" class="navbar-item">Edit Sources</a>
+						<a href="/projects/settings" class="navbar-item">Settings</a>
 					</div>
 				</div>
 			</div>

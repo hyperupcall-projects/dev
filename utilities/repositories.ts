@@ -1,12 +1,8 @@
 import * as fs from 'node:fs/promises'
-import { existsSync } from 'node:fs'
 import * as path from 'node:path'
-import util, { styleText } from 'node:util'
-import * as os from 'node:os'
-import * as readline from 'node:readline/promises'
-import { fileExists, octokit } from '#common'
+import { octokit } from '#common'
 import { minimatch } from 'minimatch'
-import { Ctx } from '#pages/repositories.util.ts'
+import { Ctx } from '#pages/projects.utils.ts'
 
 export { Ctx }
 
@@ -321,7 +317,7 @@ export async function collectGitHubRepositories(): Promise<
 				if (
 					Ctx.ignoredRepos.some((pattern) => minimatch(repository.full_name, pattern))
 				) {
-					console.log(`Ignoring "${repository.full_name}"`)
+					console.info(`Ignoring "${repository.full_name}"`)
 					continue
 				}
 

@@ -1,4 +1,4 @@
 #!/usr/bin/env -S node --disable-warning=ExperimentalWarning
-import { startServer } from '../devserver/start.ts'
+import { startServer } from '../devserver/webframework.ts'
 
-await startServer()
+startServer(process.argv)

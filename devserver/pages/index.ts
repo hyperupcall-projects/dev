@@ -1,32 +1,15 @@
 import { h, Fragment } from 'preact'
-import * as child_process from 'node:child_process'
 import { useState, useCallback } from 'preact/hooks'
 import { html } from 'htm/preact'
+import type { PageFn } from '#types'
 import { Navigation } from '#components/Navigation.ts'
-import { execa } from 'execa'
-import { getServiceData } from '#utilities/util.ts'
+import type { getServiceData } from '#utilities/util.ts'
 
-type Head = () => string
-type Server<T> = () => Promise<T>
-type Page = (props: Props) => any
-
-type Props = {
+export type Props = {
 	services: Awaited<ReturnType<typeof getServiceData>>
 }
 
-export const Head: Head = function Head() {
-	return `<link rel="stylesheet" href="/vendor/bulma-v1.0.2/css/bulma.css" />`
-}
-
-export const Server: Server<Props> = async function Server() {
-	const services: Props['services'] = await getServiceData()
-
-	return {
-		services,
-	}
-}
-
-export const Page: Page = function Page({ services }) {
+export const Page: PageFn<Props> = function Page({ services }) {
 	return html`
 		<${Fragment}>
 			<${Navigation} />
