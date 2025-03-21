@@ -1,5 +1,6 @@
 import {
 	getCachedRepositoryGroups,
+	getCachedRepositoryDetails,
 	getRepositoryGroups as getRepositoryGroups,
 	getAllRepositoryDetails,
 	Ctx,
@@ -12,19 +13,14 @@ import {
 	getRepoDestinationMaps,
 	setRepoDestination,
 	setRepoDestinationAll,
+	addRepoDestination,
+	removeRepoDestination,
+	getRepoDestinations,
 } from './settings.util.ts'
-
-export type RepoDestMaps = Record<string, string>
-export type RepoDests = {
-	name: string
-	destination: string
-}[]
+import type { RepoDestMapsT, RepoDestsT } from './settings.ts'
+import { throwBadMeta } from '#lib'
 
 export async function PageData() {
-	const { getCachedRepositoryGroups, getCachedRepositoryDetails } = await import(
-		'#utilities/repositories.ts'
-	)
-
 	const [repoGroups, repoDetails, repoDestinations, repoDestinationMaps] =
 		await Promise.all([
 			getCachedRepositoryGroups(),
@@ -92,6 +88,8 @@ export function Api(app: Express) {
 		}
 	})
 	app.post('/api/projects/refresh', async (req, res) => {
+		if (!import.meta.dirname) throwBadMeta('dirname')
+
 		const cachePath = path.join(import.meta.dirname, 'static/repositories.json') // TODO
 		const cachePath2 = path.join(import.meta.dirname, 'static/repositories2.json') // TODO
 		const [json, json2] = await Promise.all([
@@ -134,41 +132,4 @@ export function Api(app: Express) {
 	})
 
 	return app
-}
-
-const dataFile = path.join(import.meta.dirname, '../../../.data/repo-clonedirs.json')
-
-export async function addRepoDestination(name: string, destination: string) {
-	let json = [{ name: 'UNSET', destination: null }]
-	try {
-		json = JSON.parse(await fs.readFile(dataFile, 'utf-8'))
-	} catch (err) {
-		if (err.code === 'ENOENT') {
-			json = []
-		} else {
-			throw err
-		}
-	}
-	json.push({ name, destination })
-
-	await fs.writeFile(dataFile, JSON.stringify(json, null, '\t'))
-}
-
-export async function removeRepoDestination(name: string, destination: string) {
-	const json = JSON.parse(await fs.readFile(dataFile, 'utf-8'))
-
-	const index = json.findIndex(
-		(item: { name: string; destination: string }) =>
-			item.name === name && item.destination === destination,
-	)
-
-	if (index !== -1) {
-		json.splice(index, 1)
-		await fs.writeFile(dataFile, JSON.stringify(json, null, '\t'))
-	}
-}
-
-export async function getRepoDestinations() {
-	const json = JSON.parse(await fs.readFile(dataFile, 'utf-8'))
-	return json
 }

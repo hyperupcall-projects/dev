@@ -6,7 +6,6 @@ declare global {
 
 // Server.
 export type PageDataFn<T> = () => Promise<T>
-export type PageFn<T> = (props: T) => VNode
 
 // Commands.
 export type CommandNewOptions = {

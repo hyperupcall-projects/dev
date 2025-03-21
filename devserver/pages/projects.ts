@@ -2,15 +2,15 @@ import { Navigation } from '#components/Navigation.ts'
 import { html } from 'htm/preact'
 import { useRef, useState } from 'preact/hooks'
 
-import type { RepoDetails, RepoGroups } from '#utilities/repositories.ts'
+import type { RepoDetailsT, RepoGroupsT } from '#utilities/repositories.ts'
 import { Fragment } from 'preact'
 
 export function Page({
 	repoGroups,
 	repoDetails,
 }: {
-	repoGroups: RepoGroups
-	repoDetails: RepoDetails
+	repoGroups: RepoGroupsT
+	repoDetails: RepoDetailsT
 }) {
 	const [selectedRepoGroupId, setSelectedRepoGroupId] = useState(repoGroups[0].groupId)
 	const selectedRepoGroup = repoGroups.find(

@@ -1,26 +1,8 @@
-import untildify from 'untildify'
+import * as v from 'valibot'
+import { RepoGroups, RepoDetails } from '#utilities/repositories.ts'
 
-export const Ctx = {
-	cloneDir: untildify('~/.dev/.data/cloned-repositories'),
-	symlinkedRepositoriesDir: untildify('~/Documents/Repositories'),
-	ignoredRepos: [
-		// Skip cloning from the following organizations:
-		'eshsrobotics/*',
-		'hackclub/*',
-		'replit-discord/*',
-		'gamedevunite-at-smc/*',
-		'cs-club-smc/*',
-		'ecc-cs-club/*',
-		'GameDevUniteAtECC/*',
-		'EpicGames/*',
-		'fox-archives/*',
-		'fox-templates/*',
-		'fox-forks/*',
-		'asdf-contrib-hyperupcall/*',
-		// Skip cloning from the following repositories:
-		'hyperupcall/hidden',
-		'hyperupcall/secrets',
-		'hyperupcall/dotfiles',
-		'fox-incubating/dev',
-	],
-}
+export type PageSchemaT = v.InferInput<typeof PageSchema>
+export const PageSchema = v.object({
+	repoGroups: RepoGroups,
+	repoDetails: RepoDetails,
+})

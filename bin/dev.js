@@ -9,7 +9,7 @@ import { run as runFix } from '../commands/lint.ts'
 import { run as runInstall, cleanupTerminal } from '../commands/install.ts'
 import { run as runRepos } from '../commands/repos.ts'
 import { run as runTask } from '../commands/task.ts'
-import { startServer } from '../devserver/start.ts'
+import { startServer } from '../devserver/webframework.ts'
 
 /**
  * @import { PackageJson } from "type-fest";
@@ -136,11 +136,11 @@ cli.register(
 			description: `Start the global development server`,
 		})
 
-		prebundle = Option.Boolean('--prebundle')
+		prebundle = Option.Boolean('--bundle')
 		positionals = Option.Proxy()
 
 		async execute() {
-			await startServer()
+			startServer(this.positionals)
 		}
 	},
 )

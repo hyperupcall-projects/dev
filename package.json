@@ -20,6 +20,7 @@
 	"imports": {
 		"#common": "./config/common.ts",
 		"#types": "./index.d.ts",
+		"#lib": "./devserver/lib.ts",
 		"#pages/*": "./devserver/pages/*",
 		"#components/*": "./devserver/components/*",
 		"#utilities/*": "./utilities/*"
@@ -34,7 +35,6 @@
 		"@preact/signals": "^2.0.1",
 		"@rollup/plugin-node-resolve": "^16.0.0",
 		"ansi-escapes": "^7.0.0",
-		"better-sqlite3": "^11.8.1",
 		"clipanion": "4.0.0-rc.4",
 		"debounce": "^2.2.0",
 		"dedent": "^1.5.3",
@@ -51,6 +51,7 @@
 		"htm": "^3.1.1",
 		"ignore-walk": "^7.0.0",
 		"jsonc-parser": "^3.3.1",
+		"kysely": "^0.27.6",
 		"minimatch": "^10.0.1",
 		"octokit": "^4.1.2",
 		"preact": "^10.26.2",
@@ -66,6 +67,7 @@
 		"unified-lint-rule": "^3.0.1",
 		"unist-util-visit": "^5.0.0",
 		"untildify": "^5.0.0",
+		"valibot": "1.0.0-rc.3",
 		"vfile-reporter": "^8.1.1",
 		"yn": "^5.0.0"
 	},
@@ -73,10 +75,12 @@
 		"@hyperupcall/prettier-config": "^0.9.1",
 		"@hyperupcall/scripts-nodejs": "0.2.3",
 		"@octokit/types": "^13.8.0",
+		"@types/better-sqlite3": "^7.6.12",
 		"@types/express": "^5.0.0",
 		"@types/lodash": "^4.17.15",
 		"@types/node": "^22.13.4",
 		"@types/semver": "^7.5.8",
+		"kysely-codegen": "^0.18.3",
 		"type-fest": "^4.35.0"
 	},
 	"markdownlint-cli2": {

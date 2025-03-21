@@ -38,7 +38,7 @@ export function Navigation() {
 					<a href="/projects" class="navbar-link">Projects</a>
 
 					<div class="navbar-dropdown">
-						<a href="/projects/edit-sources" class="navbar-item">Edit Sources</a>
+						<a href="/projects/edit-queries" class="navbar-item">Edit Queries</a>
 						<a href="/projects/settings" class="navbar-item">Settings</a>
 					</div>
 				</div>

@@ -2,34 +2,65 @@ import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import { octokit } from '#common'
 import { minimatch } from 'minimatch'
-import { Ctx } from '#pages/projects.utils.ts'
+import * as v from 'valibot'
+import untildify from 'untildify'
 
-export { Ctx }
+export const Ctx = {
+	cloneDir: untildify('~/.dev/.data/cloned-repositories'),
+	symlinkedRepositoriesDir: untildify('~/Documents/Repositories'),
+	ignoredRepos: [
+		// Skip cloning from the following organizations:
+		'eshsrobotics/*',
+		'hackclub/*',
+		'replit-discord/*',
+		'gamedevunite-at-smc/*',
+		'cs-club-smc/*',
+		'ecc-cs-club/*',
+		'GameDevUniteAtECC/*',
+		'EpicGames/*',
+		'fox-archives/*',
+		'fox-templates/*',
+		'fox-forks/*',
+		'asdf-contrib-hyperupcall/*',
+		// Skip cloning from the following repositories:
+		'hyperupcall/hidden',
+		'hyperupcall/secrets',
+		'hyperupcall/dotfiles',
+		'fox-incubating/dev',
+	],
+}
 
 import type { GetResponseDataTypeFromEndpointMethod } from '@octokit/types'
 type GitHubRepository = GetResponseDataTypeFromEndpointMethod<
 	typeof octokit.rest.repos.get
 >
 
-export type RepoGroups = Array<{
-	groupName: string
-	groupId: string
-	repos: string[]
-}>
+export type RepoGroupsT = v.InferInput<typeof RepoGroups>
+export const RepoGroups = v.array(
+	v.object({
+		groupName: v.string(),
+		groupId: v.string(),
+		repos: v.array(v.string()),
+	}),
+)
 
-export type Repos = RepoDetails[]
+export type RepoDetailsT = v.InferInput<typeof RepoDetails>
+export const RepoDetails = v.array(
+	v.object({
+		fullName: v.string(),
+		isCloned: v.boolean(),
+		// hasUnsavedChanges: true
+		// tags: { name: string; isAnnotated: string; ref: string; link: string }[]
+		// currentBranch: string
+		// localBranches: string[]
+		// worktrees: string[]
+	}),
+)
 
-export type RepoDetails = Array<{
-	fullName: string
-	isCloned: boolean
-	// hasUnsavedChanges: true
-	// tags: { name: string; isAnnotated: string; ref: string; link: string }[]
-	// currentBranch: string
-	// localBranches: string[]
-	// worktrees: string[]
-}>
+export type ReposT = v.InferInput<typeof Repos>
+export const Repos = v.array(RepoDetails)
 
-export async function getCachedRepositoryGroups(): Promise<RepoGroups> {
+export async function getCachedRepositoryGroups(): Promise<RepoGroupsT> {
 	const cachePath = path.join(import.meta.dirname, '../.data/repository-groups.json')
 
 	let json
@@ -48,7 +79,7 @@ export async function getCachedRepositoryGroups(): Promise<RepoGroups> {
 	return json
 }
 
-export async function getRepositoryGroups(): Promise<RepoGroups> {
+export async function getRepositoryGroups(): Promise<RepoGroupsT> {
 	const repositories = await collectGitHubRepositories()
 	const allRepositoryFullnames: string[] = []
 	for (const orgName in repositories) {
@@ -195,7 +226,7 @@ export async function getCachedRepositoryDetails() {
 	return json
 }
 
-export async function getRepositoryDetails(fullName: string): Promise<RepoDetails> {
+export async function getRepositoryDetails(fullName: string): Promise<RepoDetailsT> {
 	return {
 		fullName,
 		isCloned: await fs
@@ -208,7 +239,7 @@ export async function getRepositoryDetails(fullName: string): Promise<RepoDetail
 	}
 }
 
-export async function getAllRepositoryDetails(): Promise<RepoDetails[]> {
+export async function getAllRepositoryDetails(): Promise<RepoDetailsT[]> {
 	const groups = await getCachedRepositoryGroups()
 	const details = await Promise.all(
 		groups

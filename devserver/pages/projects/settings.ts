@@ -1,20 +1,66 @@
 import { html } from 'htm/preact'
 import { Fragment } from 'preact'
-import { useRef, useState } from 'preact/hooks'
-import type { JSX, VNode } from 'preact'
+import { useState } from 'preact/hooks'
+import type { VNode } from 'preact'
+import { f } from '#lib'
+import * as v from 'valibot'
 
 import { Navigation } from '#components/Navigation.ts'
-import type { RepoDetails, RepoGroups } from '#utilities/repositories.ts'
-import type { RepoDestMaps, RepoDests } from '#pages/projects/settings.server.ts'
+import type { RepoDetailsT, RepoGroupsT } from '#utilities/repositories.ts'
+
+const RepoDestMaps = v.record(v.string(), v.string())
+const RepoDests = v.array(
+	v.object({
+		name: v.string(),
+		destination: v.string(),
+	}),
+)
+export type RepoDestMapsT = v.InferInput<typeof RepoDestMaps>
+export type RepoDestsT = v.InferInput<typeof RepoDests>
+
+export const Routes = {
+	'/api/projects/add-destination': {
+		request: v.object({
+			name: v.string(),
+			destination: v.string(),
+		}),
+		response: v.void(),
+	},
+	'/api/projects/remove-destination': {
+		request: v.object({
+			name: v.string(),
+			destination: v.string(),
+		}),
+		response: v.object({ success: v.string() }),
+	},
+	'/api/projects/list-destinations': {
+		request: v.undefined(),
+		response: RepoDests,
+	},
+	'/api/projects/set-repo-destination-all': {
+		request: v.object({
+			groupId: v.string(),
+			destinationName: v.string(),
+		}),
+		response: v.undefined(),
+	},
+	'/api/projects/set-repo-destination': {
+		request: v.object({
+			repoName: v.string(),
+			destinationName: v.string(),
+		}),
+		response: v.undefined(),
+	},
+}
 
 export function Page({
 	repoGroups,
 	repoDestinations: repoDestinationsInitial,
 	repoDestinationMaps,
 }: {
-	repoGroups: RepoGroups
-	repoDestinations: RepoDests[]
-	repoDestinationMaps: RepoDestMaps
+	repoGroups: RepoGroupsT
+	repoDestinations: RepoDestsT[]
+	repoDestinationMaps: RepoDestMapsT
 }) {
 	const [tab, setTab] = useState('destinations-list')
 
@@ -62,7 +108,7 @@ export function EditRepoDestinationsList({
 	show,
 	setShow,
 }: {
-	repoDestinations: RepoDests
+	repoDestinations: RepoDestsT
 	show: boolean
 	setShow: (show: boolean) => void
 }) {
@@ -141,37 +187,23 @@ export function EditRepoDestinationsList({
 			return
 		}
 
-		await fetch('/api/projects/add-destination', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({
-				name: formName,
-				destination: formDirectory,
-			}),
+		await f('/api/projects/add-destination', {
+			name: formName,
+			destination: formDirectory,
 		})
 	}
 
 	async function removeDestination(name: string, destination: string) {
-		await fetch('/api/projects/remove-destination', {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-			},
-			body: JSON.stringify({
-				name: name,
-				destination: destination,
-			}),
+		await f('/api/projects/remove-destination', {
+			name: name,
+			destination: destination,
 		})
 	}
 
 	function refreshDestinations() {
-		fetch('/api/projects/list-destinations', { method: 'POST' })
-			.then((response) => response.json())
-			.then((destinations) => {
-				setRepoDestinations(destinations)
-			})
+		f('/api/projects/list-destinations').then((destinations) => {
+			setRepoDestinations(destinations)
+		})
 	}
 }
 
@@ -180,9 +212,9 @@ export function EditRepoDestinationsMap({
 	repoDests,
 	repoDestMaps,
 }: {
-	repoGroups: RepoGroups
-	repoDests: RepoDests
-	repoDestMaps: RepoDestMaps
+	repoGroups: RepoGroupsT
+	repoDests: RepoDestsT
+	repoDestMaps: RepoDestMapsT
 }) {
 	return html`<${Fragment}>
 		<h1 class="title mb-0">Repository Destination Mapping</h1>
@@ -215,12 +247,9 @@ export function EditRepoDestinationsMap({
 
 				function onChange(ev, groupId: string) {
 					const newDest = (ev.target as HTMLSelectElement).value
-					fetch('/api/projects/set-repo-destination-all', {
-						method: 'POST',
-						body: JSON.stringify({ groupId, destinationName: newDest }),
-						headers: {
-							'Content-Type': 'application/json',
-						},
+					f('/api/projects/set-repo-destination-all', {
+						groupId,
+						destinationName: newDest,
 					})
 				}
 			}}
@@ -246,12 +275,9 @@ export function EditRepoDestinationsMap({
 
 				function onChange(ev, fullName: string) {
 					const newDest = (ev.target as HTMLSelectElement).value
-					fetch('/api/projects/set-repo-destination', {
-						method: 'POST',
-						body: JSON.stringify({ repoName: fullName, destinationName: newDest }),
-						headers: {
-							'Content-Type': 'application/json',
-						},
+					f('/api/projects/set-repo-destination', {
+						repoName: fullName,
+						destinationName: newDest,
 					})
 				}
 			}}
@@ -266,9 +292,9 @@ function DisplayRepository({
 	displayComponent,
 	displayOrg,
 }: {
-	repoGroups: RepoGroups
-	repoDests: RepoDests
-	repoDestMaps: RepoDestMaps
+	repoGroups: RepoGroupsT
+	repoDests: RepoDestsT
+	repoDestMaps: RepoDestMapsT
 	displayComponent: VNode
 	displayOrg: VNode
 }) {

@@ -25,8 +25,8 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 		config = toml.parse(
 			await fs.readFile(path.join(project.rootDir, 'project.toml'), 'utf-8'),
 		)
-	} catch (err: NodeJS.Error) {
-		if (err.code !== 'ENOENT') {
+	} catch (err) {
+		if ((err as NodeJS.ErrnoException)?.code !== 'ENOENT') {
 			throw err
 		}
 	}

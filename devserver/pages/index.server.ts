@@ -1,9 +1,19 @@
-import type { Props } from './index.ts'
-import type { PageDataFn } from '#types'
 import { getServiceData } from '#utilities/util.ts'
+import * as v from 'valibot'
 
-export const PageData: PageDataFn<Props> = async function PageData() {
-	const services: Props['services'] = await getServiceData()
+export type PageSchemaT = v.InferInput<typeof PageSchema>
+export const PageSchema = v.object({
+	services: v.array(
+		v.object({
+			name: v.string(),
+			isActive: v.boolean(),
+			statusOutput: v.string(),
+		}),
+	),
+})
+
+export async function PageData(): Promise<PageSchemaT> {
+	const services: PageSchemaT['services'] = await getServiceData()
 
 	return {
 		services,

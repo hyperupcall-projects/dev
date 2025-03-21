@@ -1,15 +1,9 @@
-import { h, Fragment } from 'preact'
-import { useState, useCallback } from 'preact/hooks'
+import { Fragment } from 'preact'
 import { html } from 'htm/preact'
-import type { PageFn } from '#types'
 import { Navigation } from '#components/Navigation.ts'
-import type { getServiceData } from '#utilities/util.ts'
+import type { PageSchemaT } from './index.server.ts'
 
-export type Props = {
-	services: Awaited<ReturnType<typeof getServiceData>>
-}
-
-export const Page: PageFn<Props> = function Page({ services }) {
+export function Page({ services }: PageSchemaT) {
 	return html`
 		<${Fragment}>
 			<${Navigation} />
@@ -49,8 +43,8 @@ export const Page: PageFn<Props> = function Page({ services }) {
 					class="p-1"
 					style="background-color: wheat; border-block: 1px solid lightgray;"
 				>
-					<h1 class="mb-0 title">Repositories</h1>
-					<p><a href="/repositories">View All Repositories</a></p>
+					<h1 class="mb-0 title">Projects</h1>
+					<p><a href="/projects">View All Projects</a></p>
 				</div>
 			</div>
 		<//>

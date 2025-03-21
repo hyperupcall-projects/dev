@@ -18,7 +18,9 @@ const importMap = {
 		'preact/debug': '/dependencies/preact-debug.js',
 		'@preact/signals': '/dependencies/preact-signals.js',
 		'htm/preact': '/dependencies/htm-preact.js',
+		valibot: '/dependencies/valibot.js',
 		'#components/': '/components/',
+		'#lib': '/lib.ts',
 		'#pages/': '/pages/',
 		'#utilities/': '/utilities/',
 	},
@@ -26,10 +28,12 @@ const importMap = {
 
 export function startServer(args: string[]) {
 	if (args.includes('--bundle')) {
+		console.info('Bundling dependencies...')
 		bundleDependencies()
 	}
 
 	const app = createApp()
+	app.get('/lib.ts', (req, res) => serveJs(req, res, './devserver') as any)
 	app.get('/components/*path', (req, res) => serveJs(req, res, './devserver') as any)
 	app.get('/pages/*path', (req, res) => serveJs(req, res, './devserver') as any)
 	app.post('/pages/*page', async (req, res) => {
@@ -130,15 +134,16 @@ async function serveJs(req: Request, res: Response, relPath: string) {
 }
 
 export async function renderPage(req: Request, res: Response) {
-	let id = req.url.slice(1)
-	if (id === '') id = 'index'
+	const id = req.url.slice(1) || 'index'
+	const clientFile = `../devserver/pages/${id}.ts`
+	const serverFile = `../devserver/pages/${id}.server.ts`
 
 	let head = ''
 	let page = ''
-	const module1 = await import(`../devserver/pages/${id}.ts`)
+	const module1 = await import(clientFile)
 	let module2: Record<string, unknown> | { PageData: any } = {}
 	try {
-		module2 = await import(`../devserver/pages/${id}.server.ts`)
+		module2 = await import(serverFile)
 	} catch (err) {
 		if ((err as NodeJS.ErrnoException).code !== 'ERR_MODULE_NOT_FOUND') {
 			console.error(err)
@@ -147,7 +152,12 @@ export async function renderPage(req: Request, res: Response) {
 	}
 	head = module1?.Head?.() ?? ''
 	const result = (await module2?.PageData?.()) ?? {}
-	page = render(h(() => module1.Page(result)))
+	try {
+		page = render(h(() => module1.Page(result)))
+	} catch (err) {
+		console.error(`Failed to call "Page()" for "${clientFile}"`)
+		throw err
+	}
 
 	res.setHeader('Content-Type', 'text/html')
 	res.send(
@@ -184,7 +194,7 @@ export async function renderPage(req: Request, res: Response) {
 										${page}
 									</div>
 								</body>
-							</html>`),
+							</html>\n`),
 	)
 }
 
