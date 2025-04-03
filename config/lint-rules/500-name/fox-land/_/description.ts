@@ -10,30 +10,21 @@ import { lintRule } from 'unified-lint-rule'
 import { visit } from 'unist-util-visit'
 
 import { pkgRoot, octokit } from '#common'
+import type { Root, Heading } from 'mdast'
 
 import type { Issues } from '#types'
 export const issues = async function* issues() {
 	return []
 
 	const readmeText = await fs.readFile('README.md', 'utf-8')
-	/**
-	 * @typedef {import('mdast').Root} Root
-	 */
-	const file = await remark()
+	const file: Root = await remark()
 		.use(
 			lintRule(
 				{
 					origin: 'dev:must-content',
 				},
-				/**
-				 * @param {Root} tree
-				 *   Tree.
-				 * @returns {undefined}
-				 *   Nothing.
-				 */
-				function (tree, file) {
-					/** @type {import('mdast').Heading} */
-					const title = tree.children[0]
+				function (tree: Root, file) {
+					const title: Heading = tree.children[0]
 					if (
 						title.children.length !== 1 ||
 						title.children[0].type !== 'text' ||
@@ -42,8 +33,7 @@ export const issues = async function* issues() {
 						file.message('Title is not name of repository')
 					}
 
-					/** @type {import('mdast').Heading} */
-					const description = tree.children[1]
+					const description: Heading = tree.children[1]
 					if (!description?.children[0]?.value?.startsWith("Edwin's ")) {
 						file.message("Description must begin with Edwin's ")
 					}
@@ -54,8 +44,7 @@ export const issues = async function* issues() {
 						file.message('Description must end with period')
 					}
 
-					/** @type {import('mdast').Heading} */
-					const installHeading = tree.children[2]
+					const installHeading: Heading = tree.children[2]
 					if (
 						installHeading?.children?.length !== 1 ||
 						installHeading.children[0].type !== 'text' ||
@@ -64,8 +53,7 @@ export const issues = async function* issues() {
 						file.message('Install section is not in proper place')
 					}
 
-					/** @type {import('mdast').Heading} */
-					const usageHeading = tree.children[4]
+					const usageHeading: Heading = tree.children[4]
 					if (
 						usageHeading?.children?.length !== 1 ||
 						usageHeading.children[0].type !== 'text' ||

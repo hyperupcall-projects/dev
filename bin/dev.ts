@@ -10,13 +10,9 @@ import { run as runInstall, cleanupTerminal } from '../commands/install.ts'
 import { run as runRepos } from '../commands/repos.ts'
 import { run as runTask } from '../commands/task.ts'
 import { startServer } from '../devserver/webframework.ts'
+import type { PackageJson } from 'type-fest'
 
-/**
- * @import { PackageJson } from "type-fest";
- */
-
-/** @type {PackageJson} */
-const packageJson = JSON.parse(
+const packageJson: PackageJson = JSON.parse(
 	await fs.readFile(path.join(import.meta.dirname, '../package.json'), 'utf-8'),
 )
 

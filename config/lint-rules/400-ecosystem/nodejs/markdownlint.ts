@@ -1,7 +1,12 @@
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 
-import { pkgRoot, filesMustHaveShape, filesMustHaveContent } from '#common'
+import {
+	pkgRoot,
+	filesMustHaveShape,
+	filesMustHaveContent,
+	packageJsonMustNotHaveDependencies,
+} from '#common'
 import type { Issues } from '#types'
 
 export const issues: Issues = async function* issues({ project }) {
@@ -29,24 +34,5 @@ export const issues: Issues = async function* issues({ project }) {
 		'.markdownlint.mjs': null,
 	})
 
-	const packageJson = JSON.parse(await fs.readFile('package.json', 'utf-8'))
-	for (const dependencyKey of [
-		'dependencies',
-		'devDependencies',
-		'peerDependencies',
-		'peerDependenciesMeta',
-		'bundleDependencies',
-		'optionalDependencies',
-	]) {
-		for (const dependencyName in packageJson[dependencyKey] ?? {}) {
-			if (dependencyName.includes('markdownlint')) {
-				yield {
-					message: [
-						'Expected to find no dependencies that included the string "markdownlint"',
-						`But, found "${dependencyName}"`,
-					],
-				}
-			}
-		}
-	}
+	yield* packageJsonMustNotHaveDependencies('markdownlint')
 }

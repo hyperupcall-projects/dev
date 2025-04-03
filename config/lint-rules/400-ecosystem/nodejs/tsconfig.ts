@@ -1,5 +1,6 @@
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
+import type { TsConfigJson } from 'type-fest'
 import type { Issues } from '#types'
 
 import {
@@ -8,8 +9,6 @@ import {
 	filesMustHaveShape,
 	filesMustHaveContent,
 } from '#common'
-
-import { TsConfigJson } from 'type-fest'
 
 export const issues: Issues = async function* issues({ project }) {
 	const configs = await Promise.all([

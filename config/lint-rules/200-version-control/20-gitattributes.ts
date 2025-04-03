@@ -10,7 +10,6 @@ export const issues: Issues = async function* issues({ project }) {
 	const configFile = '.gitattributes'
 
 	// TODO
-	// /** @type {string} */
 	// let attributes = ''
 	// try {
 	// 	attributes = await fs.readFile(configFile, 'utf-8')

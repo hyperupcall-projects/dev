@@ -7,14 +7,14 @@ import {
 	pkgRoot,
 	filesMustHaveContent,
 	filesMustHaveShape,
+	packageJsonMustNotHaveDependencies,
 } from '#common'
+import detectIndent from 'detect-indent'
 
 export const issues: Issues = async function* issues({ project }) {
 	// Check that there is only one configuration file.
 	{
-		const configFile = 'eslint.config.js'
-		const configPath = path.join(pkgRoot(), 'config', configFile)
-		const configContent = await fs.readFile(configPath, 'utf-8')
+		const configContent = `export { default } from '@hyperupcall/scripts-nodejs/config-eslint.ts'\n`
 
 		// https://eslint.org/docs/latest/use/configure/configuration-files-deprecated
 		// https://eslint.org/docs/latest/use/configure/configuration-files
@@ -24,7 +24,7 @@ export const issues: Issues = async function* issues({ project }) {
 			'.eslintrc.yaml': null,
 			'eslintrc.yml': null,
 			'.eslintrc.json': null,
-			'eslint.config.ts': configContent,
+			'eslint.config.js': configContent,
 			'eslint.config.mjs': null,
 			'eslint.config.cjs': null,
 			'eslint.config.ts': null,
@@ -52,25 +52,6 @@ export const issues: Issues = async function* issues({ project }) {
 			},
 		})
 
-		const packageJson = JSON.parse(await fs.readFile('package.json', 'utf-8'))
-		for (const dependencyKey of [
-			'dependencies',
-			'devDependencies',
-			'peerDependencies',
-			'peerDependenciesMeta',
-			'bundleDependencies',
-			'optionalDependencies',
-		]) {
-			for (const dependencyName in packageJson[dependencyKey] ?? {}) {
-				if (dependencyName.includes('eslint')) {
-					yield {
-						message: [
-							'Expected to find no dependencies that included the string "eslint"',
-							`But, found "${dependencyName}"`,
-						],
-					}
-				}
-			}
-		}
+		yield* packageJsonMustNotHaveDependencies('eslint')
 	}
 }

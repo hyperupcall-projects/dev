@@ -1,0 +1,2 @@
+[rules]
+'version-control/project-name/local-remote-name-mismatch' = 'off'

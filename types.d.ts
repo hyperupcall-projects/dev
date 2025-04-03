@@ -1,5 +1,3 @@
-import type { VNode } from 'preact'
-
 declare global {
 	var skipTerminalCleanup: boolean
 }
@@ -34,6 +32,7 @@ export type CommandStartServerOptions = {
 }
 
 // Fix.
+export type Config = { rules?: Record<string, 'off'> }
 export type Project =
 	| {
 			type: 'only-directory'
@@ -65,6 +64,7 @@ export type Issues = (arg0: {
 }) => AsyncGenerator<Issue>
 
 export type Issue = {
+	id?: string
 	message: string | string[]
 	fix?: (() => void) | (() => Promise<void>)
 }

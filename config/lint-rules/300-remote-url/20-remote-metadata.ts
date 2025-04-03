@@ -36,11 +36,11 @@ export const issues: Issues = async function* issues({ project }) {
 				'But, no description was found',
 			],
 			fix: async () => {
-				const /** @type {{ value: string }} */ input = await prompt({
-						type: 'input',
-						name: 'value',
-						message: 'Choose a description',
-					})
+				const input: { value: string } = await prompt({
+					type: 'input',
+					name: 'value',
+					message: 'Choose a description',
+				})
 				await octokit.rest.repos.update({
 					owner: project.owner,
 					repo: project.name,
@@ -118,12 +118,33 @@ export const issues: Issues = async function* issues({ project }) {
 	// Check that unnecessary features are disabled.
 	{
 		if (data.has_projects) {
-			const projects = await octokit.rest.projects.listForRepo({
-				owner: project.owner,
-				repo: project.name,
-			})
-			if (projects.data.length === 0) {
+			const res: {
+				organization: {
+					projectsV2: {
+						totalCount: number
+						nodes: { id: string; title: string; url: string }[]
+					}
+				}
+			} = await octokit.graphql(
+				`
+				query($organization: String!) {
+					organization(login: $organization) {
+						projectsV2(first: 10) {
+							totalCount
+							nodes {
+								id,
+								title,
+								url
+							}
+						}
+					}
+				}`,
+				{ organization: project.owner },
+			)
+			const projects = res.organization.projectsV2
+			if (projects.nodes.length === 0) {
 				yield {
+					id: 'disable-projects-tab',
 					message: [
 						'Expected GitHub repository to have the "projects" tab disabled',
 						'But, the "projects" tab is enabled (and has no projects)',
@@ -140,6 +161,7 @@ export const issues: Issues = async function* issues({ project }) {
 					message: [
 						'Expected GitHub repository to have the "projects" tab disabled',
 						'But, the "projects" tab is enabled and the repository has defined at least one project',
+						`See projects at https://github.com/orgs/${project.owner}/projects`,
 					],
 				}
 			}
@@ -218,6 +240,7 @@ export const issues: Issues = async function* issues({ project }) {
 
 	if (data.default_branch !== 'main') {
 		yield {
+			id: 'default-branch-main',
 			message: [
 				'Expected GitHub repository to have a default branch of "main"',
 				`But, default branch of "${data.default_branch}" was found`,

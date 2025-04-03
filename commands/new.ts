@@ -20,6 +20,7 @@ export async function run(values: CommandNewOptions, positionals: string[]) {
 			name: 'value',
 			message: 'Choose an ecosystem',
 			choices: [
+				{ message: 'Deno', name: 'deno' },
 				{ message: 'NodeJS', name: 'nodejs' },
 				{ message: 'Rust', name: 'rust' },
 				{ message: 'Go', name: 'go' },
@@ -31,7 +32,7 @@ export async function run(values: CommandNewOptions, positionals: string[]) {
 
 	if (!values.templateName) {
 		const templateData = getTemplateData()
-		const parameters = templateData[values.ecosystem].templates
+		const parameters = templateData[values.ecosystem]?.templates
 		if (!parameters) {
 			throw new Error(`Ecosystem "${values.ecosystem}" not supported`)
 		}
@@ -121,6 +122,7 @@ export async function createProject(ctx: Context) {
 						key: 'value',
 					})
 				}
+				await fs.mkdir(path.dirname(outputFile), { recursive: true })
 				await fs.writeFile(outputFile, outputContent)
 			}
 		}
@@ -129,7 +131,10 @@ export async function createProject(ctx: Context) {
 	console.info(`Bootstrapped "${ctx.templateName}"`)
 }
 
-function getTemplateData() {
+function getTemplateData(): Record<
+	string,
+	{ templates: Record<string, { name: string }>; onRun?: (ctx: unknown) => Promise<void> }
+> {
 	return {
 		nodejs: {
 			templates: {
@@ -147,6 +152,13 @@ function getTemplateData() {
 				await execa('npm', ['run', 'start'], {
 					stdio: 'inherit',
 				})
+			},
+		},
+		deno: {
+			templates: {
+				webframework: {
+					name: 'Web Framework',
+				},
 			},
 		},
 		rust: {

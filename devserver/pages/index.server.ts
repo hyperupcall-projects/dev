@@ -13,7 +13,7 @@ export const PageSchema = v.object({
 })
 
 export async function PageData(): Promise<PageSchemaT> {
-	const services: PageSchemaT['services'] = await getServiceData()
+	const services = await getServiceData()
 
 	return {
 		services,

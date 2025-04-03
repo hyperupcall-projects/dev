@@ -11,7 +11,9 @@ import { execa } from 'execa'
 import { globby } from 'globby'
 import ansiEscapes from 'ansi-escapes'
 
-import type { CommandFixOptions, Project } from '#types'
+import type { CommandFixOptions, Config, Issue, Project } from '#types'
+import type { PackageJson } from 'type-fest'
+import _ from 'lodash'
 
 export async function run(options: CommandFixOptions, positionals: string[]) {
 	if (positionals.length > 0) {
@@ -20,34 +22,37 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 
 	const project = await getProject()
 
-	let config = {}
+	const globalConfig = {
+		skippedOrganizations: ['bash-bastion'],
+		skippedRepositories: ['SchemaStore/schemastore'],
+	}
+
+	let config: Config = {
+		rules: {
+			...(project.type === 'with-remote-url' &&
+			`${project.owner}/${project.name}` === 'awesome-lists/awesome-bash'
+				? {
+						'remote-url/remote-metadata/disable-projects-tab': 'off',
+						'remote-url/remote-metadata/default-branch-main': 'off',
+					}
+				: {}),
+		},
+	}
 	try {
-		config = toml.parse(
-			await fs.readFile(path.join(project.rootDir, 'project.toml'), 'utf-8'),
-		)
+		config = _.merge(
+			config,
+			toml.parse(await fs.readFile(path.join(project.rootDir, 'dev.toml'), 'utf-8')),
+		) as Config
 	} catch (err) {
 		if ((err as NodeJS.ErrnoException)?.code !== 'ENOENT') {
 			throw err
 		}
 	}
 
-	// Print metadata.
-	{
-		let str = ''
-		str += `${styleText(['blue', 'bold'], 'Directory:')} ${project.rootDir}\n`
-		if (project.type === 'with-remote-url') {
-			str += `${styleText(['blue', 'bold'], 'Project:')}   ${ansiEscapes.link(`${project.owner}/${project.name}`, `https://github.com/${project.owner}/${project.name}`)}\n`
-		}
-
-		process.stdout.write(str)
-	}
-
-	// TODO
-	const skippedOrganizations = ['bash-bastion']
-	const skippedRepositories = ['SchemaStore/schemastore']
 	if (
-		skippedRepositories.includes(`${project.owner}/${project.name}`) ||
-		skippedOrganizations.includes(project.owner)
+		project.type === 'with-remote-url' &&
+		(globalConfig.skippedRepositories.includes(`${project.owner}/${project.name}`) ||
+			globalConfig.skippedOrganizations.includes(project.owner))
 	) {
 		console.info(`[${styleText('yellow', 'SKIP')}] ${project.owner}/${project.name}`)
 		return
@@ -80,13 +85,53 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 	}
 
 	// Collect rule files that match the ecosystem.
+	const ecosystems: string[] = []
 	{
 		if (await fileExists('package.json')) {
 			await collect(`400-ecosystem/nodejs/*`)
+			ecosystems.push('nodejs')
+
+			const content: PackageJson = JSON.parse(await fs.readFile('package.json', 'utf-8'))
+			if (content.displayName) {
+				await collect(`400-ecosystem/vscode-extension/*`)
+				ecosystems.push('vscode-extension')
+			}
 		}
 
 		if ((await fileExists('deno.jsonc')) || (await fileExists('deno.json'))) {
 			await collect(`400-ecosystem/deno/*`)
+			ecosystems.push('deno')
+		}
+
+		if ((await globby('*.c')).length > 0) {
+			await collect(`400-ecosystem/c/*`)
+			ecosystems.push('c')
+		}
+
+		// https://cmake.org/cmake/help/latest/command/project.html
+		if (await fileExists('CMakeLists.txt')) {
+			const content = await fs.readFile('CMakeLists.txt', 'utf-8')
+			const language: { groups?: { lang?: string } } = content.match(
+				/project\((?:.*? (?<lang>[a-zA-Z]+)\)|.*?LANGUAGES[ \t]+(?<lang>[a-zA-Z]+))/,
+			) as any
+			if (language.groups?.lang === 'C') {
+				await collect(`400-ecosystem/c/*`)
+				ecosystems.push('c')
+			} else if (language.groups?.lang === 'CXX') {
+				await collect(`400-ecosystem/cpp/*`)
+				ecosystems.push('cpp')
+			}
+		}
+
+		if (await fileExists('basalt.toml')) {
+			await collect(`400-ecosystem/bash/*`)
+			ecosystems.push('bash')
+		}
+
+		// https://zed.dev/docs/extensions/developing-extensions
+		if (await fileExists('extension.toml')) {
+			await collect(`400-ecosystem/zed-extension/*`)
+			ecosystems.push('zed-extension')
 		}
 
 		await collect(`400-ecosystem/_/*`)
@@ -116,35 +161,44 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 		}
 	}
 
-	for (const fixFile of ruleFiles) {
-		const fixId = path.basename(path.dirname(fixFile)) + '/' + path.parse(fixFile).name
-		if (`${project.owner}/${project.name}` === 'awesome-lists/awesome-bash') {
-			if (
-				fixFile.includes('300-remote-url/repo-metadata') ||
-				fixFile.includes('_/editorconfig')
-			) {
-				console.info(`[${styleText('yellow', 'SKIP')}] ${fixId}`)
-				continue
-			}
+	// Print metadata.
+	{
+		let str = ''
+		str += `${styleText(['blue', 'bold'], 'Directory:')}  ${project.rootDir}\n`
+		str += `${styleText(['blue', 'bold'], 'Ecosystems:')} ${new Intl.ListFormat().format(ecosystems)}\n`
+		if (project.type === 'with-remote-url') {
+			str += `${styleText(['blue', 'bold'], 'Project:')}    ${ansiEscapes.link(
+				`${project.owner}/${project.name}`,
+				`https://github.com/${project.owner}/${project.name}`,
+			)}\n`
 		}
 
+		process.stdout.write(str)
+	}
+
+	for (const fixFile of ruleFiles) {
 		await fixFromFile(
 			path.join(pkgRoot(), 'config/lint-rules', fixFile),
 			project,
 			options,
+			config,
 		)
 	}
 
 	console.info('Done.')
 }
 
-/**
- * @param {string} fixFile
- ] * @param {Project} project
- * @param {CommandFixOptions} options
- */
-async function fixFromFile(fixFile, project, options) {
-	const fixId = path.basename(path.dirname(fixFile)) + '/' + path.parse(fixFile).name
+async function fixFromFile(
+	fixFile: string,
+	project: Project,
+	options: CommandFixOptions,
+	config: Config,
+) {
+	const fixId = (
+		path.basename(path.dirname(fixFile)) +
+		'/' +
+		path.parse(fixFile).name
+	).replaceAll(/[0-9]+-/gu, '')
 
 	const module = await import(fixFile)
 	if (!module.issues) {
@@ -160,8 +214,18 @@ async function fixFromFile(fixFile, project, options) {
 
 	try {
 		let failed = false
-		const issues = module.issues({ project })
+		const issues: AsyncGenerator<Issue> = module.issues({ project })
 		for await (const issue of issues) {
+			if (issue.id) {
+				if (`${fixId}/${issue.id}` in (config.rules ?? {})) {
+					const rule = (config.rules ?? {})[`${fixId}/${issue.id}`]
+					if (rule === 'off') {
+						console.info(`[${styleText('yellow', 'SKIP')}] ${fixId}/${issue.id}`)
+						continue
+					}
+				}
+			}
+
 			console.info(`[EVAL] ${fixId}: Found issue`)
 			if (Array.isArray(issue.message)) {
 				for (const message of issue.message) {
@@ -196,7 +260,7 @@ async function fixFromFile(fixFile, project, options) {
 				await issue.fix()
 			} else {
 				printWithTips(`[${styleText('red', 'FAIL')}] ${fixId}`, [
-					'Failed because running fix function was declined',
+					'Failed because the fix function was not executed',
 				])
 				failed = true
 				break
@@ -217,10 +281,7 @@ async function fixFromFile(fixFile, project, options) {
 	}
 }
 
-/**
- * @returns {Promise<Project>}
- */
-async function getProject() {
+async function getProject(): Promise<Project> {
 	if (!(await fileExists('.git'))) {
 		return {
 			type: 'only-directory',

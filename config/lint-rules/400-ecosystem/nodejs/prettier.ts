@@ -6,8 +6,10 @@ import {
 	pkgRoot,
 	filesMustHaveShape,
 	filesMustHaveContent,
+	packageJsonMustNotHaveDependencies,
 } from '#common'
 import type { Issues } from '#types'
+import detectIndent from 'detect-indent'
 
 export const issues: Issues = async function* issues({ project }) {
 	// Check that there is only one configuration file.
@@ -30,7 +32,7 @@ export const issues: Issues = async function* issues({ project }) {
 
 		yield* filesMustHaveShape({
 			'package.json': {
-				prettier: '@hyperupcall/scripts-nodejs/config-prettier.ts',
+				prettier: '@hyperupcall/scripts-nodejs/config-prettier.js',
 			},
 		})
 	}
@@ -49,25 +51,6 @@ export const issues: Issues = async function* issues({ project }) {
 			},
 		})
 
-		const packageJson = JSON.parse(await fs.readFile('package.json', 'utf-8'))
-		for (const dependencyKey of [
-			'dependencies',
-			'devDependencies',
-			'peerDependencies',
-			'peerDependenciesMeta',
-			'bundleDependencies',
-			'optionalDependencies',
-		]) {
-			for (const dependencyName in packageJson[dependencyKey] ?? {}) {
-				if (dependencyName.includes('prettier')) {
-					yield {
-						message: [
-							'Expected to find no dependencies that included the string "prettier"',
-							`But, found "${dependencyName}"`,
-						],
-					}
-				}
-			}
-		}
+		yield* packageJsonMustNotHaveDependencies('prettier')
 	}
 }

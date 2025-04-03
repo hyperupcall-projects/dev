@@ -1,3 +1,53 @@
 {
-	"file_scan_exclusions": ["**/.git", "**/.data"]
+  "file_scan_exclusions": ["**/.git", "**/.data"],
+  "lsp": {
+    "deno": {
+      "settings": {
+        "deno": {
+          "enable": true
+        }
+      }
+    },
+    "languages": {
+      "JavaScript": {
+        "language_servers": [
+          "deno",
+          "!typescript-language-server",
+          "!vtsls",
+          "!eslint"
+        ]
+      },
+      "JSX": {
+        "language_servers": [
+          "deno",
+          "!typescript-language-server",
+          "!vtsls",
+          "!eslint"
+        ]
+      },
+      "TypeScript": {
+        "language_servers": [
+          "deno",
+          "!typescript-language-server",
+          "!vtsls",
+          "!eslint"
+        ],
+        "prettier": { "allowed": true }
+        // "formatter": {
+        //   "external": {
+        //     "command": "prettier",
+        //     "arguments": ["--stdin-filepath", "{buffer_path}"]
+        //   }
+        // }
+      },
+      "TSX": {
+        "language_servers": [
+          "deno",
+          "!typescript-language-server",
+          "!vtsls",
+          "!eslint"
+        ]
+      }
+    }
+  }
 }

@@ -2,6 +2,13 @@
 	"tasks": {
 		"dev": "deno run --watch --allow-all ./bin/dev.js",
 	},
+	"fmt": {
+		"useTabs": true,
+		"lineWidth": 100,
+		"indentWidth": 3,
+		"semiColons": false,
+		"singleQuote": true,
+	},
 	"imports": {
 		"#common": "./config/common.ts",
 		"#types": "./types.d.ts",

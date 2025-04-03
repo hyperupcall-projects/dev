@@ -22,11 +22,9 @@ export const octokit = new Octokit({ auth: process.env.GITHUB_AUTH_TOKEN })
 
 export const skipHyperupcallFunding = ['ecc-computing-club']
 
-/**
- * @param {Record<string, null | string>} mapping
- * @returns {AsyncGenerator<Issue>}
- */
-export async function* filesMustHaveContent(mapping) {
+export async function* filesMustHaveContent(
+	mapping: Record<string, null | string>,
+): AsyncGenerator<Issue> {
 	for (let file in mapping) {
 		const expectedContent = mapping[file]
 
@@ -60,11 +58,9 @@ export async function* filesMustHaveContent(mapping) {
 	}
 }
 
-/**
- * @param {Record<string, Record<string, unknown>>} mapping
- * @returns {AsyncGenerator<Issue>}
- */
-export async function* filesMustHaveShape(mapping) {
+export async function* filesMustHaveShape(
+	mapping: Record<string, Record<string, unknown>>,
+): AsyncGenerator<Issue> {
 	for (let file in mapping) {
 		const source = mapping[file]
 
@@ -120,11 +116,39 @@ export async function* filesMustHaveShape(mapping) {
 	}
 }
 
-/**
- * @param {Record<string, any>} target
- * @param {Record<string, any>} source
- */
-export function customMerge(target, source) {
+export async function* packageJsonMustNotHaveDependencies(substr: string) {
+	const packageJson = JSON.parse(await fs.readFile('package.json', 'utf-8'))
+	for (const dependencyKey of [
+		'dependencies',
+		'devDependencies',
+		'peerDependencies',
+		'peerDependenciesMeta',
+		'bundleDependencies',
+		'optionalDependencies',
+	]) {
+		for (const dependencyName in packageJson[dependencyKey] ?? {}) {
+			if (dependencyName.includes(substr)) {
+				yield {
+					message: [
+						`Expected to find no dependencies that included the string "${substr}"`,
+						`But, found "${dependencyName}"`,
+					],
+					fix: async () => {
+						const content = await fs.readFile('package.json', 'utf-8')
+						const json = JSON.parse(content)
+						delete json[dependencyKey][dependencyName]
+						await fs.writeFile(
+							'package.json',
+							JSON.stringify(json, null, detectIndent(content).indent || '\t'),
+						)
+					},
+				}
+			}
+		}
+	}
+}
+
+export function customMerge(target: Record<string, any>, source: Record<string, any>) {
 	for (const key in source) {
 		if (Object.hasOwn(target, key)) {
 			if (typeof source[key] === 'object' && source[key] !== null) {
@@ -168,11 +192,7 @@ export function customMerge(target, source) {
 	}
 }
 
-/**
- * @param {string} filepath
- * @returns {Promise<boolean>}
- */
-export async function fileExists(filepath) {
+export async function fileExists(filepath: string): Promise<boolean> {
 	return await fs
 		.stat(filepath)
 		.then(() => true)
@@ -187,10 +207,7 @@ export function pkgRoot(packageName?: string) {
 	}
 }
 
-/**
- * @param {Record<string, any>[]} trees
- */
-export async function writeTrees(trees) {
+export async function writeTrees(trees: Record<string, any>[]) {
 	for (const tree of trees) {
 		for (const [filepath, content] of Object.entries(tree)) {
 			await fs.mkdir(path.dirname(filepath), { recursive: true })

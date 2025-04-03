@@ -1,5 +1,3 @@
 {
-	"extends": [
-		"@hyperupcall/commitlint-config"
-	]
+	"extends": ["@hyperupcall/commitlint-config"]
 }

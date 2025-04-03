@@ -16,7 +16,7 @@ const Projects: InstalledProject[] = [
 		url: 'https://github.com/fox-incubating/sauerkraut',
 		install: dedent`
 			pnpm install
-			ln -sf "$PWD/bin/sauerkraut.js" ~/.local/bin/sauerkraut
+			ln -sf "$PWD/bin/sauerkraut.js" ~/.dotfiles/.data/bin/sauerkraut
 			cat <<"EOF" > ~/.local/share/systemd/user/brain.service
 				[Unit]
 				Description=Brain
@@ -43,6 +43,20 @@ const Projects: InstalledProject[] = [
 	`,
 		async installed() {
 			return await fileExists(path.join(os.homedir(), '.local/bin/sauerkraut'))
+		},
+	},
+	{
+		name: 'd',
+		url: 'https://github.com/fox-incubating/d',
+		install: dedent`
+			./bake build
+			ln -s "$PWD/d" ~/.dotfiles/.data/bin/d
+		`,
+		uninstall: dedent`
+
+		`,
+		async installed() {
+			return await fileExists(path.join(os.homedir(), '.dotfiles/.data/bin/d'))
 		},
 	},
 	{

@@ -1,14 +1,13 @@
 import * as fs from 'node:fs/promises'
-
 import { octokit } from '#common'
 import detectIndent from 'detect-indent'
 import { filesMustHaveShape } from '#common'
+import type { PackageJson } from 'type-fest'
 
 import type { Issues } from '#types'
 export const issues: Issues = async function* issues({ project }) {
 	let packageJsonText = await fs.readFile('package.json', 'utf-8')
-	/** @type {import('type-fest').PackageJson} */
-	let packageJson = JSON.parse(packageJsonText)
+	let packageJson: PackageJson = JSON.parse(packageJsonText)
 	if (typeof packageJson?.private !== 'boolean') {
 		yield {
 			message: ['"private" field must be specified in package.json'],
@@ -18,8 +17,7 @@ export const issues: Issues = async function* issues({ project }) {
 
 	async function fix() {
 		const packageJsonText = await fs.readFile('package.json', 'utf-8')
-		/** @type {import('type-fest').PackageJson} */
-		const packageJson = JSON.parse(packageJsonText)
+		const packageJson: PackageJson = JSON.parse(packageJsonText)
 
 		packageJson.private = true
 		await fs.writeFile(

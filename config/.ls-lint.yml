@@ -1,9 +1,0 @@
-# TODO: yaml
-ls:
-  packages/src:
-    .dir: 'kebab-case'
-    .js: 'kebab-case'
-    .ts: 'kebab-case'
-ignore:
-  - '.git'
-  - 'node_modules'

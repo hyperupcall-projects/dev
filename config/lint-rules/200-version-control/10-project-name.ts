@@ -18,6 +18,7 @@ export const issues: Issues = async function* issues({ project }) {
 		const remoteProjectName = remoteUrl.slice(remoteUrl.lastIndexOf('/') + 1)
 		if (localProjectName !== remoteProjectName) {
 			yield {
+				id: 'local-remote-name-mismatch',
 				message: [
 					`Local and remote project names do mot match`,
 					`Local project has name of "${localProjectName}"`,
