@@ -14,7 +14,7 @@ import detectIndent from 'detect-indent'
 export const issues: Issues = async function* issues({ project }) {
 	// Check that there is only one configuration file.
 	{
-		const configContent = `export { default } from '@hyperupcall/scripts-nodejs/config-eslint.ts'\n`
+		const configContent = `export { default } from '@hyperupcall/scripts-nodejs/config-eslint.js'\n`
 
 		// https://eslint.org/docs/latest/use/configure/configuration-files-deprecated
 		// https://eslint.org/docs/latest/use/configure/configuration-files
@@ -45,6 +45,7 @@ export const issues: Issues = async function* issues({ project }) {
 			'package.json': {
 				scripts: {
 					lint: 'hyperupcall-scripts-nodejs lint',
+					'lint:fix': { __delete: null },
 				},
 				devDependencies: {
 					'@hyperupcall/scripts-nodejs': `${version}`,

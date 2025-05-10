@@ -44,6 +44,7 @@ export const issues: Issues = async function* issues({ project }) {
 			'package.json': {
 				scripts: {
 					format: 'hyperupcall-scripts-nodejs format',
+					'format:fix': { __delete: null },
 				},
 				devDependencies: {
 					'@hyperupcall/scripts-nodejs': `${version}`,

@@ -71,6 +71,7 @@
 		"untildify": "^5.0.0",
 		"valibot": "1.0.0",
 		"vfile-reporter": "^8.1.1",
+		"ws": "^8.18.1",
 		"yn": "^5.0.0"
 	},
 	"devDependencies": {
@@ -82,11 +83,12 @@
 		"@types/lodash": "^4.17.16",
 		"@types/node": "^22.14.0",
 		"@types/semver": "^7.7.0",
+		"@types/ws": "^8.18.1",
 		"kysely-codegen": "^0.18.3",
 		"type-fest": "^4.39.1"
 	},
 	"markdownlint-cli2": {
 		"extends": "./node_modules/@hyperupcall/markdownlint-config/.markdownlint.json"
 	},
-	"prettier": "@hyperupcall/prettier-config"
+	"prettier": "@hyperupcall/scripts-nodejs/config-prettier.js"
 }
