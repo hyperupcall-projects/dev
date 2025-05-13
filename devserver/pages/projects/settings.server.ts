@@ -18,7 +18,7 @@ import {
 	getRepoDestinations,
 } from './settings.util.ts'
 import type { RepoDestMapsT, RepoDestsT } from './settings.ts'
-import { throwBadMeta } from '#lib'
+import { throwBadMeta } from '#webframeworklib'
 
 export async function PageData() {
 	const [repoGroups, repoDetails, repoDestinations, repoDestinationMaps] =

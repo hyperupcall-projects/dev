@@ -1,32 +1,26 @@
-#!/usr/bin/env -S node --disable-warning=ExperimentalWarning
-import fs from 'node:fs/promises'
-import path from 'node:path'
-
-import { Cli, Command, Option, Builtins } from 'clipanion'
+#!/usr/bin/env -S deno run --allow-all
+import { Builtins, Cli, Command, Option } from 'clipanion'
 
 import { run as runNew } from '../commands/new.ts'
 import { run as runFix } from '../commands/lint.ts'
-import { run as runInstall, cleanupTerminal } from '../commands/install.ts'
+import { cleanupTerminal, run as runInstall } from '../commands/install.ts'
 import { run as runRepos } from '../commands/repos.ts'
 import { run as runTask } from '../commands/task.ts'
-import { startServer } from '../devserver/webframework.ts'
-import type { PackageJson } from 'type-fest'
+import { startServer } from '../devserver/webframework/webframework.ts'
 
-const packageJson: PackageJson = JSON.parse(
-	await fs.readFile(path.join(import.meta.dirname, '../package.json'), 'utf-8'),
-)
+const version = '0.4.0' // TODO
 
 const cli = new Cli({
 	binaryLabel: 'dev',
 	binaryName: 'dev',
-	binaryVersion: packageJson.version,
+	binaryVersion: version,
 	enableCapture: false,
 })
 
 cli.register(
 	class NewCommand extends Command {
-		static paths = [[`new`]]
-		static usage = Command.Usage({
+		static override paths = [[`new`]]
+		static override usage = Command.Usage({
 			description: `Create a new project`,
 		})
 
@@ -53,8 +47,8 @@ cli.register(
 )
 cli.register(
 	class LintCommand extends Command {
-		static paths = [[`lint`]]
-		static usage = Command.Usage({
+		static override paths = [[`lint`]]
+		static override usage = Command.Usage({
 			description: `Lint and fix issues with code`,
 		})
 
@@ -79,8 +73,8 @@ cli.register(
 )
 cli.register(
 	class InstallCommand extends Command {
-		static paths = [[`install`]]
-		static usage = Command.Usage({
+		static override paths = [[`install`]]
+		static override usage = Command.Usage({
 			description: `Install or update a program through the TUI`,
 		})
 
@@ -90,7 +84,7 @@ cli.register(
 			await runInstall({}, this.positionals)
 		}
 
-		async catch(/** @type {unknown} */ error) {
+		override async catch(error: unknown) {
 			globalThis.skipTerminalCleanup = true
 			cleanupTerminal()
 			console.error(error)
@@ -99,8 +93,8 @@ cli.register(
 )
 cli.register(
 	class ReposCommand extends Command {
-		static paths = [[`repos`]]
-		static usage = Command.Usage({
+		static override paths = [[`repos`]]
+		static override usage = Command.Usage({
 			description: `Manage repositories`,
 		})
 
@@ -113,8 +107,8 @@ cli.register(
 )
 cli.register(
 	class ScriptCommand extends Command {
-		static paths = [[`task`]]
-		static usage = Command.Usage({
+		static override paths = [[`task`]]
+		static override usage = Command.Usage({
 			description: `Run a task`,
 		})
 
@@ -127,8 +121,8 @@ cli.register(
 )
 cli.register(
 	class StartServer extends Command {
-		static paths = [[`start-dev-server`]]
-		static usage = Command.Usage({
+		static override paths = [[`start-dev-server`]]
+		static override usage = Command.Usage({
 			description: `Start the global development server`,
 		})
 

@@ -1,5 +1,6 @@
 import * as v from 'valibot'
 import { Routes as Routes1 } from '#pages/projects/settings.ts'
+import chokidar from 'chokidar'
 
 const routes = { ...Routes1 }
 

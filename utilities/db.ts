@@ -1,7 +1,8 @@
 // import { Kysely, SqliteDialect } from 'kysely'
 // import { DB } from 'kysely-codegen'
 // import Database from 'better-sqlite3'
-import { throwBadMeta } from '#lib'
+import { throwBadMeta } from '#webframeworklib'
+import { existsSync, writeFileSync } from 'node:fs'
 import path from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
@@ -18,7 +19,11 @@ if (!import.meta.dirname) throwBadMeta('dirname')
 // 	}),
 // })
 
-const db = new DatabaseSync(path.join(import.meta.dirname, '../.data/dev.sqlite'))
+const dbFile = path.join(import.meta.dirname, '../.data/dev.sqlite')
+if (!existsSync(dbFile)) {
+	writeFileSync(dbFile, '')
+}
+const db = new DatabaseSync(dbFile)
 
 db.exec(`
 CREATE TABLE IF NOT EXISTS project_queries (

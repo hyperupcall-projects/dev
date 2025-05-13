@@ -1,5 +1,4 @@
 import * as fs from 'node:fs/promises'
-import path from 'node:path'
 import { globby } from 'globby'
 
 import { fileExists, pkgRoot } from '#common'
@@ -18,7 +17,9 @@ import type { Issues } from '#types'
 export const issues: Issues = async function* issues({ project }) {
 	// Checks for the ".github" directory
 	{
-		const files = await globby('.github/*readme*', { caseSensitiveMatch: false })
+		const files = await globby('.github/*readme*', {
+			caseSensitiveMatch: false,
+		})
 		if (files.length > 0) {
 			yield {
 				message: [
@@ -34,12 +35,16 @@ export const issues: Issues = async function* issues({ project }) {
 		const files = await globby('*readme*', { caseSensitiveMatch: false })
 		if (files.length === 0) {
 			yield {
-				message: ['Expected to find a single readme file', 'But, found no readme files'],
+				message: [
+					'Expected to find a single readme file',
+					'But, found no readme files',
+				],
 				fix: () => fs.writeFile('README.md', `# ${project.name}\n`),
 			}
 		} else if (files.length === 1) {
 			if (files[0] !== 'README.md') {
 				yield {
+					id: 'expected-name-readme',
 					message: [
 						'Expected readme file with name of "README.md"',
 						`But, found readme file with name of "${files[0]}"`,
@@ -72,7 +77,9 @@ export const issues: Issues = async function* issues({ project }) {
 			],
 		}
 	}
-	if (!content.toLowerCase().replaceAll(' ', '-').match(`^#-${project.name}`)) {
+	if (
+		!content.toLowerCase().replaceAll(' ', '-').match(`^#-${project.name}`)
+	) {
 		yield {
 			message: [
 				'Expected readme file to have a title matching the project name',

@@ -11,6 +11,8 @@ import { forEachRepository } from '../utilities/util.ts'
 import { octokit } from '#common'
 
 import type { CommandScriptOptions } from '#types'
+import { execa } from 'execa'
+import type { PackageJson } from 'type-fest'
 
 export async function run(values: CommandScriptOptions, positionals: string[]) {
 	const task = positionals[0]
@@ -19,6 +21,9 @@ export async function run(values: CommandScriptOptions, positionals: string[]) {
 TASKS:
 
 check-license-headers
+symlink-hidden-dirs
+validate-fox-archives
+create-vscode-launchers
 `
 	if (values.help) {
 		console.info(helpText)
@@ -34,6 +39,8 @@ check-license-headers
 		await symlinkHiddenDirs(positionals.slice(1))
 	} else if (task === 'validate-fox-archives') {
 		await validateFoxArchives(positionals.slice(1))
+	} else if (task === 'create-vscode-launchers') {
+		await createVSCodeLaunchers(positionals.slice(1))
 	} else {
 		process.stdout.write('Error: Failed to pass task name\n')
 		process.exit(1)
@@ -238,12 +245,14 @@ export async function symlinkHiddenDirs(args: string[]) {
 }
 
 async function validateFoxArchives(args: string[]) {
-	for await (const { data: repositories } of octokit.paginate.iterator(
-		octokit.rest.repos.listForOrg,
-		{
-			org: 'fox-archives',
-		},
-	)) {
+	for await (
+		const { data: repositories } of octokit.paginate.iterator(
+			octokit.rest.repos.listForOrg,
+			{
+				org: 'fox-archives',
+			},
+		)
+	) {
 		for (const repository of repositories) {
 			if (repository.name === '.github') {
 				continue
@@ -255,5 +264,42 @@ async function validateFoxArchives(args: string[]) {
 				process.exit(1)
 			}
 		}
+	}
+}
+
+async function createVSCodeLaunchers(args: string[]) {
+	const extensions: { dirname: string; packageJson: PackageJson }[] = await (await fetch(
+		`https://raw.githubusercontent.com/fox-self/vscode-hyperupcall-packs/refs/heads/main/extension-list.json`,
+	)).json()
+	for (const { dirname, packageJson } of extensions) {
+		if (!dirname.startsWith('pack-ecosystem-')) continue
+
+		const desktopFile = path.join(
+			os.homedir(),
+			`.local/share/applications/${packageJson.name}.desktop`,
+		)
+		const ecosystemNamePretty = (packageJson.displayName as '' ?? '').split(':')[1].trimStart()
+		await fs.writeFile(
+			desktopFile,
+			`[Desktop Entry]
+Name=VSCode: ${ecosystemNamePretty}
+Comment=Code Editing. Redefined.
+GenericName=Text Editor
+Exec=code-with-extension-path ${packageJson.publisher} ${packageJson.name} %F
+Icon=vscode
+Type=Application
+StartupNotify=false
+StartupWMClass=Code
+Categories=TextEditor;Development;IDE;
+MimeType=application/x-code-workspace;
+Actions=new-empty-window;
+Keywords=vscode;
+
+[Desktop Action new-empty-window]
+Name=New Empty Window: ${ecosystemNamePretty}
+Exec=code-with-extension-path ${packageJson.publisher} ${packageJson.name} --new-window %F
+Icon=vscode`,
+		)
+		await fs.chmod(desktopFile, 0o755)
 	}
 }

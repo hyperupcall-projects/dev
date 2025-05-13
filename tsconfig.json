@@ -16,7 +16,7 @@
 		"paths": {
 			"#common": ["config/common.ts"],
 			"#types": ["./types.d.ts"],
-			"#lib": ["./devserver/lib.ts"],
+			"#webframeworklib": ["devserver/webframework/lib.ts"],
 			"#components/*": ["devserver/components/*"],
 			"#utilities/*": ["./utilities/*"]
 		}

@@ -11,6 +11,7 @@ import dedent from 'dedent'
 import * as diff from 'diff'
 import dotenv from 'dotenv'
 import { globby } from 'globby'
+import jsonc from 'jsonc-parser'
 
 import type { Issue, Project } from '#types'
 
@@ -44,13 +45,15 @@ export async function* filesMustHaveContent(
 				const content = await fs.readFile(file, 'utf-8')
 				if (content !== expectedContent) {
 					yield {
-						message: `  -> Expected file "${file}" to have content:\n---\n${expectedContent}\n---\n  -> But, the file has content:\n---\n${content}\n---\n`,
+						message:
+							`  -> Expected file "${file}" to have content:\n---\n${expectedContent}\n---\n  -> But, the file has content:\n---\n${content}\n---\n`,
 						fix: () => fs.writeFile(file, expectedContent),
 					}
 				}
 			} else {
 				yield {
-					message: `  -> Expected file "${file}" to exist and have content:\n---\n${expectedContent}\n---\n  -> But, the file does not exist`,
+					message:
+						`  -> Expected file "${file}" to exist and have content:\n---\n${expectedContent}\n---\n  -> But, the file does not exist`,
 					fix: () => fs.writeFile(file, expectedContent),
 				}
 			}
@@ -69,25 +72,11 @@ export async function* filesMustHaveShape(
 		}
 
 		const content = await fs.readFile(file, 'utf-8')
-		const actual = JSON.parse(content)
+		const actual = file.endsWith('.jsonc') ? jsonc.parse(content) : JSON.parse(content)
 		const expected = structuredClone(actual)
 		customMerge(expected, source)
 
 		if (!util.isDeepStrictEqual(expected, actual)) {
-			let difference = ''
-			for (const part of diff.diffJson(
-				JSON.stringify(actual, null, 2),
-				JSON.stringify(expected, null, 2),
-			)) {
-				if (part.added) {
-					difference += styleText('green', part.value)
-				} else if (part.removed) {
-					difference += styleText('red', part.value)
-				} else {
-					difference += part.value
-				}
-			}
-
 			const oldStr = content
 			const newStr = JSON.stringify(expected, null, detectIndent(content).indent ?? '  ')
 			const rawPatch = diff.createPatch(file, oldStr, newStr, undefined, undefined, {
@@ -99,8 +88,7 @@ export async function* filesMustHaveShape(
 				.replaceAll(/\n-(?!\-)/g, '\n' + styleText('red', '-'))
 
 			yield {
-				message:
-					'  ' +
+				message: '  ' +
 					dedent`
 					-> Expected file "${file}" to have the correct shape:
 					${'='.repeat(80)}
@@ -109,6 +97,8 @@ export async function* filesMustHaveShape(
 				fix: () =>
 					fs.writeFile(
 						file,
+						// TODO: Handle JSON.stringify in all places, so that if on jsonc file,
+						// and if it has all trailing commas say in object, it's not removed in the diff
 						JSON.stringify(expected, null, detectIndent(content).indent || '\t'),
 					),
 			}
@@ -118,14 +108,16 @@ export async function* filesMustHaveShape(
 
 export async function* packageJsonMustNotHaveDependencies(substr: string) {
 	const packageJson = JSON.parse(await fs.readFile('package.json', 'utf-8'))
-	for (const dependencyKey of [
-		'dependencies',
-		'devDependencies',
-		'peerDependencies',
-		'peerDependenciesMeta',
-		'bundleDependencies',
-		'optionalDependencies',
-	]) {
+	for (
+		const dependencyKey of [
+			'dependencies',
+			'devDependencies',
+			'peerDependencies',
+			'peerDependenciesMeta',
+			'bundleDependencies',
+			'optionalDependencies',
+		]
+	) {
 		for (const dependencyName in packageJson[dependencyKey] ?? {}) {
 			if (dependencyName.includes(substr)) {
 				yield {

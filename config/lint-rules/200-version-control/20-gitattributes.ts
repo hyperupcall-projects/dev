@@ -1,6 +1,3 @@
-import * as fs from 'node:fs/promises'
-import path from 'node:path'
-
 import { fileExists } from '#common'
 import type { Issues } from '#types'
 
@@ -57,8 +54,7 @@ async function minimalGitAttributes(input: string) {
 	content = content.replaceAll(/# foxxo /gu, '#section:fox-tools/fix ')
 
 	if (!content.includes('#section:fox-tools/fix start')) {
-		content =
-			`#section:fox-tools/fix start
+		content = `#section:fox-tools/fix start
 #section:fox-tools/fix end\n` + content
 	}
 
@@ -99,7 +95,7 @@ async function minimalGitAttributes(input: string) {
 
 	if (
 		content ===
-		`#section:fox-tools/fix start
+			`#section:fox-tools/fix start
 #section:fox-tools/fix end
 `
 	) {

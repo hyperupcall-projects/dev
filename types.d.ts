@@ -1,5 +1,6 @@
 declare global {
 	var skipTerminalCleanup: boolean
+	var ws: WebSocket
 }
 
 // Server.

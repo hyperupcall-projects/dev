@@ -1,7 +1,3 @@
-import * as fs from 'node:fs/promises'
-import path from 'node:path'
-
-import { fileExists } from '#common'
 import { execa } from 'execa'
 import type { Issues } from '#types'
 

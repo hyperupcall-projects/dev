@@ -8,7 +8,7 @@ import detectIndent from 'detect-indent'
 import { execa } from 'execa'
 import enquirer from 'enquirer'
 
-import { fileExists, pkgRoot, octokit } from '#common'
+import { fileExists, octokit, pkgRoot } from '#common'
 import type { Issues } from '#types'
 
 const { prompt } = enquirer
@@ -53,8 +53,9 @@ export const issues: Issues = async function* issues({ project }) {
 			},
 		}
 	}
-	if (!data.description)
+	if (!data.description) {
 		throw new TypeError(`Expected variable "data.description" to not be falsy`)
+	}
 
 	if (!data.description.endsWith('.') && !data.description.endsWith('!')) {
 		yield {
@@ -62,6 +63,23 @@ export const issues: Issues = async function* issues({ project }) {
 				'Expected GitHub repository description to end with a period',
 				'But, no period was found at the end of the description',
 			],
+			fix: async () => {
+				const input: { value: string } = await prompt({
+					type: 'input',
+					name: 'value',
+					message: 'Choose a description',
+					initial: data.description ?? '',
+				})
+				await octokit.rest.repos.update({
+					owner: project.owner,
+					repo: project.name,
+					description: input.value,
+				})
+				;({ data } = await octokit.rest.repos.get({
+					owner: project.owner,
+					repo: project.name,
+				}))
+			},
 		}
 	}
 

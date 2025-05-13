@@ -30,18 +30,20 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 	let config: Config = {
 		rules: {
 			...(project.type === 'with-remote-url' &&
-			`${project.owner}/${project.name}` === 'awesome-lists/awesome-bash'
+					`${project.owner}/${project.name}` === 'awesome-lists/awesome-bash'
 				? {
-						'remote-url/remote-metadata/disable-projects-tab': 'off',
-						'remote-url/remote-metadata/default-branch-main': 'off',
-					}
+					'remote-url/remote-metadata/disable-projects-tab': 'off',
+					'remote-url/remote-metadata/default-branch-main': 'off',
+				}
 				: {}),
 		},
 	}
 	try {
 		config = _.merge(
 			config,
-			toml.parse(await fs.readFile(path.join(project.rootDir, 'dev.toml'), 'utf-8')),
+			toml.parse(
+				await fs.readFile(path.join(project.rootDir, 'dev.toml'), 'utf-8'),
+			),
 		) as Config
 	} catch (err) {
 		if ((err as NodeJS.ErrnoException)?.code !== 'ENOENT') {
@@ -51,10 +53,14 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 
 	if (
 		project.type === 'with-remote-url' &&
-		(globalConfig.skippedRepositories.includes(`${project.owner}/${project.name}`) ||
+		(globalConfig.skippedRepositories.includes(
+			`${project.owner}/${project.name}`,
+		) ||
 			globalConfig.skippedOrganizations.includes(project.owner))
 	) {
-		console.info(`[${styleText('yellow', 'SKIP')}] ${project.owner}/${project.name}`)
+		console.info(
+			`[${styleText('yellow', 'SKIP')}] ${project.owner}/${project.name}`,
+		)
 		return
 	}
 
@@ -73,7 +79,10 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 	{
 		await collect(`100-directory/*`)
 
-		if (project.type === 'under-version-control' || project.type === 'with-remote-url') {
+		if (
+			project.type === 'under-version-control' ||
+			project.type === 'with-remote-url'
+		) {
 			if (await fileExists('.git')) {
 				await collect(`200-version-control/*`)
 			}
@@ -91,7 +100,9 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 			await collect(`400-ecosystem/nodejs/*`)
 			ecosystems.push('nodejs')
 
-			const content: PackageJson = JSON.parse(await fs.readFile('package.json', 'utf-8'))
+			const content: PackageJson = JSON.parse(
+				await fs.readFile('package.json', 'utf-8'),
+			)
 			if (content.displayName) {
 				await collect(`400-ecosystem/vscode-extension/*`)
 				ecosystems.push('vscode-extension')
@@ -152,7 +163,7 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 		const idx = ruleFiles.findIndex((item) => {
 			return (
 				path.parse(item).name.slice(item.indexOf('-') + 1) ===
-				path.parse(fixFile).name.slice(fixFile.indexOf('-') + 1)
+					path.parse(fixFile).name.slice(fixFile.indexOf('-') + 1)
 			)
 		})
 
@@ -165,12 +176,16 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 	{
 		let str = ''
 		str += `${styleText(['blue', 'bold'], 'Directory:')}  ${project.rootDir}\n`
-		str += `${styleText(['blue', 'bold'], 'Ecosystems:')} ${new Intl.ListFormat().format(ecosystems)}\n`
+		str += `${styleText(['blue', 'bold'], 'Ecosystems:')} ${
+			new Intl.ListFormat().format(ecosystems)
+		}\n`
 		if (project.type === 'with-remote-url') {
-			str += `${styleText(['blue', 'bold'], 'Project:')}    ${ansiEscapes.link(
-				`${project.owner}/${project.name}`,
-				`https://github.com/${project.owner}/${project.name}`,
-			)}\n`
+			str += `${styleText(['blue', 'bold'], 'Project:')}    ${
+				ansiEscapes.link(
+					`${project.owner}/${project.name}`,
+					`https://github.com/${project.owner}/${project.name}`,
+				)
+			}\n`
 		}
 
 		process.stdout.write(str)
@@ -186,6 +201,7 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 	}
 
 	console.info('Done.')
+	Deno.exit(1) // TODO
 }
 
 async function fixFromFile(
@@ -220,7 +236,9 @@ async function fixFromFile(
 				if (`${fixId}/${issue.id}` in (config.rules ?? {})) {
 					const rule = (config.rules ?? {})[`${fixId}/${issue.id}`]
 					if (rule === 'off') {
-						console.info(`[${styleText('yellow', 'SKIP')}] ${fixId}/${issue.id}`)
+						console.info(
+							`[${styleText('yellow', 'SKIP')}] ${fixId}/${issue.id}`,
+						)
 						continue
 					}
 				}
@@ -251,7 +269,9 @@ async function fixFromFile(
 					input: process.stdin,
 					output: process.stdout,
 				})
-				const input = await rl.question(`Would you like to fix this issue? (y/n): `)
+				const input = await rl.question(
+					`Would you like to fix this issue? (y/n): `,
+				)
 				rl.close()
 				shouldRunFix = yn(input)
 			}
@@ -290,11 +310,18 @@ async function getProject(): Promise<Project> {
 		}
 	}
 
-	const { stdout: branchName } = await execa('git', ['branch', '--show-current'])
+	const { stdout: branchName } = await execa('git', [
+		'branch',
+		'--show-current',
+	])
 	const { stdout: remoteName } = await (async () => {
 		try {
 			if (branchName) {
-				return await execa('git', ['config', '--get', `branch.${branchName}.remote`])
+				return await execa('git', [
+					'config',
+					'--get',
+					`branch.${branchName}.remote`,
+				])
 			} else {
 				// If HEAD does not point to a branch, it is in a detached state.
 				// This can occur with '@actions/checkout'. In such cases, we read
@@ -323,7 +350,11 @@ async function getProject(): Promise<Project> {
 			branchName,
 		}
 	}
-	const { stdout: remoteUrl } = await execa('git', ['remote', 'get-url', remoteName])
+	const { stdout: remoteUrl } = await execa('git', [
+		'remote',
+		'get-url',
+		remoteName,
+	])
 	const match = remoteUrl.match(/[:/](?<owner>.*?)\/(?<name>.*)$/u)
 	if (!match?.groups) {
 		printWithTips(

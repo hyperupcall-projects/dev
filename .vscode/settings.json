@@ -1,6 +1,11 @@
 {
 	"files.exclude": {
 		"**/.git": true,
-		"**/.data": true
+		"**/.data": true,
+		"config/templates": true,
+		"devserver/static/vendor": true
+	},
+	"[typescript]": {
+		"editor.defaultFormatter": "denoland.vscode-deno"
 	}
 }
