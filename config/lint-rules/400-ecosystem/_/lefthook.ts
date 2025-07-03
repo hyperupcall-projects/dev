@@ -36,13 +36,6 @@ export const issues: Issues = async function* issues({ project }) {
 			PropertyKey,
 			unknown
 		>
-		if (!('pre-commit' in lefthookConfig)) {
-			yield {
-				message: [
-					`Expected to find property "pre-commit" in file "./.lefthook.yaml"`,
-				],
-			}
-		}
 		if (lefthookConfig.assert_lefthook_installed != true) {
 			yield {
 				message: [

@@ -1,8 +1,14 @@
 import * as v from 'valibot'
-import { Routes as Routes1 } from '#pages/projects/settings.ts'
-import chokidar from 'chokidar'
 
-const routes = { ...Routes1 }
+const routes = {
+	'/api/tools/dictionary-watcher/process-files': {
+		request: v.undefined(),
+		response: v.object({
+			uniqueWords: v.number(),
+			wordsToProcess: v.array(v.object({ missingFiles: v.array(v.string()), word: v.string() })),
+		}),
+	},
+}
 
 export async function f<
 	T extends keyof typeof routes,

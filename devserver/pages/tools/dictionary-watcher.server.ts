@@ -15,7 +15,7 @@ export const PageSchema = v.strictObject({
 })
 
 const dictionaryFiles = [
-	path.join(os.homedir(), '.dotfiles/config/custom-words.txt'),
+	path.join(os.homedir(), '.dotfiles/config/dictionary-hyperupcall.txt'),
 	path.join(
 		(process.env.XDG_CONFIG_HOME ?? '').startsWith('/')
 			? (process.env.XDG_CONFIG_HOME ?? '')
@@ -44,6 +44,7 @@ export function Api(app: Express, wss: WebSocketServer) {
 		const dictionaries: { filepath: string; words: Set<string> }[] = []
 		for (const dictionaryFile of dictionaryFiles) {
 			const set: Set<string> = new Set()
+			console.log(dictionaryFile)
 
 			if (dictionaryFile.endsWith('.txt')) {
 				const result = await parseTextFile(dictionaryFile)

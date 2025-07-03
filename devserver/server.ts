@@ -3,11 +3,10 @@ import { renderPage } from './webframework/webframework.ts'
 import type { Express } from 'express'
 import { WebSocketServer } from 'ws'
 
-import { Api as repositoriesApi } from './pages/projects.server.ts'
 import { Api as servicesApi } from './pages/services.server.ts'
-import { Api as repositoriesSettingsApi } from './pages/projects/settings.server.ts'
-import { Api as editProjectQueriesApi } from './pages/projects/edit-queries.server.ts'
 import { Api as dictionaryWatcherApi } from './pages/tools/dictionary-watcher.server.ts'
+import path from 'node:path'
+import os from 'node:os'
 
 await import('#utilities/db.ts')
 
@@ -18,20 +17,18 @@ export function createApp(app: Express, wss: WebSocketServer) {
 		next()
 	})
 	app.get('/', renderPage)
+	app.get('/ublacklist', (req, res) => {
+		res.sendFile(path.join(os.homedir(), '.dotfiles/config/ublacklist.txt'), {
+			dotfiles: 'allow'
+		})
+	})
 	app.get('/lint', renderPage)
 
 	app.get('/services', renderPage)
 	servicesApi(app)
 
-	app.get('/projects', renderPage)
-	repositoriesApi(app)
+	app.get('/tools', renderPage)
 
 	app.get('/tools/dictionary-watcher', renderPage)
 	dictionaryWatcherApi(app, wss)
-
-	app.get('/projects/settings', renderPage)
-	repositoriesSettingsApi(app)
-
-	app.get('/projects/edit-queries', renderPage)
-	editProjectQueriesApi(app)
 }

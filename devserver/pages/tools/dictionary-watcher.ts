@@ -43,7 +43,7 @@ export function Page(a: PageSchemaT) {
 					<li>
 						<p>
 							<b>cspell:</b> at
-							<code>cat ~/.dotfiles/config/custom-words.txt</code>
+							<code>cat ~/.dotfiles/config/dictionary-kofler.txt</code>
 						</p>
 					</li>
 					<li>
@@ -51,6 +51,13 @@ export function Page(a: PageSchemaT) {
 							<b>LibreOffice:</b> at
 							<!-- TODO: space -->
 							<code>~/.config/libreoffice/4/user/wordbook/standard.dic</code>
+						</p>
+					</li>
+					<li>
+						<p>
+							<b>Obsidian:</b> at
+							<!-- TODO: space -->
+							<code>?</code>
 						</p>
 					</li>
 				</ul>
