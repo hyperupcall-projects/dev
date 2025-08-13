@@ -2,32 +2,29 @@ import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import * as util from 'node:util'
 import { existsSync } from 'node:fs'
-import enquirer from 'enquirer'
+
 import * as ejs from 'ejs'
 import { globby } from 'globby'
 import { execa } from 'execa'
 import Handlebars from 'handlebars'
 import { fileExists } from '#common'
+import * as inquirer from '@inquirer/prompts'
 
 import type { CommandNewOptions } from '#types'
 
-const { prompt } = enquirer
-
 export async function run(values: CommandNewOptions, positionals: string[]) {
 	if (!values.ecosystem) {
-		const input = (await prompt({
-			type: 'select',
-			name: 'value',
+		const input = await inquirer.select({
 			message: 'Choose an ecosystem',
 			choices: [
-				{ message: 'Deno', name: 'deno' },
-				{ message: 'NodeJS', name: 'nodejs' },
-				{ message: 'Rust', name: 'rust' },
-				{ message: 'Go', name: 'go' },
-				{ message: 'C++', name: 'cpp' },
+				{ name: 'Deno', value: 'deno' },
+				{ name: 'NodeJS', value: 'nodejs' },
+				{ name: 'Rust', value: 'rust' },
+				{ name: 'Go', value: 'go' },
+				{ name: 'C++', value: 'cpp' },
 			],
-		})) as { value: string }
-		values.ecosystem = input.value
+		})
+		values.ecosystem = input
 	}
 
 	if (!values.templateName) {
@@ -37,25 +34,21 @@ export async function run(values: CommandNewOptions, positionals: string[]) {
 			throw new Error(`Ecosystem "${values.ecosystem}" not supported`)
 		}
 
-		const { value } = (await prompt({
-			type: 'select',
-			name: 'value',
+		const value = await inquirer.select({
 			message: `Choose a "${values.ecosystem}" template`,
 			choices: Object.entries(parameters).map(([id, { name }]) => ({
-				name: id,
-				message: name,
+				name,
+				value: id,
 			})),
-		})) as { value: string }
+		})
 
 		values.templateName = value
 	}
 
 	if (!values.projectName) {
-		const { value } = (await prompt({
-			type: 'input',
-			name: 'value',
+		const value = await inquirer.input({
 			message: 'What is the project name?',
-		})) as { value: string }
+		})
 
 		values.projectName = value
 	}

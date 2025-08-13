@@ -4,17 +4,22 @@ import * as path from 'node:path'
 import util, { styleText } from 'node:util'
 import * as os from 'node:os'
 import * as readline from 'node:readline/promises'
-
 import { minimatch } from 'minimatch'
 import { execa } from 'execa'
 import untildify from 'untildify'
 import yn from 'yn'
+import * as inquirer from '@inquirer/prompts'
 
 import { fileExists, octokit } from '#common'
-import { collectGitHubRepositories } from '#utilities/repositories.ts'
+import { collectGitHubRepositories, collectGitHubRepositories2 } from '#utilities/repositories.ts'
 import type { Octokit } from 'octokit'
 import type { GetResponseDataTypeFromEndpointMethod } from '@octokit/types'
 import type { CommandReposOptions } from '#types'
+import { describe } from 'node:test'
+import { description } from 'valibot'
+import { exec } from 'node:child_process'
+import { stderr } from 'node:process'
+import { getEcosystems } from './lint.ts'
 
 type Config = {
 	organizationsDir: string
@@ -48,43 +53,194 @@ export async function run(values: CommandReposOptions, positionals: string[]) {
 		],
 		ignored: [
 			// Skip cloning from the following organizations:
-			'eshsrobotics/*',
-			'hackclub/*',
+
 			// 'bpkg/*',
-			'replit-discord/*',
-			'gamedevunite-at-smc/*',
-			// 'foxium-browser/*',
-			'cs-club-smc/*',
+
 			'ecc-cs-club/*',
 			'quasipanacea/*',
 			'semantic-hotkeys/*',
 			'fox-archives/*',
 			'fox-templates/*',
 			'fox-forks/*',
-			'asdf-contrib-hyperupcall/*',
+
 			'fix-js/*',
 			'big-blocks/*',
-			'GameDevUniteAtECC/*',
+
 			'swallowjs/*',
-			'EpicGames/*',
+
 			// Skip cloning from the following repositories:
 			'SchemaStore/json-validator',
-			'hyperupcall/hidden',
-			'hyperupcall/secrets',
 		],
 	}
-	if (positionals[0] === 'sync') {
+	if (positionals[0] === 'fetch-repository-data') {
+		const Repositories = await collectGitHubRepositories2(
+			{
+				fromCurrentlyAuthenticatedUser: true, // hyperupcall
+				users: [
+					'sindresorhus',
+					'isaacs',
+				],
+				organizations: [
+					'refined-github',
+					'expressjs',
+					'hacks-guide',
+					'todotxt',
+					'pallets',
+				],
+				ignored: [
+					'eshsrobotics/*',
+					'hackclub/*',
+					'replit-discord/*',
+					'gamedevunite-at-smc/*',
+					'cs-club-smc/*',
+					'hyperupcall-archives/*',
+					'fox-forks/*', // TODO
+					'foxium-browser/*',
+					'hyperupcall-forks/*',
+					'asdf-contrib-hyperupcall/*',
+					'GameDevUniteAtECC/*',
+					'EpicGames/*',
+					'hyperupcall/hidden',
+				],
+			},
+		)
+
+		// TODO
+		await fs.writeFile(
+			path.join(os.homedir(), '.dotfiles/.data/repositories.json'),
+			JSON.stringify(Repositories, null, '\t'),
+		)
+	} else if (positionals[0] === 'tui') {
+		const repositories = JSON.parse(
+			await fs.readFile(path.join(os.homedir(), '.dotfiles/.data/repositories.json'), 'utf-8'),
+		)
+		const allRepoNames: string[] = []
+		for (const orgName in repositories) {
+			for (const repo of repositories[orgName]) {
+				allRepoNames.push(`${orgName}/${repo.name}`)
+			}
+		}
+
+		const repository = await inquirer.search({
+			message: 'Select repository',
+			source: async (input) => {
+				return allRepoNames
+					.filter((fullName) => fullName.includes(input ?? ''))
+					.map((fullName) => ({
+						name: fullName,
+						value: fullName,
+						description: '',
+					}))
+			},
+		})
+		const dir = path.join(os.homedir(), '/Documents/Code', repository)
+		if (!existsSync(dir)) {
+			if (
+				await inquirer.confirm({
+					message: 'Would you like to clone this repository?',
+				})
+			) {
+				await execa({
+					stdout: 'inherit',
+					stderr: 'inherit',
+				})`git clone git@github.com:${repository} ${dir}`
+			}
+		}
+		const action = await inquirer.select({
+			message: 'Choose action',
+			choices: [
+				{
+					name: 'Open in VSCode (Default)',
+					value: 'vscode-default',
+				},
+				{
+					name: 'Open in VSCode (Ecosystem)',
+					value: 'vscode-ecosystem',
+				},
+				{
+					name: 'Open in VSCode Insiders',
+					value: 'vscode-insiders',
+				},
+				{
+					name: 'Open in Zed',
+					value: 'zed',
+				},
+			],
+		})
+		switch (action) {
+			case 'vscode-default':
+				await execa({
+					stdout: 'inherit',
+					stderr: 'inherit',
+				})`code ${dir}`
+				break
+			case 'vscode-ecosystem': {
+				let packname = ''
+				const ecosystems = await getEcosystems(dir)
+				let stop = false
+				for (const ecosystem of ecosystems) {
+					switch (ecosystem) {
+						case 'nodejs':
+							packname = 'vscode-hyperupcall-pack-web'
+							stop = true
+							break
+						case 'deno':
+							break
+						case 'c':
+							packname = 'vscode-hyperupcall-pack-cpp'
+							stop = true
+							break
+						case 'cpp':
+							packname = 'vscode-hyperupcall-pack-cpp'
+							stop = true
+							break
+					}
+
+					if (stop) {
+						break
+					}
+				}
+
+				if (!packname) {
+					console.info(`An ecosystem could not be inferred...`)
+					process.exit(1) // TODO
+				}
+
+				await execa({
+					stdout: 'inherit',
+					stderr: 'inherit',
+				})`code-with-extension-path EdwinKofler ${packname} --new-window ${dir}`
+				break
+			}
+			case 'vscode-insiders':
+				await execa({
+					stdout: 'inherit',
+					stderr: 'inherit',
+				})`code-insiders ${dir}`
+				break
+			case 'zed':
+				await execa({
+					stdout: 'inherit',
+					stderr: 'inherit',
+				})`zed ${dir}`
+				break
+		}
+	} else if (positionals[0] === 'sync') {
 		await syncRepositories({ octokit, config })
 	} else if (positionals[0] === 'run') {
-		for (let orgEntry of await fs.readdir(config.organizationsDir, {
-			withFileTypes: true,
-		})) {
-			for (let repoEntry of await fs.readdir(
-				path.join(orgEntry.parentPath, orgEntry.name),
-				{
-					withFileTypes: true,
-				},
-			)) {
+		for (
+			let orgEntry of await fs.readdir(config.organizationsDir, {
+				withFileTypes: true,
+			})
+		) {
+			for (
+				let repoEntry of await fs.readdir(
+					path.join(orgEntry.parentPath, orgEntry.name),
+					{
+						withFileTypes: true,
+					},
+				)
+			) {
 				const repoPath = path.join(repoEntry.parentPath, repoEntry.name)
 
 				{
@@ -140,9 +296,11 @@ export async function syncRepositories({
 	const Repositories = await collectGitHubRepositories()
 	// Check that no directories are empty
 	{
-		for (let orgStat of await fs.readdir(config.organizationsDir, {
-			withFileTypes: true,
-		})) {
+		for (
+			let orgStat of await fs.readdir(config.organizationsDir, {
+				withFileTypes: true,
+			})
+		) {
 			if (
 				orgStat.isDirectory() &&
 				(await fs.readdir(path.join(orgStat.parentPath, orgStat.name))).length === 0
@@ -154,15 +312,19 @@ export async function syncRepositories({
 
 	// Check that each repository directory has a corresponding GitHub repository.
 	{
-		for (let orgEntry of await fs.readdir(config.organizationsDir, {
-			withFileTypes: true,
-		})) {
-			for (let repoEntry of await fs.readdir(
-				path.join(orgEntry.parentPath, orgEntry.name),
-				{
-					withFileTypes: true,
-				},
-			)) {
+		for (
+			let orgEntry of await fs.readdir(config.organizationsDir, {
+				withFileTypes: true,
+			})
+		) {
+			for (
+				let repoEntry of await fs.readdir(
+					path.join(orgEntry.parentPath, orgEntry.name),
+					{
+						withFileTypes: true,
+					},
+				)
+			) {
 				if (!repoEntry.isDirectory()) {
 					console.error(`❌ Expected a directory: ${orgEntry.name}${repoEntry.name}`)
 				}
@@ -264,11 +426,13 @@ export async function syncRepositories({
 		}
 	}
 
-	// Check that there are no empty organization directories
+	// Check that there are no empty organization directories.
 	{
-		for (let orgEntry of await fs.readdir(config.organizationsDir, {
-			withFileTypes: true,
-		})) {
+		for (
+			let orgEntry of await fs.readdir(config.organizationsDir, {
+				withFileTypes: true,
+			})
+		) {
 			const children = await fs.readdir(path.join(orgEntry.parentPath, orgEntry.name))
 			if (children.length === 0) {
 				console.info(`❌ Organization directory should not be empty ${orgEntry.name}`)

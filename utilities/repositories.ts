@@ -274,12 +274,14 @@ export async function collectGitHubRepositories(): Promise<
 	// Collect repositories from organizations.
 	{
 		const joinedOrganizations = []
-		for await (const { data: memberships } of octokit.paginate.iterator(
-			octokit.rest.orgs.listMembershipsForAuthenticatedUser,
-			{
-				per_page: 100,
-			},
-		)) {
+		for await (
+			const { data: memberships } of octokit.paginate.iterator(
+				octokit.rest.orgs.listMembershipsForAuthenticatedUser,
+				{
+					per_page: 100,
+				},
+			)
+		) {
 			for (const membership of memberships) {
 				// If user has joined the organization.
 				if (membership.state !== 'active') {
@@ -337,13 +339,15 @@ export async function collectGitHubRepositories(): Promise<
 	{
 		const currentGitHubUser = (await octokit.rest.users.getAuthenticated()).data.login
 		const repos = []
-		for await (const { data: repositories } of octokit.paginate.iterator(
-			octokit.rest.repos.listForAuthenticatedUser,
-			{
-				affiliation: 'owner',
-				per_page: 100,
-			},
-		)) {
+		for await (
+			const { data: repositories } of octokit.paginate.iterator(
+				octokit.rest.repos.listForAuthenticatedUser,
+				{
+					affiliation: 'owner',
+					per_page: 100,
+				},
+			)
+		) {
 			for (const repository of repositories) {
 				if (
 					Ctx.ignoredRepos.some((pattern) => minimatch(repository.full_name, pattern))
@@ -357,6 +361,142 @@ export async function collectGitHubRepositories(): Promise<
 		}
 
 		repositories[currentGitHubUser] = repos
+	}
+
+	return repositories
+}
+
+export async function collectGitHubRepositories2(
+	options: {
+		fromCurrentlyAuthenticatedUser: true
+		users: string[]
+		organizations: string[]
+		ignored: string[]
+	},
+): Promise<
+	Record<string, GitHubRepository[]>
+> {
+	const repositories: Record<string, GitHubRepository[]> = {}
+
+	// Collect public & private repositories from currently signed-in user.
+	if (options.fromCurrentlyAuthenticatedUser) {
+		const currentUser = (await octokit.rest.users.getAuthenticated()).data.login
+		const repos: GitHubRepository[] = []
+		for await (
+			const { data: repositories } of octokit.paginate.iterator(
+				octokit.rest.repos.listForAuthenticatedUser,
+				{
+					affiliation: 'owner',
+					per_page: 100,
+				},
+			)
+		) {
+			for (const repository of repositories) {
+				repos.push(repository)
+			}
+		}
+
+		repositories[currentUser] = repos
+	}
+
+	// Collect public & private repositories from the organizations of the currently signed-in user.
+	if (options.fromCurrentlyAuthenticatedUser) {
+		const joinedOrganizations = []
+		for await (
+			const { data: memberships } of octokit.paginate.iterator(
+				octokit.rest.orgs.listMembershipsForAuthenticatedUser,
+				{
+					per_page: 100,
+				},
+			)
+		) {
+			for (const membership of memberships) {
+				// If user has joined the organization.
+				if (membership.state !== 'active') {
+					continue
+				}
+
+				joinedOrganizations.push(membership.organization)
+			}
+		}
+		const joinedOrganizationsData = await Promise.all(
+			joinedOrganizations.map(async (organization) => {
+				// TODO: paging
+				return await octokit
+					.request('GET /orgs/{org}/repos', {
+						org: organization.login,
+						headers: {
+							'X-GitHub-Api-Version': '2022-11-28',
+						},
+					})
+					.then((res) => {
+						return res.data
+					})
+			}),
+		)
+		for (let i = 0; i < joinedOrganizations.length; ++i) {
+			const orgName = joinedOrganizations[i].login
+			repositories[orgName] = joinedOrganizationsData[i]
+		}
+	}
+
+	// Collect public repositories from specified users
+	{
+		for (const user of options.users) {
+			const repos: GitHubRepository[] = []
+			for await (
+				const { data: repositories } of octokit.paginate.iterator(
+					octokit.rest.repos.listForUser,
+					{
+						username: user,
+						affiliation: 'owner',
+						per_page: 100,
+					},
+				)
+			) {
+				for (const repository of repositories) {
+					repos.push(repository)
+				}
+			}
+
+			repositories[user] = repos
+		}
+	}
+
+	// Collect public repositories from specified organizations
+	{
+		for (const organization of options.organizations) {
+			const repos: GitHubRepository[] = []
+			for await (
+				const { data: repositories } of octokit.paginate.iterator(
+					octokit.rest.repos.listForOrg,
+					{
+						org: organization,
+						affiliation: 'owner',
+						per_page: 100,
+					},
+				)
+			) {
+				for (const repository of repositories) {
+					repos.push(repository)
+				}
+			}
+
+			repositories[organization] = repos
+		}
+	}
+
+	for (const org in repositories) {
+		const repos = repositories[org].filter((repo) => {
+			for (const ignorePattern of options.ignored) {
+				if (minimatch(repo.full_name, ignorePattern, { dot: true })) {
+					// console.info(`Ignoring "${repo.full_name}"`)
+					return false
+				}
+			}
+			return true
+		})
+		repositories[org] = repos
 	}
 
 	return repositories

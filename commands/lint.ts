@@ -94,59 +94,33 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 	}
 
 	// Collect rule files that match the ecosystem.
-	const ecosystems: string[] = []
-	{
-		if (await fileExists('package.json')) {
-			await collect(`400-ecosystem/nodejs/*`)
-			ecosystems.push('nodejs')
-
-			const content: PackageJson = JSON.parse(
-				await fs.readFile('package.json', 'utf-8'),
-			)
-			if (content.displayName) {
+	const ecosystems = await getEcosystems(Deno.cwd()) // TODO
+	for (const ecosystem of ecosystems) {
+		switch (ecosystem) {
+			case 'nodejs':
+				await collect(`400-ecosystem/nodejs/*`)
+				break
+			case 'vscode-extension':
 				await collect(`400-ecosystem/vscode-extension/*`)
-				ecosystems.push('vscode-extension')
-			}
-		}
-
-		if ((await fileExists('deno.jsonc')) || (await fileExists('deno.json'))) {
-			await collect(`400-ecosystem/deno/*`)
-			ecosystems.push('deno')
-		}
-
-		if ((await globby('*.c')).length > 0) {
-			await collect(`400-ecosystem/c/*`)
-			ecosystems.push('c')
-		}
-
-		// https://cmake.org/cmake/help/latest/command/project.html
-		if (await fileExists('CMakeLists.txt')) {
-			const content = await fs.readFile('CMakeLists.txt', 'utf-8')
-			const language: { groups?: { lang?: string } } = content.match(
-				/project\((?:.*? (?<lang>[a-zA-Z]+)\)|.*?LANGUAGES[ \t]+(?<lang>[a-zA-Z]+))/,
-			) as any
-			if (language.groups?.lang === 'C') {
+				break
+			case 'deno':
+				await collect(`400-ecosystem/deno/*`)
+				break
+			case 'c':
 				await collect(`400-ecosystem/c/*`)
-				ecosystems.push('c')
-			} else if (language.groups?.lang === 'CXX') {
+				break
+			case 'cpp':
 				await collect(`400-ecosystem/cpp/*`)
-				ecosystems.push('cpp')
-			}
+				break
+			case 'bash':
+				await collect(`400-ecosystem/bash/*`)
+				break
+			case 'zed-extension':
+				await collect(`400-ecosystem/zed-extension/*`)
+				break
 		}
-
-		if (await fileExists('basalt.toml')) {
-			await collect(`400-ecosystem/bash/*`)
-			ecosystems.push('bash')
-		}
-
-		// https://zed.dev/docs/extensions/developing-extensions
-		if (await fileExists('extension.toml')) {
-			await collect(`400-ecosystem/zed-extension/*`)
-			ecosystems.push('zed-extension')
-		}
-
-		await collect(`400-ecosystem/_/*`)
 	}
+	await collect(`400-ecosystem/_/*`)
 
 	// Collect rule files that match the name.
 	{
@@ -177,7 +151,9 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 		let str = ''
 		str += `${styleText(['blue', 'bold'], 'Directory:')}  ${project.rootDir}\n`
 		str += `${styleText(['blue', 'bold'], 'Ecosystems:')} ${
-			new Intl.ListFormat().format(ecosystems)
+			new Intl.ListFormat().format(
+				ecosystems,
+			)
 		}\n`
 		if (project.type === 'with-remote-url') {
 			str += `${styleText(['blue', 'bold'], 'Project:')}    ${
@@ -373,6 +349,64 @@ async function getProject(): Promise<Project> {
 		remoteUrl,
 		owner: match.groups.owner,
 	}
+}
+
+export async function getEcosystems(rootDir: string): Promise<string[]> {
+	using _ = ((origDir: string) => ({
+		[Symbol.dispose]: () => Deno.chdir(origDir),
+	}))(Deno.cwd())
+	Deno.chdir(rootDir)
+
+	const ecosystems: string[] = []
+
+	if (await fileExists('package.json')) {
+		ecosystems.push('nodejs')
+
+		const content: PackageJson = JSON.parse(
+			await fs.readFile('package.json', 'utf-8'),
+		)
+		if (content.displayName) {
+			ecosystems.push('vscode-extension')
+		}
+	}
+
+	if ((await fileExists('deno.jsonc')) || (await fileExists('deno.json'))) {
+		ecosystems.push('deno')
+	}
+
+	if ((await globby('*.c')).length > 0) {
+		ecosystems.push('c')
+	}
+
+	// https://cmake.org/cmake/help/latest/command/project.html
+	if (await fileExists('CMakeLists.txt')) {
+		const content = await fs.readFile('CMakeLists.txt', 'utf-8')
+		const language = content.match(
+			/project\((?:.*? (?<lang>[a-zA-Z]+)\)|.*?LANGUAGES[ \t]+(?<lang>[a-zA-Z]+))/,
+		)
+		if (language?.groups?.lang === 'C') {
+			ecosystems.push('c')
+		} else if (language?.groups?.lang === 'CXX') {
+			ecosystems.push('cpp')
+		} else {
+			// TODO
+			console.error(
+				`CMAkeLists.txt should have language defined in project()`,
+			)
+			process.exit(1)
+		}
+	}
+
+	if (await fileExists('basalt.toml')) {
+		ecosystems.push('bash')
+	}
+
+	// https://zed.dev/docs/extensions/developing-extensions
+	if (await fileExists('extension.toml')) {
+		ecosystems.push('zed-extension')
+	}
+
+	return ecosystems
 }
 
 function printWithTips(str: string, tips: string[]) {

@@ -6,12 +6,10 @@ import child_process from 'node:child_process'
 
 import detectIndent from 'detect-indent'
 import { execa } from 'execa'
-import enquirer from 'enquirer'
+import * as inquirer from '@inquirer/prompts'
 
 import { fileExists, octokit, pkgRoot } from '#common'
 import type { Issues } from '#types'
-
-const { prompt } = enquirer
 
 /**
  * Check that various fields of the the GitHub repository metadata conforms
@@ -36,15 +34,13 @@ export const issues: Issues = async function* issues({ project }) {
 				'But, no description was found',
 			],
 			fix: async () => {
-				const input: { value: string } = await prompt({
-					type: 'input',
-					name: 'value',
+				const input = await inquirer.input({
 					message: 'Choose a description',
 				})
 				await octokit.rest.repos.update({
 					owner: project.owner,
 					repo: project.name,
-					description: input.value,
+					description: input,
 				})
 				;({ data } = await octokit.rest.repos.get({
 					owner: project.owner,
@@ -64,16 +60,14 @@ export const issues: Issues = async function* issues({ project }) {
 				'But, no period was found at the end of the description',
 			],
 			fix: async () => {
-				const input: { value: string } = await prompt({
-					type: 'input',
-					name: 'value',
+				const input = await inquirer.input({
 					message: 'Choose a description',
-					initial: data.description ?? '',
+					default: data.description ?? '',
 				})
 				await octokit.rest.repos.update({
 					owner: project.owner,
 					repo: project.name,
-					description: input.value,
+					description: input,
 				})
 				;({ data } = await octokit.rest.repos.get({
 					owner: project.owner,
