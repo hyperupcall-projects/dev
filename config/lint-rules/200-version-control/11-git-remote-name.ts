@@ -1,7 +1,7 @@
 import { execa } from 'execa'
 import type { Issues } from '#types'
 
-export const issues: Issues = async function* issues({ project }) {
+export const issues: Issues = async function* issues() {
 	const output = await execa('git', ['remote', '--verbose'])
 	if (!output.stdout) return
 

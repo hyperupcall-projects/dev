@@ -1,5 +1,5 @@
 {
-	"window.title": "${folderName} ${separator}${activeRepositoryBranchName}${separator}${remoteName} (python)",
+	"window.title": "${folderName} ${separator}${activeRepositoryBranchName}${separator}${remoteName} (deno)",
 	"files.exclude": {
 		"**/.git": true,
 		"**/.data": true,

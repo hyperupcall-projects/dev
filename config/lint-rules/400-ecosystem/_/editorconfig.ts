@@ -9,7 +9,7 @@ import type { Issues } from '#types'
  * Check that the EditorConfig file exists and has the correct content.
  */
 
-export const issues: Issues = async function* issues({ project }) {
+export const issues: Issues = async function* issues() {
 	const configFile = '.editorconfig'
 	const configPath = path.join(pkgRoot(), 'config', configFile)
 	const configContent = await fs.readFile(configPath, 'utf-8')

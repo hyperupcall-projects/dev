@@ -1,9 +1,9 @@
 import * as path from 'node:path'
 import * as os from 'node:os'
 import * as readline from 'node:readline/promises'
-import * as util from 'node:util'
 
 import { minimatch } from 'minimatch'
+import micromatch from 'micromatch'
 import yn from 'yn'
 
 import { forEachRepository } from '../utilities/util.ts'
@@ -15,8 +15,10 @@ import type { PackageJson } from 'type-fest'
 import * as fs from 'node:fs'
 import { styleText } from 'node:util'
 import { spawnSync } from 'node:child_process'
+import process from 'node:process'
+import walk from 'ignore-walk'
 
-export async function run(values: CommandScriptOptions, positionals: string[]) {
+export async function run(options: CommandScriptOptions, positionals: string[]) {
 	const task = positionals[0]
 
 	const helpText = `script <taskName>
@@ -27,11 +29,11 @@ symlink-hidden-dirs
 validate-fox-archives
 create-vscode-launchers
 `
-	if (values.help) {
+	if (options.help) {
 		console.info(helpText)
 	}
 	if (!task) {
-		process.stdout.write(helpText)
+		Deno.stdout.write(new TextEncoder().encode(helpText))
 		process.exit(1)
 	}
 
@@ -44,12 +46,12 @@ create-vscode-launchers
 	} else if (task === 'create-vscode-launchers') {
 		await createVSCodeLaunchers(positionals.slice(1))
 	} else {
-		process.stdout.write('Error: Failed to pass task name\n')
+		Deno.stdout.write(new TextEncoder().encode('Error: Failed to pass task name\n'))
 		process.exit(1)
 	}
 }
 
-export async function checkLicenseHeaders(args: string[]) {
+export async function checkLicenseHeaders(positionals: string[]) {
 	await forEachRepository(
 		config.organizationsDir,
 		{ ignores: config.ignoredOrganizations },
@@ -165,7 +167,7 @@ export async function checkLicenseHeaders(args: string[]) {
 	}
 }
 
-export async function symlinkHiddenDirs(args: string[]) {
+export async function symlinkHiddenDirs(positionals: string[]) {
 	await forEachRepository(
 		config.organizationsDir,
 		async function run({ orgDir, orgEntry, repoDir, repoEntry }) {
@@ -246,7 +248,7 @@ export async function symlinkHiddenDirs(args: string[]) {
 	)
 }
 
-async function validateFoxArchives(args: string[]) {
+async function validateFoxArchives(positionals: string[]) {
 	for await (
 		const { data: repositories } of octokit.paginate.iterator(
 			octokit.rest.repos.listForOrg,
@@ -269,7 +271,7 @@ async function validateFoxArchives(args: string[]) {
 	}
 }
 
-async function createVSCodeLaunchers(args: string[]) {
+async function createVSCodeLaunchers(positionals: string[]) {
 	const extensions: { dirname: string; packageJson: PackageJson }[] = await (await fetch(
 		`https://raw.githubusercontent.com/fox-self/vscode-hyperupcall-packs/refs/heads/main/extension-list.json`,
 	)).json()
@@ -320,7 +322,9 @@ async function createVSCodeLaunchers(args: string[]) {
 Name=VSCode: ${ecosystemNamePretty}
 Comment=Code Editing. Redefined.
 GenericName=Text Editor
-Exec=code --user-data-dir ${path.join(vscodeDataDirs, packageJson.name)} --extensions-dir ${path.join(vscodeExtDirs, packageJson.name)} %F
+Exec=code --user-data-dir ${path.join(vscodeDataDirs, packageJson.name)} --extensions-dir ${
+				path.join(vscodeExtDirs, packageJson.name)
+			} %F
 Icon=${iconFile}
 Type=Application
 StartupNotify=false
@@ -332,7 +336,9 @@ Keywords=vscode;
 
 [Desktop Action new-empty-window]
 Name=New Empty Window: ${ecosystemNamePretty}
-Exec=code --user-data-dir ${path.join(vscodeDataDirs, packageJson.name)} --extensions-dir ${path.join(vscodeExtDirs, packageJson.name)} --new-window %F
+Exec=code --user-data-dir ${path.join(vscodeDataDirs, packageJson.name)} --extensions-dir ${
+				path.join(vscodeExtDirs, packageJson.name)
+			} --new-window %F
 Icon=${iconFile}`,
 		)
 		fs.copyFileSync(
@@ -399,26 +405,42 @@ Icon=${iconFile}`,
 		}
 
 		{
-			await writeRule('Description','Generated rules for ecosystem ' + ecosystemNamePretty)
+			await writeRule('Description', 'Generated rules for ecosystem ' + ecosystemNamePretty)
 			await writeRule('desktopfile', desktopFile)
 			await writeRule('desktopfilerule', '2')
 			await writeRule('title', `(${ecosystemName})`)
 			await writeRule('titlematch', '2')
 			await writeRule('wmclass', 'code Code')
-			await execa`kwriteconfig6 --notify --file ${path.join(configDir, 'kwinrulesrc')} --group ${'vscode-hyperupcall-pack-' + ecosystemName} --key wmclasscomplete true --type boolean`
+			await execa`kwriteconfig6 --notify --file ${path.join(configDir, 'kwinrulesrc')} --group ${
+				'vscode-hyperupcall-pack-' + ecosystemName
+			} --key wmclasscomplete true --type boolean`
 			await writeRule('wmclassmatch', '1')
 
 			const [{ stdout: count }, { stdout: rules }] = await Promise.all([
-				execa`kreadconfig6 --file ${path.join(configDir, 'kwinrulesrc')} --group General --key count`,
-				execa`kreadconfig6 --file ${path.join(configDir, 'kwinrulesrc')} --group General --key rules`
+				execa`kreadconfig6 --file ${
+					path.join(configDir, 'kwinrulesrc')
+				} --group General --key count`,
+				execa`kreadconfig6 --file ${
+					path.join(configDir, 'kwinrulesrc')
+				} --group General --key rules`,
 			])
 			if (!rules.includes('vscode-hyperupcall-pack-' + ecosystemName)) {
 				await writeRule('count', String(Number(count) + 1), 'General')
-				await writeRule('rules', `${rules},${'vscode-hyperupcall-pack-' + ecosystemName}`, 'General')
+				await writeRule(
+					'rules',
+					`${rules},${'vscode-hyperupcall-pack-' + ecosystemName}`,
+					'General',
+				)
 			}
 
-			async function writeRule(key: string, value: string, group = 'vscode-hyperupcall-pack-' + ecosystemName) {
-				await execa`kwriteconfig6 --notify --file ${path.join(configDir, 'kwinrulesrc')} --group ${group} --key ${key} ${value}`
+			async function writeRule(
+				key: string,
+				value: string,
+				group = 'vscode-hyperupcall-pack-' + ecosystemName,
+			) {
+				await execa`kwriteconfig6 --notify --file ${
+					path.join(configDir, 'kwinrulesrc')
+				} --group ${group} --key ${key} ${value}`
 			}
 		}
 	}

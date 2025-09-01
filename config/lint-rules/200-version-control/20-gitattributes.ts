@@ -4,7 +4,7 @@ import fs from 'node:fs/promises'
 
 export const skip = true
 
-export const issues: Issues = async function* issues({ project }) {
+export const issues: Issues = async function* issues() {
 	const configFile = '.gitattributes'
 
 	let content = ''

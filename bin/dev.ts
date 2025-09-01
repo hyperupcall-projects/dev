@@ -7,6 +7,7 @@ import { cleanupTerminal, run as runInstall } from '../commands/install.ts'
 import { run as runRepos } from '../commands/repos.ts'
 import { run as runTask } from '../commands/task.ts'
 import { startServer } from '../devserver/webframework/webframework.ts'
+import process from "node:process";
 
 const version = '0.4.0' // TODO
 

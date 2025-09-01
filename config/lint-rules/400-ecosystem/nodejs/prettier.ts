@@ -1,17 +1,12 @@
-import * as fs from 'node:fs/promises'
-import * as path from 'node:path'
-
 import {
-	getNpmLatestVersion,
-	pkgRoot,
-	filesMustHaveShape,
 	filesMustHaveContent,
+	filesMustHaveShape,
+	getNpmLatestVersion,
 	packageJsonMustNotHaveDependencies,
 } from '#common'
 import type { Issues } from '#types'
-import detectIndent from 'detect-indent'
 
-export const issues: Issues = async function* issues({ project }) {
+export const issues: Issues = async function* issues() {
 	// Check that there is only one configuration file.
 	{
 		// https://prettier.io/docs/en/configuration.html

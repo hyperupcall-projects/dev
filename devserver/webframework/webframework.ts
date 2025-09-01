@@ -12,6 +12,7 @@ import { Server } from 'node:http'
 import { createApp } from '../server.ts'
 import { WebSocketServer } from 'ws'
 import http from 'node:http'
+import process from "node:process";
 
 const importMap = {
 	imports: {

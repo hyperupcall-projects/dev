@@ -1,13 +1,10 @@
-import { html } from 'htm/preact'
 import path from 'node:path'
-import { useEffect, useState } from 'preact/hooks'
 import * as v from 'valibot'
 import chokidar from 'chokidar'
 import os from 'node:os'
 import fs from 'node:fs/promises'
 import type { Express } from 'express'
 import type { WebSocketServer } from 'ws'
-import { xdgConfig } from 'xdg-basedir' // TODO
 
 export type PageSchemaT = v.InferInput<typeof PageSchema>
 export const PageSchema = v.strictObject({
@@ -17,8 +14,8 @@ export const PageSchema = v.strictObject({
 const dictionaryFiles = [
 	path.join(os.homedir(), '.dotfiles/config/dictionary-hyperupcall.txt'),
 	path.join(
-		(process.env.XDG_CONFIG_HOME ?? '').startsWith('/')
-			? (process.env.XDG_CONFIG_HOME ?? '')
+		(Deno.env.get('XDG_CONFIG_HOME') ?? '').startsWith('/')
+			? (Deno.env.get('XDG_CONFIG_HOME') ?? '')
 			: path.join(os.homedir(), '.config'),
 		'libreoffice/4/user/wordbook/standard.dic',
 	),
@@ -111,7 +108,7 @@ export function Api(app: Express, wss: WebSocketServer) {
 
 		const watcher = chokidar.watch(dictionaryFiles, { persistent: false })
 		watcher.on('error', console.error)
-		watcher.on('change', (path, stats) => {
+		watcher.on('change', (path) => {
 			ws.send(
 				JSON.stringify({
 					type: 'dictionary-watcher-log',

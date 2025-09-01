@@ -1,7 +1,6 @@
 import * as fs from 'node:fs/promises'
 import { globby } from 'globby'
 
-import { fileExists, pkgRoot } from '#common'
 import type { Issues } from '#types'
 
 /**

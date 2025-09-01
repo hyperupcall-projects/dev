@@ -1,14 +1,9 @@
-import * as fs from 'node:fs/promises'
-import * as path from 'node:path'
-import * as os from 'node:os'
 import * as util from 'node:util'
 import child_process from 'node:child_process'
 
-import detectIndent from 'detect-indent'
-import { execa } from 'execa'
 import * as inquirer from '@inquirer/prompts'
 
-import { fileExists, octokit, pkgRoot } from '#common'
+import { octokit } from '#common'
 import type { Issues } from '#types'
 
 /**
@@ -206,7 +201,7 @@ export const issues: Issues = async function* issues({ project }) {
 				)
 				// If we get a valid response, then the wiki repository exists (and has content). Therefore,
 				// we should not automatically disable the wiki tab and let the user decide what to do.
-			} catch (err: any) {
+			} catch (err) {
 				if (!err.killed && err.stderr.includes('fatal: could not read Username')) {
 					// We attempt to access the wiki repository. As per security best practices, GitHub will
 					// ask for authentication, if either the wiki repository either does not exist, or is private.

@@ -1,9 +1,9 @@
 import type { Issues } from '#types'
-import { fileExists, filesMustHaveContent, filesMustHaveShape } from '#common'
+import { fileExists, filesMustHaveContent } from '#common'
 import * as yaml from 'std/yaml'
 import { execa } from 'execa'
 
-export const issues: Issues = async function* issues({ project }) {
+export const issues: Issues = async function* issues() {
 	// Check that there is only one configuration file.
 	{
 		// https://lefthook.dev/configuration/index.html#config-file-name

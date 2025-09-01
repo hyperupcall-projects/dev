@@ -3,3 +3,5 @@ pre-commit:
   commands:
     deno-lint:
       run: deno lint
+    deno-check:
+      run: deno check

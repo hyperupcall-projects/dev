@@ -1,18 +1,11 @@
 import * as fs from 'node:fs/promises'
-import path from 'node:path'
 
-import { unified } from 'unified'
 import { remark } from 'remark'
-import remarkParse from 'remark-parse'
-import detectIndent from 'detect-indent'
 import { reporter } from 'vfile-reporter'
 import { lintRule } from 'unified-lint-rule'
-import { visit } from 'unist-util-visit'
 
-import { pkgRoot, octokit } from '#common'
-import type { Root, Heading } from 'mdast'
+import type { Heading, Root } from 'remark'
 
-import type { Issues } from '#types'
 export const issues = async function* issues() {
 	return []
 

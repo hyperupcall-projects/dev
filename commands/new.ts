@@ -11,7 +11,7 @@ import { existsSync } from 'node:fs'
 
 const _dirname = import.meta.dirname
 
-export async function run(values: CommandNewOptions, positionals: string[]) {
+export async function run(options: CommandNewOptions, positionals: string[]) {
 	if (!positionals[0]) {
 		const input = await inquirer.input({
 			message: 'Choose a directory',
@@ -29,7 +29,7 @@ export async function run(values: CommandNewOptions, positionals: string[]) {
 		}
 	}
 
-	if (!values.ecosystem) {
+	if (!options.ecosystem) {
 		const input = await inquirer.select({
 			message: 'Choose an ecosystem',
 			choices: [
@@ -40,14 +40,14 @@ export async function run(values: CommandNewOptions, positionals: string[]) {
 				{ name: 'C++', value: 'cpp' },
 			],
 		})
-		values.ecosystem = input
+		options.ecosystem = input
 	}
 
-	if (!values.templateName) {
+	if (!options.templateName) {
 		const templateData = getTemplateData()
-		const parameters = templateData[values.ecosystem]?.templates
+		const parameters = templateData[options.ecosystem]?.templates
 		if (!parameters) {
-			throw new Error(`Ecosystem "${values.ecosystem}" not supported`)
+			throw new Error(`Ecosystem "${options.ecosystem}" not supported`)
 		}
 
 		const value = await inquirer.select({
@@ -58,24 +58,24 @@ export async function run(values: CommandNewOptions, positionals: string[]) {
 			})),
 		})
 
-		values.templateName = value
+		options.templateName = value
 	}
 
-	if (!values.projectName) {
+	if (!options.projectName) {
 		const value = await inquirer.input({
 			message: 'What is the project name?',
 		})
 
-		values.projectName = value
+		options.projectName = value
 	}
 
 	await createProject({
 		dir: positionals[0] ?? '.',
-		ecosystem: values.ecosystem,
-		templateName: values.templateName,
-		projectName: values.projectName,
-		forceTemplate: values.force ?? false,
-		options: (values.options ?? '').split(','),
+		ecosystem: options.ecosystem,
+		templateName: options.templateName,
+		projectName: options.projectName,
+		forceTemplate: options.force ?? false,
+		options: (options.options ?? '').split(','),
 	})
 }
 

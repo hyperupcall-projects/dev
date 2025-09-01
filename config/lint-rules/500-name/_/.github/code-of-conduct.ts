@@ -2,7 +2,6 @@
 import * as fs from 'node:fs/promises'
 import type { Issues } from '#types'
 
-import { globby } from 'globby'
 import { findCodeOfConductFiles } from '#common'
 
 /**
@@ -12,7 +11,7 @@ import { findCodeOfConductFiles } from '#common'
  * the code of conduct file must exist in the organization's ".github" repository.
  */
 
-export const issues: Issues = async function* issues({ project }) {
+export const issues: Issues = async function* issues() {
 	const files = await findCodeOfConductFiles()
 
 	for (const file of files) {

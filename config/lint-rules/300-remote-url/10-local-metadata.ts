@@ -1,6 +1,5 @@
 import { octokit } from '#common'
 import type { Issues } from '#types'
-import { execa } from 'execa'
 
 export const issues: Issues = async function* issues({ project }) {
 	if (project.type !== 'with-remote-url') {

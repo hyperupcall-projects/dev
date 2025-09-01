@@ -3,7 +3,6 @@ import * as path from 'node:path'
 import util, { styleText } from 'node:util'
 import { execa } from 'execa'
 import { createRequire } from 'node:module'
-import { existsSync } from 'node:fs'
 
 import { Octokit } from 'octokit'
 import detectIndent from 'detect-indent'
@@ -13,7 +12,8 @@ import dotenv from 'dotenv'
 import { globby } from 'globby'
 import jsonc from 'jsonc-parser'
 
-import type { Issue, Project } from '#types'
+import type { Issue } from '#types'
+import process from 'node:process'
 
 const require = createRequire(import.meta.url)
 
@@ -199,7 +199,7 @@ export function pkgRoot(packageName?: string) {
 	}
 }
 
-export async function writeTrees(trees: Record<string, any>[]) {
+export async function writeTrees(trees: Record<string, string>[]) {
 	for (const tree of trees) {
 		for (const [filepath, content] of Object.entries(tree)) {
 			await fs.mkdir(path.dirname(filepath), { recursive: true })

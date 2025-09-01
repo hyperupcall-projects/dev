@@ -1,15 +1,14 @@
 // SPDX-License-Identifier: MPL-2.0
 import * as fs from 'node:fs/promises'
-import * as path from 'node:path'
 
-import { fileExists, pkgRoot } from '#common'
+import { fileExists } from '#common'
 import type { Issues } from '#types'
 
 /**
  * Check that the EditorConfig file exists and has the correct content.
  */
 
-export const issues: Issues = async function* issues({ project }) {
+export const issues: Issues = async function* issues() {
 	return // TODO
 	const configContent = `ls:
   packages/src:

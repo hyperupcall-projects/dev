@@ -1,10 +1,9 @@
 import * as fs from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import * as path from 'node:path'
-import util, { styleText } from 'node:util'
+import { styleText } from 'node:util'
 import * as os from 'node:os'
 import * as readline from 'node:readline/promises'
-import { minimatch } from 'minimatch'
 import { execa } from 'execa'
 import untildify from 'untildify'
 import yn from 'yn'
@@ -13,20 +12,15 @@ import * as inquirer from '@inquirer/prompts'
 import { fileExists, octokit } from '#common'
 import { collectGitHubRepositories, collectGitHubRepositories2 } from '#utilities/repositories.ts'
 import type { Octokit } from 'octokit'
-import type { GetResponseDataTypeFromEndpointMethod } from '@octokit/types'
-import type { CommandReposOptions } from '#types'
-import { describe } from 'node:test'
-import { description } from 'valibot'
-import { exec } from 'node:child_process'
-import { stderr } from 'node:process'
 import { getEcosystems } from '../devutils/index.ts'
+import process from 'node:process'
 
 type Config = {
 	organizationsDir: string
 	ignored: string[]
 }
 
-export async function run(values: CommandReposOptions, positionals: string[]) {
+export async function run(options: CommandScriptOptions, positionals: string[]) {
 	const config = {
 		organizationsDir: untildify('~/.dev/.data/managed-repositories'),
 		repositoryGroups: [
@@ -230,12 +224,12 @@ export async function run(values: CommandReposOptions, positionals: string[]) {
 		await syncRepositories({ octokit, config })
 	} else if (positionals[0] === 'run') {
 		for (
-			let orgEntry of await fs.readdir(config.organizationsDir, {
+			const orgEntry of await fs.readdir(config.organizationsDir, {
 				withFileTypes: true,
 			})
 		) {
 			for (
-				let repoEntry of await fs.readdir(
+				const repoEntry of await fs.readdir(
 					path.join(orgEntry.parentPath, orgEntry.name),
 					{
 						withFileTypes: true,
@@ -247,8 +241,8 @@ export async function run(values: CommandReposOptions, positionals: string[]) {
 				{
 					let str = '\n\n\n'
 					str += styleText(['magenta', 'bold'], repoPath) + styleText('reset', '') + '\n'
-					str += '='.repeat(process.stdout.columns) + '\n'
-					process.stdout.write(str)
+					str += '='.repeat(Deno.consoleSize().columns) + '\n'
+					Deno.stdout.write(new TextEncoder().encode(str))
 				}
 
 				const cmdName = positionals[1]
@@ -257,13 +251,13 @@ export async function run(values: CommandReposOptions, positionals: string[]) {
 					console.error(`Failed determine command name`)
 					Deno.exit(1)
 				}
-				const res = await execa(cmdName, cmdArgs, {
+				const child = await execa(cmdName, cmdArgs, {
 					cwd: repoPath,
 					stdin: 'inherit',
 					stdout: 'inherit',
 					stderr: 'inherit',
 				}).catch(() => {})
-				if (res.exitCode > 1) {
+				if (!child || !child.exitCode || child.exitCode > 1) {
 					Deno.exit(1)
 				}
 			}
@@ -298,7 +292,7 @@ export async function syncRepositories({
 	// Check that no directories are empty
 	{
 		for (
-			let orgStat of await fs.readdir(config.organizationsDir, {
+			const orgStat of await fs.readdir(config.organizationsDir, {
 				withFileTypes: true,
 			})
 		) {
@@ -314,12 +308,12 @@ export async function syncRepositories({
 	// Check that each repository directory has a corresponding GitHub repository.
 	{
 		for (
-			let orgEntry of await fs.readdir(config.organizationsDir, {
+			const orgEntry of await fs.readdir(config.organizationsDir, {
 				withFileTypes: true,
 			})
 		) {
 			for (
-				let repoEntry of await fs.readdir(
+				const repoEntry of await fs.readdir(
 					path.join(orgEntry.parentPath, orgEntry.name),
 					{
 						withFileTypes: true,
@@ -354,10 +348,10 @@ export async function syncRepositories({
 
 	// Check that each GitHub repository has a corresponding cloned repository directory.
 	{
-		for (let orgName in Repositories) {
+		for (const orgName in Repositories) {
 			const repos = Repositories[orgName]
-			for (let repo of repos) {
-				let repoDir = path.join(config.organizationsDir, orgName, repo.name)
+			for (const repo of repos) {
+				const repoDir = path.join(config.organizationsDir, orgName, repo.name)
 
 				if (!existsSync(repoDir)) {
 					console.info(`❌ Not cloned: ${orgName}/${repo.name}`)
@@ -381,10 +375,10 @@ export async function syncRepositories({
 
 	// Check that each cloned GitHub repository is up to date
 	{
-		for (let orgName in Repositories) {
+		for (const orgName in Repositories) {
 			const repos = Repositories[orgName]
-			for (let repo of repos) {
-				let repoDir = path.join(config.organizationsDir, orgName, repo.name)
+			for (const repo of repos) {
+				const repoDir = path.join(config.organizationsDir, orgName, repo.name)
 				console.info(`Checking if ${orgName}/${repo.name} needs updates`)
 
 				async function uptoDate(repoDir: string) {
@@ -420,7 +414,7 @@ export async function syncRepositories({
 
 	// Check that each cloned organization directory has a corresponding GitHub organization.
 	{
-		for (let orgName of await fs.readdir(config.organizationsDir)) {
+		for (const orgName of await fs.readdir(config.organizationsDir)) {
 			if (!(orgName in Repositories)) {
 				console.info(`❌ Organization not on GitHub: ${orgName}`)
 			}
@@ -430,7 +424,7 @@ export async function syncRepositories({
 	// Check that there are no empty organization directories.
 	{
 		for (
-			let orgEntry of await fs.readdir(config.organizationsDir, {
+			const orgEntry of await fs.readdir(config.organizationsDir, {
 				withFileTypes: true,
 			})
 		) {

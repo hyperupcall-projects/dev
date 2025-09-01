@@ -1,6 +1,3 @@
-import * as fs from 'node:fs/promises'
-
-import { globby } from 'globby'
 import type { Issues } from '#types'
 import { filesMustHaveContent } from '#common'
 

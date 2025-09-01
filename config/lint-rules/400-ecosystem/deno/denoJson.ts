@@ -1,9 +1,9 @@
 import fs from 'node:fs/promises'
 
-import { fileExists, filesMustHaveContent, filesMustHaveShape } from '#common'
+import { fileExists, filesMustHaveShape } from '#common'
 
 import type { Issues } from '#types'
-export const issues: Issues = async function* issues({ project }) {
+export const issues: Issues = async function* issues() {
 	{
 		const file = 'deno.json'
 		if (await fileExists(file)) {

@@ -1,14 +1,19 @@
 import path from 'node:path'
 import fs from 'node:fs/promises'
 import os from 'node:os'
-import util, { styleText } from 'node:util'
+import { styleText } from 'node:util'
 
 import ansiEscapes from 'ansi-escapes'
 import dedent from 'dedent'
 import { execa } from 'execa'
 import semver from 'semver'
 import { fileExists } from '#common'
-import type { CommandInstallOptions, InstalledProject } from '#types'
+import type { CommandFixOptions, InstalledProject } from '#types'
+import process from 'node:process'
+
+function writeStdout(str: string) {
+	Deno.stdout.write(new TextEncoder().encode(str))
+}
 
 const Projects: InstalledProject[] = [
 	{
@@ -82,7 +87,7 @@ const Projects: InstalledProject[] = [
 			try {
 				await execa({ shell: true })`command -v woof`
 				return true
-			} catch (err) {
+			} catch {
 				return false
 			}
 		},
@@ -114,27 +119,27 @@ const Ctx = {
 	currentProject: Projects[0].name,
 }
 export function cleanupTerminal() {
-	process.stdout.write(ansiEscapes.cursorRestorePosition)
-	process.stdout.write(ansiEscapes.cursorShow)
-	process.stdout.write(ansiEscapes.exitAlternativeScreen)
+	writeStdout(ansiEscapes.cursorRestorePosition)
+	writeStdout(ansiEscapes.cursorShow)
+	writeStdout(ansiEscapes.exitAlternativeScreen)
 }
 let ignoreKeystrokes = false
-export async function run(values: CommandInstallOptions, positionals: string[]) {
+export async function run(options: CommandFixOptions, positionals: string[]) {
 	await fs.mkdir(Ctx.devDir, { recursive: true })
 	await fs.mkdir(Ctx.repositoryDir, { recursive: true })
 
 	process.stdin.setRawMode(true)
-	process.stdout.write(ansiEscapes.cursorSavePosition)
-	process.stdout.write(ansiEscapes.cursorHide)
-	process.stdout.write(ansiEscapes.enterAlternativeScreen)
+	writeStdout(ansiEscapes.cursorSavePosition)
+	writeStdout(ansiEscapes.cursorHide)
+	writeStdout(ansiEscapes.enterAlternativeScreen)
 	process.on('exit', () => {
 		if (!globalThis.skipTerminalCleanup) {
 			cleanupTerminal()
 		}
 	})
-	process.on('uncaughtException', (err) => {})
+	process.on('uncaughtException', () => {})
 
-	process.stdout.write(`Fetching data...\n`)
+	writeStdout(`Fetching data...\n`)
 	await updateProjectData()
 	await render('')
 
@@ -164,9 +169,9 @@ async function renderMainScreen(char: string) {
 	}
 
 	if (char === '\x1B' || char === 'q') {
-		process.stdout.write(ansiEscapes.cursorRestorePosition)
-		process.stdout.write(ansiEscapes.cursorShow)
-		process.stdout.write(ansiEscapes.exitAlternativeScreen)
+		writeStdout(ansiEscapes.cursorRestorePosition)
+		writeStdout(ansiEscapes.cursorShow)
+		writeStdout(ansiEscapes.exitAlternativeScreen)
 		Deno.exit()
 	} else if (char === 'j') {
 		const idx = Projects.findIndex((project) => project.name === Ctx.currentProject)
@@ -178,12 +183,12 @@ async function renderMainScreen(char: string) {
 		Ctx.currentProject = Projects[newIdx].name
 	} else if (char === 'c') {
 		if (project.data.isCloned) {
-			process.stdout.write(ansiEscapes.eraseScreen + ansiEscapes.cursorTo(0, 0))
-			process.stdout.write('Repository already cloned...\n')
+			writeStdout(ansiEscapes.eraseScreen + ansiEscapes.cursorTo(0, 0))
+			writeStdout('Repository already cloned...\n')
 		} else {
 			const dir = path.join(Ctx.repositoryDir, project.name)
 
-			process.stdout.write(ansiEscapes.eraseScreen + ansiEscapes.cursorTo(0, 0))
+			writeStdout(ansiEscapes.eraseScreen + ansiEscapes.cursorTo(0, 0))
 			ignoreKeystrokes = true
 			await execa({
 				stdio: 'inherit',
@@ -196,16 +201,16 @@ async function renderMainScreen(char: string) {
 		if (project.data.isCloned) {
 			const dir = path.join(Ctx.repositoryDir, project.name)
 
-			process.stdout.write(ansiEscapes.eraseScreen + ansiEscapes.cursorTo(0, 0))
-			process.stdout.write(
+			writeStdout(ansiEscapes.eraseScreen + ansiEscapes.cursorTo(0, 0))
+			writeStdout(
 				`REMOVING DIRECTORY: ${path.join(Ctx.repositoryDir, project.name)}\n`,
 			)
-			process.stdout.write(`Exit with "q/esc" to abort in less than 5 seconds\n`)
+			writeStdout(`Exit with "q/esc" to abort in less than 5 seconds\n`)
 			await new Promise((resolve, reject) => {
 				setTimeout(async () => {
 					try {
 						await fs.rm(dir, { recursive: true })
-						process.stdout.write('Done. Updating project data...\n')
+						writeStdout('Done. Updating project data...\n')
 						await updateProjectData()
 						await waitOnConfirmInput()
 					} catch (err) {
@@ -216,15 +221,15 @@ async function renderMainScreen(char: string) {
 				}, 5000)
 			})
 		} else {
-			process.stdout.write(ansiEscapes.eraseScreen + ansiEscapes.cursorTo(0, 0))
-			process.stdout.write('Repository already removed...\n')
+			writeStdout(ansiEscapes.eraseScreen + ansiEscapes.cursorTo(0, 0))
+			writeStdout('Repository already removed...\n')
 			await waitOnConfirmInput()
 		}
 	} else if (char === 'i') {
 		if (project.data.isCloned) {
 			const dir = path.join(Ctx.repositoryDir, project.name)
 
-			process.stdout.write(ansiEscapes.eraseScreen + ansiEscapes.cursorTo(0, 0))
+			writeStdout(ansiEscapes.eraseScreen + ansiEscapes.cursorTo(0, 0))
 			const scriptFile = path.join(os.tmpdir(), `dev-${crypto.randomUUID()}.sh`)
 			await fs.writeFile(scriptFile, project.install)
 			ignoreKeystrokes = true
@@ -235,15 +240,15 @@ async function renderMainScreen(char: string) {
 			ignoreKeystrokes = false
 			await updateProjectData()
 		} else {
-			process.stdout.write(ansiEscapes.eraseScreen + ansiEscapes.cursorTo(0, 0))
-			process.stdout.write('Repository does not exist...\n')
+			writeStdout(ansiEscapes.eraseScreen + ansiEscapes.cursorTo(0, 0))
+			writeStdout('Repository does not exist...\n')
 		}
 		await waitOnConfirmInput()
 	} else if (char === 'u') {
 		if (project.data.isCloned) {
 			const dir = path.join(Ctx.repositoryDir, project.name)
 
-			process.stdout.write(ansiEscapes.eraseScreen + ansiEscapes.cursorTo(0, 0))
+			writeStdout(ansiEscapes.eraseScreen + ansiEscapes.cursorTo(0, 0))
 			const scriptFile = path.join(os.tmpdir(), `dev-${crypto.randomUUID()}.sh`)
 			await fs.writeFile(scriptFile, project.uninstall)
 			ignoreKeystrokes = true
@@ -254,12 +259,12 @@ async function renderMainScreen(char: string) {
 			ignoreKeystrokes = false
 			await updateProjectData()
 		} else {
-			process.stdout.write(ansiEscapes.eraseScreen + ansiEscapes.cursorTo(0, 0))
-			process.stdout.write('Repository does not exist...\n')
+			writeStdout(ansiEscapes.eraseScreen + ansiEscapes.cursorTo(0, 0))
+			writeStdout('Repository does not exist...\n')
 		}
 		await waitOnConfirmInput()
 	} else if (char === 'r') {
-		process.stdout.write('LOADING...\n')
+		writeStdout('LOADING...\n')
 		await updateProjectData()
 	} else if (char === 'v') {
 		currentScreen = 'update-version'
@@ -267,16 +272,16 @@ async function renderMainScreen(char: string) {
 		return
 	}
 
-	const sep = '='.repeat(process.stdout.columns)
+	const sep = '='.repeat(Deno.consoleSize().columns)
 	const nameColLen = 13
 	const clonedColLen = 8
 	const installedColLen = 11
 	const currentRef = 14
 	const latestRef = 14
 
-	process.stdout.write(ansiEscapes.eraseScreen + ansiEscapes.cursorTo(0, 0))
-	process.stdout.write(`${sep}\n`)
-	process.stdout.write(
+	writeStdout(ansiEscapes.eraseScreen + ansiEscapes.cursorTo(0, 0))
+	writeStdout(`${sep}\n`)
+	writeStdout(
 		'    ' +
 			'Name'.padEnd(nameColLen) +
 			'Cloned'.padEnd(clonedColLen) +
@@ -285,7 +290,7 @@ async function renderMainScreen(char: string) {
 			'Latest Ref'.padEnd(latestRef) +
 			'\n',
 	)
-	process.stdout.write(`${sep}\n`)
+	writeStdout(`${sep}\n`)
 	for (const project of Projects) {
 		if (!project?.data) {
 			throw new Error(`Project does not have data attached: \"${project.name}\"`)
@@ -315,10 +320,10 @@ async function renderMainScreen(char: string) {
 		str += '\n'
 		str = str.replaceAll('YES', styleText('green', 'yes'))
 		str = str.replaceAll('NO', styleText('red', 'no'))
-		process.stdout.write(str)
+		writeStdout(str)
 	}
-	process.stdout.write(`${sep}\n`)
-	process.stdout.write(dedent`
+	writeStdout(`${sep}\n`)
+	writeStdout(dedent`
 		CONTROLS
 		  - j/k: Move up/down
 		  - c: Clone repository
@@ -328,7 +333,7 @@ async function renderMainScreen(char: string) {
 		  - r: Refresh refs
 		  - v: Switch version/ref of repository
 		  - q/esc: Exit program\n`)
-	process.stdout.write(`${sep}\n`)
+	writeStdout(`${sep}\n`)
 }
 
 let currentVersion = 0
@@ -346,7 +351,7 @@ async function renderUpdateVersionScreen(char: string) {
 		currentVersion = Math.max(0, currentVersion - 1)
 	} else if (char === '\x0D') {
 		ignoreKeystrokes = true
-		process.stdout.write(ansiEscapes.eraseScreen + ansiEscapes.cursorTo(0, 0))
+		writeStdout(ansiEscapes.eraseScreen + ansiEscapes.cursorTo(0, 0))
 		const ref = project.data.versions[currentVersion]
 		const dir = path.join(Ctx.repositoryDir, project.name)
 		await execa`git -C ${dir} reset --hard HEAD`
@@ -368,21 +373,21 @@ async function renderUpdateVersionScreen(char: string) {
 		return
 	}
 
-	const sep = '='.repeat(process.stdout.columns)
-	process.stdout.write(ansiEscapes.eraseScreen + ansiEscapes.cursorTo(0, 0))
-	process.stdout.write(`REPOSITORY: ${project.name}\n`)
+	const sep = '='.repeat(Deno.consoleSize().columns)
+	writeStdout(ansiEscapes.eraseScreen + ansiEscapes.cursorTo(0, 0))
+	writeStdout(`REPOSITORY: ${project.name}\n`)
 	for (let i = 0; i < project.data.versions.length; ++i) {
 		const version = project.data.versions[i]
-		process.stdout.write(`[${i === currentVersion ? 'x' : ' '}] ${version}\n`)
+		writeStdout(`[${i === currentVersion ? 'x' : ' '}] ${version}\n`)
 	}
-	process.stdout.write(`${sep}\n`)
-	process.stdout.write(dedent`
+	writeStdout(`${sep}\n`)
+	writeStdout(dedent`
 		CONTROLS
 		  - j/k: Move up/down
 		  - Enter: Select version
 		  - v/backspace: Go back
 		  - q/esc: Exit program\n`)
-	process.stdout.write(`${sep}\n`)
+	writeStdout(`${sep}\n`)
 }
 
 async function updateProjectData() {
@@ -449,7 +454,7 @@ async function updateProjectData() {
 }
 
 async function waitOnConfirmInput() {
-	process.stdout.write('PRESS ENTER TO CONTINUE...\n')
+	writeStdout('PRESS ENTER TO CONTINUE...\n')
 	await new Promise((resolve, reject) => {
 		process.stdin
 			.once('data', (data) => {

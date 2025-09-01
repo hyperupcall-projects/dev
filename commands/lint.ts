@@ -3,7 +3,7 @@
 import * as path from 'node:path'
 import * as fs from 'node:fs/promises'
 import * as readline from 'node:readline/promises'
-import util, { styleText } from 'node:util'
+import { styleText } from 'node:util'
 import { fileExists, pkgRoot } from '#common'
 import yn from 'yn'
 import toml from 'smol-toml'
@@ -15,8 +15,8 @@ import { xdgConfig } from 'xdg-basedir'
 import { getEcosystems } from '../devutils/index.ts'
 
 import type { CommandFixOptions, Config, Issue, Project } from '#types'
-import type { PackageJson } from 'type-fest'
 import _ from 'lodash'
+import process from 'node:process'
 
 export async function run(options: CommandFixOptions, positionals: string[]) {
 	if (positionals.length > 0) {
@@ -196,7 +196,7 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 			}\n`
 		}
 
-		process.stdout.write(str)
+		Deno.stdout.write(new TextEncoder().encode(str))
 	}
 
 	for (const fixFile of ruleFiles) {
@@ -340,7 +340,7 @@ async function getProject(): Promise<Project> {
 					'clone.defaultRemoteName',
 				])
 			}
-		} catch (err) {
+		} catch {
 			// If there is a git branch, but no configured remotes, then control flow reaches here.
 			return {
 				stdout: null,
