@@ -19,7 +19,7 @@ import { describe } from 'node:test'
 import { description } from 'valibot'
 import { exec } from 'node:child_process'
 import { stderr } from 'node:process'
-import { getEcosystems } from './lint.ts'
+import { getEcosystems } from '../devutils/index.ts'
 
 type Config = {
 	organizationsDir: string
@@ -86,6 +86,7 @@ export async function run(values: CommandReposOptions, positionals: string[]) {
 					'hacks-guide',
 					'todotxt',
 					'pallets',
+					'Bash-it',
 				],
 				ignored: [
 					'eshsrobotics/*',
@@ -133,7 +134,7 @@ export async function run(values: CommandReposOptions, positionals: string[]) {
 					}))
 			},
 		})
-		const dir = path.join(os.homedir(), '/Documents/Code', repository)
+		const dir = getRepositoryDestDirectory(repository)
 		if (!existsSync(dir)) {
 			if (
 				await inquirer.confirm({
@@ -181,10 +182,9 @@ export async function run(values: CommandReposOptions, positionals: string[]) {
 				for (const ecosystem of ecosystems) {
 					switch (ecosystem) {
 						case 'nodejs':
+						case 'deno':
 							packname = 'vscode-hyperupcall-pack-web'
 							stop = true
-							break
-						case 'deno':
 							break
 						case 'c':
 							packname = 'vscode-hyperupcall-pack-cpp'
@@ -203,9 +203,10 @@ export async function run(values: CommandReposOptions, positionals: string[]) {
 
 				if (!packname) {
 					console.info(`An ecosystem could not be inferred...`)
-					process.exit(1) // TODO
+					Deno.exit(1) // TODO
 				}
 
+				// TODO: put in function
 				await execa({
 					stdout: 'inherit',
 					stderr: 'inherit',
@@ -254,7 +255,7 @@ export async function run(values: CommandReposOptions, positionals: string[]) {
 				const cmdArgs = positionals.slice(2)
 				if (!cmdName) {
 					console.error(`Failed determine command name`)
-					process.exit(1)
+					Deno.exit(1)
 				}
 				const res = await execa(cmdName, cmdArgs, {
 					cwd: repoPath,
@@ -263,13 +264,13 @@ export async function run(values: CommandReposOptions, positionals: string[]) {
 					stderr: 'inherit',
 				}).catch(() => {})
 				if (res.exitCode > 1) {
-					process.exit(1)
+					Deno.exit(1)
 				}
 			}
 		}
 	} else {
 		console.error(`Unknown command: ${positionals[0]}`)
-		process.exit(1)
+		Deno.exit(1)
 	}
 }
 
@@ -288,7 +289,7 @@ export async function syncRepositories({
 			process.stderr.write(
 				`${styleText('red', 'Error:')} Symbolic link is broken: "${config.organizationsDir}"\n`,
 			)
-			process.exit(1)
+			Deno.exit(1)
 		}
 	}
 	await fs.mkdir(config.organizationsDir, { recursive: true })
@@ -438,5 +439,16 @@ export async function syncRepositories({
 				console.info(`❌ Organization directory should not be empty ${orgEntry.name}`)
 			}
 		}
+	}
+}
+
+function getRepositoryDestDirectory(repository: string) {
+	switch (repository) {
+		case 'hyperupcall-projects/dev':
+			return path.join(os.homedir(), '.dev')
+		case 'hyperupcall/dotfiles':
+			return path.join(os.homedir(), '.dotfiles')
+		default:
+			return path.join(os.homedir(), '/Documents/Code', repository)
 	}
 }

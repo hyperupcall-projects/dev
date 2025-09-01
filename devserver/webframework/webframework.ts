@@ -68,7 +68,7 @@ export function startServer(args: string[]) {
 	server.listen(port)
 	server.on('error', (err) => {
 		console.error(err)
-		process.exit(1)
+		Deno.exit(1)
 	})
 	server.on('listening', () => {
 		console.info(`Listening on http://localhost:${port}`)
@@ -107,7 +107,7 @@ export async function bundleDependencies() {
 		})
 	} catch (error) {
 		console.error(error)
-		process.exit(1)
+		Deno.exit(1)
 	}
 	if (bundle) {
 		await bundle.close()

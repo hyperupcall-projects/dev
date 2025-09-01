@@ -21,6 +21,8 @@ export const issues: Issues = async function* issues({ project }) {
 		throw new Error(`Expected project to be associated with a remote`)
 	}
 
+	const maxDescriptionLength = 96
+
 	let { data } = await octokit.rest.repos.get({
 		owner: project.owner,
 		repo: project.name,
@@ -33,20 +35,7 @@ export const issues: Issues = async function* issues({ project }) {
 				'Expected GitHub repository to have a description',
 				'But, no description was found',
 			],
-			fix: async () => {
-				const input = await inquirer.input({
-					message: 'Choose a description',
-				})
-				await octokit.rest.repos.update({
-					owner: project.owner,
-					repo: project.name,
-					description: input,
-				})
-				;({ data } = await octokit.rest.repos.get({
-					owner: project.owner,
-					repo: project.name,
-				}))
-			},
+			fix: fixSetDescription,
 		}
 	}
 	if (!data.description) {
@@ -56,34 +45,49 @@ export const issues: Issues = async function* issues({ project }) {
 	if (!data.description.endsWith('.') && !data.description.endsWith('!')) {
 		yield {
 			message: [
-				'Expected GitHub repository description to end with a period',
-				'But, no period was found at the end of the description',
+				'Expected GitHub repository description to end with either a period or exclamation mark',
+				'But, no period or exclamation mark was found at the end of the description',
 			],
-			fix: async () => {
-				const input = await inquirer.input({
-					message: 'Choose a description',
-					default: data.description ?? '',
-				})
-				await octokit.rest.repos.update({
-					owner: project.owner,
-					repo: project.name,
-					description: input,
-				})
-				;({ data } = await octokit.rest.repos.get({
-					owner: project.owner,
-					repo: project.name,
-				}))
-			},
+			fix: fixSetDescription,
 		}
 	}
 
-	if (data.description.length >= 65) {
+	if (data.description.length > maxDescriptionLength) {
 		yield {
 			message: [
-				'Expected GitHub repository description to have less than 65 UTF-16 code units',
+				`Expected GitHub repository description to have at most ${maxDescriptionLength} UTF-16 code units`,
 				`But, GitHub repository description has ${data.description.length} UTF-16 code units`,
 			],
+			fix: fixSetDescription,
 		}
+	}
+
+	async function fixSetDescription() {
+		const input = await inquirer.input({
+			message: 'Choose a description',
+			default: data.description ?? '',
+			required: true,
+			validate(str: string) {
+				if (str.length > maxDescriptionLength) {
+					return `Must have at most ${maxDescriptionLength} UTF-16 code units`
+				}
+
+				if (!str.endsWith('.') && !str.endsWith('!')) {
+					return 'Must end with either a period or exclamation mark'
+				}
+
+				return true
+			},
+		})
+		await octokit.rest.repos.update({
+			owner: project.owner,
+			repo: project.name,
+			description: input,
+		})
+		;({ data } = await octokit.rest.repos.get({
+			owner: project.owner,
+			repo: project.name,
+		}))
 	}
 
 	// Check the homepage URL.

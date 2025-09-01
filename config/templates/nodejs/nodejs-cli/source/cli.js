@@ -1,16 +1,16 @@
-import util from 'node:util'
+import util from "node:util";
 
 const { positionals, values } = util.parseArgs({
 	options: {
 		version: {
 			default: false,
-			short: 'v',
-			type: 'boolean',
+			short: "v",
+			type: "boolean",
 		},
 		help: {
 			default: false,
-			short: 'h',
-			type: 'boolean',
+			short: "h",
+			type: "boolean",
 		},
 	},
-})
+});

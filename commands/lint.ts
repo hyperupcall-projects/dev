@@ -10,6 +10,9 @@ import toml from 'smol-toml'
 import { execa } from 'execa'
 import { globby } from 'globby'
 import ansiEscapes from 'ansi-escapes'
+import * as jsonc from 'jsonc-parser'
+import { xdgConfig } from 'xdg-basedir'
+import { getEcosystems } from '../devutils/index.ts'
 
 import type { CommandFixOptions, Config, Issue, Project } from '#types'
 import type { PackageJson } from 'type-fest'
@@ -62,6 +65,35 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 			`[${styleText('yellow', 'SKIP')}] ${project.owner}/${project.name}`,
 		)
 		return
+	}
+
+	// FIX EDITOR SETTINGS
+	if (await fileExists('.vscode/settings.json')) {
+		const userSettingsJsonFile = path.join(xdgConfig, 'Code/User/settings.json')
+		const defaultTitle =
+			jsonc.parse(await fs.readFile(userSettingsJsonFile, 'utf-8'))['window.title']
+
+		const settingsText = await fs.readFile('.vscode/settings.json', 'utf-8')
+		const settingsJson = jsonc.parse(settingsText)
+		const ecosystem = (await getEcosystems(Deno.cwd()))[0]
+		if (settingsJson['window.title']) {
+			const output = settingsText.replace(
+				/"window\.title"[ \t]*:[ \t]*".*?"/m,
+				`"window.title": "${defaultTitle} (${ecosystem})"`,
+			)
+			await fs.writeFile('.vscode/settings.json', output)
+		} else if (Object.keys(settingsJson).length === 0) {
+			const output = `{
+	"window.title": "${defaultTitle} (${ecosystem})"
+}`
+			await fs.writeFile('.vscode/settings.json', output)
+		} else {
+			const output = settingsText.replace(
+				/[ \t]*{/m,
+				`{\n\t"window.title": "${defaultTitle} (${ecosystem})",`,
+			)
+			await fs.writeFile('.vscode/settings.json', output)
+		}
 	}
 
 	const ruleFiles: string[] = []
@@ -255,25 +287,22 @@ async function fixFromFile(
 			if (shouldRunFix) {
 				await issue.fix()
 			} else {
-				printWithTips(`[${styleText('red', 'FAIL')}] ${fixId}`, [
-					'Failed because the fix function was not executed',
-				])
-				failed = true
-				break
+				console.info(`[${styleText('yellow', 'SKIP')}] ${fixId}`)
+				return
 			}
 		}
 
 		if (!failed) {
 			console.info(`[${styleText('green', 'PASS')}] ${fixId}`)
 		} else {
-			process.exit(1)
+			Deno.exit(1)
 		}
 	} catch (err) {
 		printWithTips(`[${styleText('red', 'FAIL')}] ${fixId}`, [
 			'Failed because an error was caught',
 		])
 		console.error(err)
-		process.exit(1)
+		Deno.exit(1)
 	}
 }
 
@@ -281,8 +310,8 @@ async function getProject(): Promise<Project> {
 	if (!(await fileExists('.git'))) {
 		return {
 			type: 'only-directory',
-			rootDir: process.cwd(),
-			name: path.basename(process.cwd()),
+			rootDir: Deno.cwd(),
+			name: path.basename(Deno.cwd()),
 		}
 	}
 
@@ -321,8 +350,8 @@ async function getProject(): Promise<Project> {
 	if (!remoteName) {
 		return {
 			type: 'under-version-control',
-			rootDir: process.cwd(),
-			name: path.basename(process.cwd()),
+			rootDir: Deno.cwd(),
+			name: path.basename(Deno.cwd()),
 			branchName,
 		}
 	}
@@ -337,76 +366,18 @@ async function getProject(): Promise<Project> {
 			`Failed to extract repository name and owner for remote name "${remoteName}"`,
 			[`Remote name has URL of "${remoteUrl}"`],
 		)
-		process.exit(1)
+		Deno.exit(1)
 	}
 
 	return {
 		type: 'with-remote-url',
-		rootDir: process.cwd(),
+		rootDir: Deno.cwd(),
 		name: match.groups.name,
 		branchName,
 		remoteName,
 		remoteUrl,
 		owner: match.groups.owner,
 	}
-}
-
-export async function getEcosystems(rootDir: string): Promise<string[]> {
-	using _ = ((origDir: string) => ({
-		[Symbol.dispose]: () => Deno.chdir(origDir),
-	}))(Deno.cwd())
-	Deno.chdir(rootDir)
-
-	const ecosystems: string[] = []
-
-	if (await fileExists('package.json')) {
-		ecosystems.push('nodejs')
-
-		const content: PackageJson = JSON.parse(
-			await fs.readFile('package.json', 'utf-8'),
-		)
-		if (content.displayName) {
-			ecosystems.push('vscode-extension')
-		}
-	}
-
-	if ((await fileExists('deno.jsonc')) || (await fileExists('deno.json'))) {
-		ecosystems.push('deno')
-	}
-
-	if ((await globby('*.c')).length > 0) {
-		ecosystems.push('c')
-	}
-
-	// https://cmake.org/cmake/help/latest/command/project.html
-	if (await fileExists('CMakeLists.txt')) {
-		const content = await fs.readFile('CMakeLists.txt', 'utf-8')
-		const language = content.match(
-			/project\((?:.*? (?<lang>[a-zA-Z]+)\)|.*?LANGUAGES[ \t]+(?<lang>[a-zA-Z]+))/,
-		)
-		if (language?.groups?.lang === 'C') {
-			ecosystems.push('c')
-		} else if (language?.groups?.lang === 'CXX') {
-			ecosystems.push('cpp')
-		} else {
-			// TODO
-			console.error(
-				`CMAkeLists.txt should have language defined in project()`,
-			)
-			process.exit(1)
-		}
-	}
-
-	if (await fileExists('basalt.toml')) {
-		ecosystems.push('bash')
-	}
-
-	// https://zed.dev/docs/extensions/developing-extensions
-	if (await fileExists('extension.toml')) {
-		ecosystems.push('zed-extension')
-	}
-
-	return ecosystems
 }
 
 function printWithTips(str: string, tips: string[]) {

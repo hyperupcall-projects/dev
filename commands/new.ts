@@ -1,18 +1,34 @@
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
-import * as util from 'node:util'
-import { existsSync } from 'node:fs'
 
-import * as ejs from 'ejs'
-import { globby } from 'globby'
 import { execa } from 'execa'
 import Handlebars from 'handlebars'
 import { fileExists } from '#common'
 import * as inquirer from '@inquirer/prompts'
 
 import type { CommandNewOptions } from '#types'
+import { existsSync } from 'node:fs'
+
+const _dirname = import.meta.dirname
 
 export async function run(values: CommandNewOptions, positionals: string[]) {
+	if (!positionals[0]) {
+		const input = await inquirer.input({
+			message: 'Choose a directory',
+		})
+		positionals = [input]
+	}
+
+	if (!existsSync(positionals[0])) {
+		const input = await inquirer.confirm({
+			message: 'Would you like to create the directory?',
+		})
+
+		if (input) {
+			await fs.mkdir(positionals[0], { recursive: true })
+		}
+	}
+
 	if (!values.ecosystem) {
 		const input = await inquirer.select({
 			message: 'Choose an ecosystem',
@@ -35,7 +51,7 @@ export async function run(values: CommandNewOptions, positionals: string[]) {
 		}
 
 		const value = await inquirer.select({
-			message: `Choose a "${values.ecosystem}" template`,
+			message: `Choose a template`,
 			choices: Object.entries(parameters).map(([id, { name }]) => ({
 				name,
 				value: id,
@@ -58,7 +74,7 @@ export async function run(values: CommandNewOptions, positionals: string[]) {
 		ecosystem: values.ecosystem,
 		templateName: values.templateName,
 		projectName: values.projectName,
-		forceTemplate: values.force,
+		forceTemplate: values.force ?? false,
 		options: (values.options ?? '').split(','),
 	})
 }
@@ -73,7 +89,9 @@ type Context = Readonly<{
 }>
 
 export async function createProject(ctx: Context) {
-	const outputDir = path.resolve(process.cwd(), ctx.dir)
+	if (!_dirname) throw new TypeError('Variable "import.meta.dirname" is not truthy')
+
+	const outputDir = path.resolve(Deno.cwd(), ctx.dir)
 
 	if (!(await fileExists(outputDir))) {
 		await fs.mkdir(outputDir, { recursive: true })
@@ -82,12 +100,12 @@ export async function createProject(ctx: Context) {
 	if (!ctx.forceTemplate) {
 		if ((await fs.readdir(outputDir)).length > 0) {
 			console.error(`Error: Directory must be empty: "${outputDir}"`)
-			process.exit(1)
+			Deno.exit(1)
 		}
 	}
 
 	const templateDir = path.join(
-		import.meta.dirname,
+		_dirname,
 		'../config/templates',
 		ctx.ecosystem,
 		`${ctx.ecosystem}-${ctx.templateName}`,
@@ -107,16 +125,24 @@ export async function createProject(ctx: Context) {
 				const rel = inputFile.slice(templateDir.length + 1)
 				const outputFile = path.join(outputDir, rel)
 
-				let outputContent = ''
-				{
+				try {
 					const template = await fs.readFile(inputFile, 'utf-8')
 					const runtimeTemplate = Handlebars.compile(template)
-					outputContent = runtimeTemplate({
+					const outputContent = runtimeTemplate({
 						key: 'value',
+					}, {
+						helpers: {
+							'raw': function (options: any) {
+								return options.fn()
+							},
+						},
 					})
+					await fs.mkdir(path.dirname(outputFile), { recursive: true })
+					await fs.writeFile(outputFile, outputContent)
+				} catch (err) {
+					console.error(`Failed to template file "${inputFile}"`)
+					throw err
 				}
-				await fs.mkdir(path.dirname(outputFile), { recursive: true })
-				await fs.writeFile(outputFile, outputContent)
 			}
 		}
 	}
@@ -137,8 +163,8 @@ function getTemplateData(): Record<
 				cli: {
 					name: 'CLI',
 				},
-				'web-server': {
-					name: 'Web Server',
+				'web-server-express': {
+					name: 'Web Server (Express)',
 				},
 			},
 			async onRun(ctx) {
@@ -198,11 +224,6 @@ function getTemplateData(): Record<
 				playground: {
 					name: 'Playground',
 				},
-			},
-			async onRun(ctx) {
-				await execa('c++', ['run', '.'], {
-					stdio: 'inherit',
-				})
 			},
 		},
 	}

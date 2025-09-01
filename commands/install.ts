@@ -167,7 +167,7 @@ async function renderMainScreen(char: string) {
 		process.stdout.write(ansiEscapes.cursorRestorePosition)
 		process.stdout.write(ansiEscapes.cursorShow)
 		process.stdout.write(ansiEscapes.exitAlternativeScreen)
-		process.exit()
+		Deno.exit()
 	} else if (char === 'j') {
 		const idx = Projects.findIndex((project) => project.name === Ctx.currentProject)
 		const newIdx = Math.min(Projects.length - 1, idx + 1)
@@ -339,7 +339,7 @@ async function renderUpdateVersionScreen(char: string) {
 	}
 
 	if (char === '\x1B' || char === 'q') {
-		process.exit()
+		Deno.exit()
 	} else if (char === 'j') {
 		currentVersion = Math.min(project.data.versions.length - 1, currentVersion + 1)
 	} else if (char === 'k') {

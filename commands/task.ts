@@ -1,4 +1,3 @@
-import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import * as os from 'node:os'
 import * as readline from 'node:readline/promises'
@@ -13,6 +12,9 @@ import { octokit } from '#common'
 import type { CommandScriptOptions } from '#types'
 import { execa } from 'execa'
 import type { PackageJson } from 'type-fest'
+import * as fs from 'node:fs'
+import { styleText } from 'node:util'
+import { spawnSync } from 'node:child_process'
 
 export async function run(values: CommandScriptOptions, positionals: string[]) {
 	const task = positionals[0]
@@ -178,7 +180,7 @@ export async function symlinkHiddenDirs(args: string[]) {
 			let newHiddenDirStat
 			const restat = async function restat() {
 				try {
-					oldHiddenDirStat = await fs.lstat(oldHiddenDir)
+					oldHiddenDirStat = fs.lstatSync(oldHiddenDir)
 				} catch (err) {
 					if (err.code !== 'ENOENT') {
 						throw err
@@ -186,7 +188,7 @@ export async function symlinkHiddenDirs(args: string[]) {
 				}
 
 				try {
-					newHiddenDirStat = await fs.lstat(newHiddenDir)
+					newHiddenDirStat = fs.lstatSync(newHiddenDir)
 				} catch (err) {
 					if (err.code !== 'ENOENT') {
 						throw err
@@ -227,18 +229,18 @@ export async function symlinkHiddenDirs(args: string[]) {
 				const input = await rl.question(`Move? ${newHiddenDirPretty} (y/n): `)
 				rl.close()
 				if (yn(input)) {
-					await fs.mkdir(path.dirname(newHiddenDir), {
+					fs.mkdirSync(path.dirname(newHiddenDir), {
 						recursive: true,
 						mode: 0o755,
 					})
-					await fs.rename(oldHiddenDir, newHiddenDir)
+					fs.renameSync(oldHiddenDir, newHiddenDir)
 					await restat()
 				}
 			}
 
-			await fs.rm(oldHiddenDir, { force: true })
+			fs.rmSync(oldHiddenDir, { force: true })
 			if (newHiddenDirStat) {
-				await fs.symlink(newHiddenDir, oldHiddenDir)
+				fs.symlinkSync(newHiddenDir, oldHiddenDir)
 			}
 		},
 	)
@@ -271,25 +273,58 @@ async function createVSCodeLaunchers(args: string[]) {
 	const extensions: { dirname: string; packageJson: PackageJson }[] = await (await fetch(
 		`https://raw.githubusercontent.com/fox-self/vscode-hyperupcall-packs/refs/heads/main/extension-list.json`,
 	)).json()
-	for (const { dirname, packageJson } of extensions) {
-		if (!dirname.startsWith('pack-ecosystem-')) continue
 
-		const desktopFile = path.join(
+	for (const { dirname, packageJson } of extensions) {
+		if (!packageJson.name) {
+			throw new Error('packageJson should have field "name"')
+		}
+		if (!packageJson.displayName || typeof packageJson.displayName !== 'string') {
+			throw new Error('packageJson should have field "displayName" and be a string')
+		}
+
+		if (
+			!dirname.startsWith('pack-ecosystem-') || dirname === 'pack-ecosystem-all' ||
+			dirname === 'pack-ecosystem-other'
+		) {
+			continue
+		}
+
+		const extensionNameShort = packageJson.name.slice('vscode-'.length)
+		const configDir = (Deno.env.get('XDG_CONFIG_HOME') ?? '').startsWith('/')
+			? Deno.env.get('XDG_CONFIG_HOME')
+			: path.join(os.homedir(), '.config')
+		const dataDir = (Deno.env.get('XDG_DATA_HOME') ?? '').startsWith('/')
+			? Deno.env.get('XDG_DATA_HOME')
+			: path.join(os.homedir(), '.config')
+		const vscodeDataDirs = path.join( // TODO
 			os.homedir(),
-			`.local/share/applications/${packageJson.name}.desktop`,
+			'.dotfiles/.data/vscode-datadirs',
+			extensionNameShort,
 		)
-		const ecosystemNamePretty = (packageJson.displayName as '' ?? '').split(':')[1].trimStart()
-		await fs.writeFile(
+		const vscodeExtDirs = path.join(
+			os.homedir(),
+			'.dotfiles/.data/vscode-extensions',
+			extensionNameShort,
+		)
+		const desktopFile = path.join(
+			dataDir,
+			`applications/${packageJson.name}.desktop`,
+		)
+		const ecosystemName = dirname.split('-').at(-1)
+		const ecosystemNamePretty = (packageJson.displayName ?? '').split(':')[1].trimStart()
+		const iconFile = path.join(dataDir, `icons/hicolor/512x512/${packageJson.name}.png`)
+
+		fs.writeFileSync(
 			desktopFile,
 			`[Desktop Entry]
 Name=VSCode: ${ecosystemNamePretty}
 Comment=Code Editing. Redefined.
 GenericName=Text Editor
-Exec=code-with-extension-path ${packageJson.publisher} ${packageJson.name} %F
-Icon=vscode
+Exec=code --user-data-dir ${path.join(vscodeDataDirs, packageJson.name)} --extensions-dir ${path.join(vscodeExtDirs, packageJson.name)} %F
+Icon=${iconFile}
 Type=Application
 StartupNotify=false
-StartupWMClass=Code
+StartupWMClass=code-${ecosystemName}
 Categories=TextEditor;Development;IDE;
 MimeType=application/x-code-workspace;
 Actions=new-empty-window;
@@ -297,9 +332,95 @@ Keywords=vscode;
 
 [Desktop Action new-empty-window]
 Name=New Empty Window: ${ecosystemNamePretty}
-Exec=code-with-extension-path ${packageJson.publisher} ${packageJson.name} --new-window %F
-Icon=vscode`,
+Exec=code --user-data-dir ${path.join(vscodeDataDirs, packageJson.name)} --extensions-dir ${path.join(vscodeExtDirs, packageJson.name)} --new-window %F
+Icon=${iconFile}`,
 		)
-		await fs.chmod(desktopFile, 0o755)
+		fs.copyFileSync(
+			path.join(
+				os.homedir(),
+				'.devresources/ecosystem-icons/output/vscode-desktop',
+				`${ecosystemName}.png`,
+			),
+			iconFile,
+		)
+		fs.chmodSync(desktopFile, 0o755)
+		console.info(`Created desktop entry for "${ecosystemNamePretty}"`)
+
+		for (const filename of ['keybindings.json', 'settings.json', 'snippets']) {
+			const source = path.join(configDir, 'Code/User', filename)
+			const target = path.join(vscodeDataDirs, 'User', filename)
+			let targetStat = null
+			try {
+				targetStat = fs.lstatSync(target)
+			} catch (err) {
+				if (!(err instanceof Deno.errors.NotFound)) {
+					throw err
+				}
+			}
+			if (!targetStat) {
+				fs.mkdirSync(path.dirname(target), { recursive: true })
+				fs.symlinkSync(source, target)
+			} else if (targetStat.isSymbolicLink()) {
+				fs.unlinkSync(target)
+				fs.symlinkSync(source, target)
+			} else {
+				console.info(
+					`${
+						styleText('yellow', 'WARN:')
+					} Skipping symlink "${filename}" for "${packageJson.name}" VSCode extension`,
+				)
+			}
+		}
+
+		if (!fs.existsSync(vscodeDataDirs) || !fs.existsSync(vscodeExtDirs)) {
+			console.info(
+				`${styleText('blue', 'NOTE:')} Installing "${packageJson.name}" VSCode extension`,
+			)
+			spawnSync(
+				'code',
+				[
+					'--user-data-dir',
+					vscodeDataDirs,
+					'--extensions-dir',
+					vscodeExtDirs,
+					'--install-extension',
+					`EdwinKofler.${packageJson.name}`,
+					'--install-extension',
+					`EdwinKofler.vscode-hyperupcall-pack-core`,
+				],
+				{ stdio: 'inherit' },
+			)
+		} else {
+			console.info(
+				`${
+					styleText('blue', 'NOTE:')
+				} Already installed "${packageJson.name}" VSCode extension`,
+			)
+		}
+
+		{
+			await writeRule('Description','Generated rules for ecosystem ' + ecosystemNamePretty)
+			await writeRule('desktopfile', desktopFile)
+			await writeRule('desktopfilerule', '2')
+			await writeRule('title', `(${ecosystemName})`)
+			await writeRule('titlematch', '2')
+			await writeRule('wmclass', 'code Code')
+			await execa`kwriteconfig6 --notify --file ${path.join(configDir, 'kwinrulesrc')} --group ${'vscode-hyperupcall-pack-' + ecosystemName} --key wmclasscomplete true --type boolean`
+			await writeRule('wmclassmatch', '1')
+
+			const [{ stdout: count }, { stdout: rules }] = await Promise.all([
+				execa`kreadconfig6 --file ${path.join(configDir, 'kwinrulesrc')} --group General --key count`,
+				execa`kreadconfig6 --file ${path.join(configDir, 'kwinrulesrc')} --group General --key rules`
+			])
+			if (!rules.includes('vscode-hyperupcall-pack-' + ecosystemName)) {
+				await writeRule('count', String(Number(count) + 1), 'General')
+				await writeRule('rules', `${rules},${'vscode-hyperupcall-pack-' + ecosystemName}`, 'General')
+			}
+
+			async function writeRule(key: string, value: string, group = 'vscode-hyperupcall-pack-' + ecosystemName) {
+				await execa`kwriteconfig6 --notify --file ${path.join(configDir, 'kwinrulesrc')} --group ${group} --key ${key} ${value}`
+			}
+		}
 	}
+	console.info(`Be sure to open "Window Rules" application and hit apply.`)
 }

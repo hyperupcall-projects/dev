@@ -3,8 +3,8 @@ import { renderPage } from './webframework/webframework.ts'
 import type { Express } from 'express'
 import { WebSocketServer } from 'ws'
 
-import { Api as servicesApi } from './pages/services.server.ts'
-import { Api as dictionaryWatcherApi } from './pages/tools/dictionary-watcher.server.ts'
+import { Api as servicesApi } from '#pages/services.server.ts'
+import { Api as dictionaryWatcherApi } from '#pages/tools/dictionary-watcher.server.ts'
 import path from 'node:path'
 import os from 'node:os'
 

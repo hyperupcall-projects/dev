@@ -11,6 +11,7 @@ export const issues: Issues = async function* issues({ project }) {
 			'lefthook.yml': null,
 			'.lefthook.yml': null,
 			'lefthook.yaml': null,
+			'.lefthook.yaml': `assert_lefthook_installed: true`,
 			'lefthook.toml': null,
 			'.lefthook.toml': null,
 			'lefthook.json': null,
