@@ -1,0 +1,9 @@
+{
+	"tasks": {
+		"dev": "deno run --watch main.ts"
+	},
+	"imports": {
+		"globby": "npm:globby@^14.1.0",
+		"type-fest": "npm:type-fest@^4.41.0"
+	}
+}

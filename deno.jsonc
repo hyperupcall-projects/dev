@@ -5,6 +5,8 @@
 		"test": "node ./test/test.ts",
 		"dev": "deno run --watch --allow-all ./bin/dev.ts"
 	},
+	"nodeModulesDir": "auto",
+	"workspace": ["./devutils"],
 	"exclude": [
 		"devserver/static",
 		"config/templates",

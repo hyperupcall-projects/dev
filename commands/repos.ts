@@ -13,6 +13,7 @@ import { fileExists, octokit } from '#common'
 import { collectGitHubRepositories, collectGitHubRepositories2 } from '#utilities/repositories.ts'
 import type { Octokit } from 'octokit'
 import { getEcosystems } from '../devutils/index.ts'
+import { CommandScriptOptions } from '#types'
 import process from 'node:process'
 
 type Config = {

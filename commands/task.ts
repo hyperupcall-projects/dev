@@ -298,12 +298,12 @@ async function createVSCodeLaunchers(positionals: string[]) {
 		const dataDir = (Deno.env.get('XDG_DATA_HOME') ?? '').startsWith('/')
 			? Deno.env.get('XDG_DATA_HOME')
 			: path.join(os.homedir(), '.config')
-		const vscodeDataDirs = path.join( // TODO
+		const vscodeDataDir = path.join( // TODO
 			os.homedir(),
 			'.dotfiles/.data/vscode-datadirs',
 			extensionNameShort,
 		)
-		const vscodeExtDirs = path.join(
+		const vscodeExtDir = path.join(
 			os.homedir(),
 			'.dotfiles/.data/vscode-extensions',
 			extensionNameShort,
@@ -322,9 +322,7 @@ async function createVSCodeLaunchers(positionals: string[]) {
 Name=VSCode: ${ecosystemNamePretty}
 Comment=Code Editing. Redefined.
 GenericName=Text Editor
-Exec=code --user-data-dir ${path.join(vscodeDataDirs, packageJson.name)} --extensions-dir ${
-				path.join(vscodeExtDirs, packageJson.name)
-			} %F
+Exec=code --user-data-dir ${vscodeDataDir} --extensions-dir ${vscodeExtDir} %F
 Icon=${iconFile}
 Type=Application
 StartupNotify=false
@@ -336,9 +334,7 @@ Keywords=vscode;
 
 [Desktop Action new-empty-window]
 Name=New Empty Window: ${ecosystemNamePretty}
-Exec=code --user-data-dir ${path.join(vscodeDataDirs, packageJson.name)} --extensions-dir ${
-				path.join(vscodeExtDirs, packageJson.name)
-			} --new-window %F
+Exec=code --user-data-dir ${vscodeDataDir} --extensions-dir ${vscodeExtDir} --new-window %F
 Icon=${iconFile}`,
 		)
 		fs.copyFileSync(
@@ -354,7 +350,7 @@ Icon=${iconFile}`,
 
 		for (const filename of ['keybindings.json', 'settings.json', 'snippets']) {
 			const source = path.join(configDir, 'Code/User', filename)
-			const target = path.join(vscodeDataDirs, 'User', filename)
+			const target = path.join(vscodeDataDir, 'User', filename)
 			let targetStat = null
 			try {
 				targetStat = fs.lstatSync(target)
@@ -378,7 +374,7 @@ Icon=${iconFile}`,
 			}
 		}
 
-		if (!fs.existsSync(vscodeDataDirs) || !fs.existsSync(vscodeExtDirs)) {
+		if (!fs.existsSync(vscodeDataDir) || !fs.existsSync(vscodeExtDir)) {
 			console.info(
 				`${styleText('blue', 'NOTE:')} Installing "${packageJson.name}" VSCode extension`,
 			)
@@ -386,9 +382,9 @@ Icon=${iconFile}`,
 				'code',
 				[
 					'--user-data-dir',
-					vscodeDataDirs,
+					vscodeDataDir,
 					'--extensions-dir',
-					vscodeExtDirs,
+					vscodeExtDir,
 					'--install-extension',
 					`EdwinKofler.${packageJson.name}`,
 					'--install-extension',

@@ -4340,6 +4340,14 @@
       "npm:ws@^8.18.3",
       "npm:xdg-basedir@^5.1.0",
       "npm:yn@^5.1.0"
-    ]
+    ],
+    "members": {
+      "devutils": {
+        "dependencies": [
+          "npm:globby@^14.1.0",
+          "npm:type-fest@^4.41.0"
+        ]
+      }
+    }
   }
 }

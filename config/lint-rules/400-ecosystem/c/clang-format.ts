@@ -3,6 +3,7 @@ import type { Issues } from '#types'
 import dedent from 'dedent'
 
 export const issues: Issues = async function* issues() {
+	// TODO: AlignEscapedNewlines: LeftWithLastLine,
 	const content = dedent`
 		{
 			BasedOnStyle: LLVM,

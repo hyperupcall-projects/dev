@@ -4,9 +4,9 @@ import type { PackageJson } from 'type-fest'
 
 export async function getEcosystems(rootDir: string): Promise<string[]> {
 	using _ = ((origDir: string) => ({
-		[Symbol.dispose]: () => Deno.chdir(origDir),
-	}))(Deno.cwd())
-	Deno.chdir(rootDir)
+		[Symbol.dispose]: () => process.chdir(origDir),
+	}))(process.cwd())
+	process.chdir(rootDir)
 
 	const ecosystems: string[] = []
 
@@ -21,7 +21,7 @@ export async function getEcosystems(rootDir: string): Promise<string[]> {
 		}
 	}
 
-	if ((await fileExists('deno.jsonc')) || (await fileExists('deno.json'))) {
+	if ((await fileExists('process.jsonc')) || (await fileExists('process.json'))) {
 		ecosystems.push('deno')
 	}
 
@@ -44,7 +44,7 @@ export async function getEcosystems(rootDir: string): Promise<string[]> {
 			console.error(
 				`CMAkeLists.txt should have language defined in project()`,
 			)
-			Deno.exit(1)
+			process.exit(1)
 		}
 	}
 
