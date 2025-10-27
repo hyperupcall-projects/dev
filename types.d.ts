@@ -20,6 +20,7 @@ export type CommandFixOptions = {
 	match?: string[]
 	exclude?: string[]
 	only?: string[]
+	strict?: boolean
 }
 
 export type CommandInstallOptions = Record<PropertyKey, never>
@@ -68,6 +69,7 @@ export type Issue = {
 	id?: string
 	message: string | string[]
 	fix?: (() => void) | (() => Promise<void>)
+	strict?: boolean
 }
 
 // Install.

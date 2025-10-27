@@ -147,8 +147,14 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 			case 'bash':
 				await collect(`400-ecosystem/bash/*`)
 				break
+			case 'python':
+				await collect(`400-ecosystem/python/*`)
+				break
 			case 'zed-extension':
 				await collect(`400-ecosystem/zed-extension/*`)
+				break
+			case 'java':
+				await collect(`400-ecosystem/java/*`)
 				break
 		}
 	}
@@ -240,6 +246,13 @@ async function fixFromFile(
 		let failed = false
 		const issues: AsyncGenerator<Issue> = module.issues({ project })
 		for await (const issue of issues) {
+			if (issue.strict && !options.strict) {
+				console.info(
+					`[${styleText('yellow', 'SKIP')}] ${fixId}/${issue.id}`,
+				)
+				continue
+			}
+
 			if (issue.id) {
 				if (`${fixId}/${issue.id}` in (config.rules ?? {})) {
 					const rule = (config.rules ?? {})[`${fixId}/${issue.id}`]

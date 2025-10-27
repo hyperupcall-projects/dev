@@ -29,6 +29,10 @@ export async function getEcosystems(rootDir: string): Promise<string[]> {
 		ecosystems.push('c')
 	}
 
+	if ((await globby('*.py')).length > 0) {
+		ecosystems.push('python')
+	}
+
 	// https://cmake.org/cmake/help/latest/command/project.html
 	if (await fileExists('CMakeLists.txt')) {
 		const content = await fs.readFile('CMakeLists.txt', 'utf-8')
@@ -57,6 +61,14 @@ export async function getEcosystems(rootDir: string): Promise<string[]> {
 		ecosystems.push('zed-extension')
 	}
 
+	if (
+		(await fileExists('gradlew')) || (await fileExists('build.gradle')) ||
+		(await fileExists('build.gradle.kts'))
+	) {
+		ecosystems.push('java')
+	}
+
+	// TODO: Could be empty
 	return ecosystems
 }
 

@@ -38,6 +38,7 @@ export async function run(options: CommandNewOptions, positionals: string[]) {
 				{ name: 'Rust', value: 'rust' },
 				{ name: 'Go', value: 'go' },
 				{ name: 'C++', value: 'cpp' },
+				{ name: 'Java', value: 'java' },
 			],
 		})
 		options.ecosystem = input

@@ -6,7 +6,7 @@ import { minimatch } from 'minimatch'
 import micromatch from 'micromatch'
 import yn from 'yn'
 
-import { forEachRepository } from '../utilities/util.ts'
+import { forEachRepository } from '#utilities/util.ts'
 import { octokit } from '#common'
 
 import type { CommandScriptOptions } from '#types'
@@ -231,18 +231,18 @@ export async function symlinkHiddenDirs(positionals: string[]) {
 				const input = await rl.question(`Move? ${newHiddenDirPretty} (y/n): `)
 				rl.close()
 				if (yn(input)) {
-					fs.mkdirSync(path.dirname(newHiddenDir), {
+					Deno.mkdirSync(path.dirname(newHiddenDir), {
 						recursive: true,
 						mode: 0o755,
 					})
-					fs.renameSync(oldHiddenDir, newHiddenDir)
+					Deno.renameSync(oldHiddenDir, newHiddenDir)
 					await restat()
 				}
 			}
 
 			fs.rmSync(oldHiddenDir, { force: true })
 			if (newHiddenDirStat) {
-				fs.symlinkSync(newHiddenDir, oldHiddenDir)
+				Deno.symlinkSync(newHiddenDir, oldHiddenDir)
 			}
 		},
 	)
@@ -316,7 +316,7 @@ async function createVSCodeLaunchers(positionals: string[]) {
 		const ecosystemNamePretty = (packageJson.displayName ?? '').split(':')[1].trimStart()
 		const iconFile = path.join(dataDir, `icons/hicolor/512x512/${packageJson.name}.png`)
 
-		fs.writeFileSync(
+		Deno.writeTextFile(
 			desktopFile,
 			`[Desktop Entry]
 Name=VSCode: ${ecosystemNamePretty}
@@ -337,7 +337,7 @@ Name=New Empty Window: ${ecosystemNamePretty}
 Exec=code --user-data-dir ${vscodeDataDir} --extensions-dir ${vscodeExtDir} --new-window %F
 Icon=${iconFile}`,
 		)
-		fs.copyFileSync(
+		Deno.copyFileSync(
 			path.join(
 				os.homedir(),
 				'.devresources/ecosystem-icons/output/vscode-desktop',
@@ -345,7 +345,7 @@ Icon=${iconFile}`,
 			),
 			iconFile,
 		)
-		fs.chmodSync(desktopFile, 0o755)
+		Deno.chmodSync(desktopFile, 0o755)
 		console.info(`Created desktop entry for "${ecosystemNamePretty}"`)
 
 		for (const filename of ['keybindings.json', 'settings.json', 'snippets']) {
@@ -353,18 +353,18 @@ Icon=${iconFile}`,
 			const target = path.join(vscodeDataDir, 'User', filename)
 			let targetStat = null
 			try {
-				targetStat = fs.lstatSync(target)
+				targetStat = Deno.lstatSync(target)
 			} catch (err) {
 				if (!(err instanceof Deno.errors.NotFound)) {
 					throw err
 				}
 			}
 			if (!targetStat) {
-				fs.mkdirSync(path.dirname(target), { recursive: true })
-				fs.symlinkSync(source, target)
-			} else if (targetStat.isSymbolicLink()) {
+				Deno.mkdirSync(path.dirname(target), { recursive: true })
+				Deno.symlinkSync(source, target)
+			} else if (targetStat.isSymlink) {
 				fs.unlinkSync(target)
-				fs.symlinkSync(source, target)
+				Deno.symlinkSync(source, target)
 			} else {
 				console.info(
 					`${
@@ -374,7 +374,10 @@ Icon=${iconFile}`,
 			}
 		}
 
-		if (!fs.existsSync(vscodeDataDir) || !fs.existsSync(vscodeExtDir)) {
+		if (
+			!fs.existsSync(vscodeDataDir) || !fs.existsSync(vscodeExtDir) ||
+			Array.from(Deno.readDirSync(vscodeExtDir)).length < 2
+		) {
 			console.info(
 				`${styleText('blue', 'NOTE:')} Installing "${packageJson.name}" VSCode extension`,
 			)
