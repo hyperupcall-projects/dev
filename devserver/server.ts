@@ -7,6 +7,7 @@ import { Api as servicesApi } from '#pages/services.server.ts'
 import { Api as dictionaryWatcherApi } from '#pages/tools/dictionary-watcher.server.ts'
 import path from 'node:path'
 import os from 'node:os'
+import { fileExists } from '#common'
 
 await import('#utilities/db.ts')
 
@@ -27,6 +28,29 @@ export function createApp(app: Express, wss: WebSocketServer) {
 			dotfiles: 'allow',
 		})
 	})
+	app.get('/ublacklist-severity*number', async (req, res) => {
+		res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+		res.setHeader('Pragma', 'no-cache')
+		res.setHeader('Expires', '0')
+		res.setHeader('Surrogate-Control', 'no-store')
+
+		const file = path.join(
+			os.homedir(),
+			`.dotfiles/config/ublacklist-severity${req.params.number}.txt`,
+		)
+		if (await fileExists(file)) {
+			res.sendFile(
+				file,
+				{
+					dotfiles: 'allow',
+				},
+			)
+		} else {
+			res.setHeader('Content-Type', 'text/plain')
+			res.send('# File not found.')
+		}
+	})
+
 	app.get('/lint', renderPage)
 
 	app.get('/services', renderPage)
