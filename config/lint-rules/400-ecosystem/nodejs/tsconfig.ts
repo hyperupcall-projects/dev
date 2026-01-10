@@ -59,8 +59,7 @@ export const issues: Issues = async function* issues({ project }) {
 				.replaceAll(/\n-(?!\-)/g, '\n' + styleText('red', '-'))
 
 			yield {
-				message: '  ' +
-					dedent`
+				message: dedent`
 					-> Expected file "${configFile}" to have the correct shape:
 					${'='.repeat(80)}
 					${patch.replaceAll('\n', '\n' + '\t'.repeat(5))}${'='.repeat(80)}

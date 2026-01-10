@@ -45,15 +45,28 @@ export async function* filesMustHaveContent(
 				const content = await fs.readFile(file, 'utf-8')
 				if (content !== expectedContent) {
 					yield {
-						message:
-							`  -> Expected file "${file}" to have content:\n---\n${expectedContent}\n---\n  -> But, the file has content:\n---\n${content}\n---\n`,
+						message: dedent`
+							-> Expected file "${file}" to have content:
+							${'='.repeat(80)}
+							${expectedContent}
+							${'='.repeat(80)}
+							-> But, the file has content:
+							${'='.repeat(80)}
+							${content}
+							${'='.repeat(80)}
+							`,
 						fix: () => fs.writeFile(file, expectedContent),
 					}
 				}
 			} else {
 				yield {
-					message:
-						`  -> Expected file "${file}" to exist and have content:\n---\n${expectedContent}\n---\n  -> But, the file does not exist`,
+					message: dedent`
+						-> Expected file "${file}" to exist and have content:
+						${'='.repeat(80)}
+						${expectedContent}
+						${'='.repeat(80)}
+						-> But, the file does not exist
+						`,
 					fix: () => fs.writeFile(file, expectedContent),
 				}
 			}
@@ -88,8 +101,7 @@ export async function* filesMustHaveShape(
 				.replaceAll(/\n-(?!\-)/g, '\n' + styleText('red', '-'))
 
 			yield {
-				message: '  ' +
-					dedent`
+				message: dedent`
 					-> Expected file "${file}" to have the correct shape:
 					${'='.repeat(80)}
 					${patch.replaceAll('\n', '\n' + '\t'.repeat(5))}${'='.repeat(80)}

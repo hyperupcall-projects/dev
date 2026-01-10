@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: Copyright 2023 Edwin Kofler
 import * as path from 'node:path'
 import * as fs from 'node:fs/promises'
-import * as readline from 'node:readline/promises'
+import * as inquirer from '@inquirer/prompts'
 import { styleText } from 'node:util'
 import os from 'node:os'
 import { fileExists, pkgRoot } from '#common'
@@ -273,7 +273,7 @@ async function fixFromFile(
 				}
 			}
 
-			console.info(`[EVAL] ${fixId}: Found issue`)
+			console.info(`[EVAL] ${fixId}`)
 			if (Array.isArray(issue.message)) {
 				for (const message of issue.message) {
 					console.info(` -> ${message}`)
@@ -294,15 +294,20 @@ async function fixFromFile(
 			if (options.yes) {
 				shouldRunFix = true
 			} else {
-				const rl = readline.createInterface({
-					input: process.stdin,
-					output: process.stdout,
-				})
-				const input = await rl.question(
-					`Would you like to fix this issue? (y/n): `,
-				)
-				rl.close()
-				shouldRunFix = yn(input)
+				try {
+					shouldRunFix = await inquirer.confirm({
+						message: 'Would you like to fix this issue?',
+						default: true,
+					}, { clearPromptOnDone: true })
+				} catch (err) {
+					if (err.name === 'ExitPromptError') {
+						printWithTips(`[${styleText('red', 'FAIL')}] ${fixId}`, [
+							'Failed because the user exited the prompt',
+						])
+						Deno.exit(1)
+					}
+					throw err
+				}
 			}
 
 			if (shouldRunFix) {
