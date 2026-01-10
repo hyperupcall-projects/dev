@@ -1,5 +1,7 @@
 import * as fs from 'node:fs/promises'
 import path from 'node:path'
+import spdxLicenseList from 'spdx-license-list/full.js'
+import * as inquirer from '@inquirer/prompts'
 
 import { pkgRoot } from '#common'
 import { globby } from 'globby'
@@ -11,9 +13,8 @@ import { globby } from 'globby'
  */
 
 import type { Issues } from '#types'
+import { styleText } from 'node:util'
 export const issues: Issues = async function* issues() {
-	const configPath = path.join(pkgRoot(), 'assets/LICENSE-MPL-2.0')
-
 	// Check that the number and names of licenses are correct
 	{
 		const files = await globby(['*license*'], { caseSensitiveMatch: false })
@@ -23,7 +24,55 @@ export const issues: Issues = async function* issues() {
 					'Expected to find a license file',
 					'But, found no license file was found',
 				],
-				fix: () => fs.copyFile(configPath, 'LICENSE'),
+				fix: async () => {
+					const selectedLicenseId = await inquirer.select(
+						{
+							message: 'Choose file:',
+							choices: [
+								{ name: 'ISC License', value: 'ISC' },
+								{
+									name: 'BSD 3-Clause "New" or "Revised" License',
+									value: 'BSD-3-Clause',
+								},
+								{
+									name: 'Mozilla Public License 2.0',
+									value: 'MPL-2.0',
+								},
+								{ name: 'Apache License 2.0', value: 'Apache-2.0' },
+								{
+									name: 'GNU General Public License v2.0',
+									value: 'GPL-2.0-only',
+								},
+								{
+									name: 'GNU General Public License v3.0',
+									value: 'GPL-3.0-only',
+								},
+								{
+									name: 'GNU Lesser General Public License v2.1',
+									value: 'LGPL-2.1-only',
+								},
+								{
+									name: 'GNU Lesser General Public License v3.0',
+									value: 'LGPL-3.0-only',
+								},
+								{
+									name: 'GNU Affero General Public License v3.0',
+									value: 'AGPL-3.0-only',
+								},
+							],
+						},
+						{ clearPromptOnDone: true },
+					)
+
+					const licenseData = spdxLicenseList[selectedLicenseId]
+					if (!licenseData) {
+						throw new Error(
+							`License "${selectedLicenseId}" is not an SPDX license`,
+						)
+					}
+
+					await fs.writeFile('LICENSE', licenseData.licenseText, 'utf-8')
+				},
 			}
 		} else if (files.length === 1) {
 			if (files[0] !== 'LICENSE') {

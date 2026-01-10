@@ -4,6 +4,7 @@ import * as path from 'node:path'
 import * as fs from 'node:fs/promises'
 import * as readline from 'node:readline/promises'
 import { styleText } from 'node:util'
+import os from 'node:os'
 import { fileExists, pkgRoot } from '#common'
 import yn from 'yn'
 import toml from 'smol-toml'
@@ -69,9 +70,13 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 
 	// FIX EDITOR SETTINGS
 	if (await fileExists('.vscode/settings.json')) {
-		const userSettingsJsonFile = path.join(xdgConfig, 'Code/User/settings.json')
-		const defaultTitle =
-			jsonc.parse(await fs.readFile(userSettingsJsonFile, 'utf-8'))['window.title']
+		const userSettingsJsonFile = path.join(
+			xdgConfig,
+			'Code/User/settings.json',
+		)
+		const defaultTitle = jsonc.parse(
+			await fs.readFile(userSettingsJsonFile, 'utf-8'),
+		)['window.title']
 
 		const settingsText = await fs.readFile('.vscode/settings.json', 'utf-8')
 		const settingsJson = jsonc.parse(settingsText)
@@ -186,13 +191,11 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 
 	// Print metadata.
 	{
+		const homedirPretty = project.rootDir.startsWith(os.homedir())
+			? `~/${project.rootDir.slice(os.homedir().length + 1)}`
+			: project.rootDir
 		let str = ''
-		str += `${styleText(['blue', 'bold'], 'Directory:')}  ${project.rootDir}\n`
-		str += `${styleText(['blue', 'bold'], 'Ecosystems:')} ${
-			new Intl.ListFormat().format(
-				ecosystems,
-			)
-		}\n`
+		str += `${styleText(['blue', 'bold'], 'Directory:')}  ${homedirPretty}\n`
 		if (project.type === 'with-remote-url') {
 			str += `${styleText(['blue', 'bold'], 'Project:')}    ${
 				ansiEscapes.link(
@@ -201,6 +204,11 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 				)
 			}\n`
 		}
+		str += `${styleText(['blue', 'bold'], 'Ecosystems:')} ${
+			new Intl.ListFormat().format(
+				ecosystems,
+			)
+		}\n`
 
 		Deno.stdout.write(new TextEncoder().encode(str))
 	}
@@ -298,7 +306,7 @@ async function fixFromFile(
 			}
 
 			if (shouldRunFix) {
-				await issue.fix()
+				await issue.fix(fixId)
 			} else {
 				console.info(`[${styleText('yellow', 'SKIP')}] ${fixId}`)
 				return
@@ -311,6 +319,13 @@ async function fixFromFile(
 			Deno.exit(1)
 		}
 	} catch (err) {
+		if (err.name === 'ExitPromptError') {
+			printWithTips(`[${styleText('red', 'FAIL')}] ${fixId}`, [
+				'Failed because the user exited the prompt',
+			])
+			Deno.exit()
+		}
+
 		printWithTips(`[${styleText('red', 'FAIL')}] ${fixId}`, [
 			'Failed because an error was caught',
 		])
