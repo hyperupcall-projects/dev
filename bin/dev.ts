@@ -3,8 +3,10 @@ import { Builtins, Cli, Command, Option } from 'clipanion'
 
 import { run as runNew } from '../commands/new.ts'
 import { run as runFix } from '../commands/lint.ts'
+import { run as runVersion } from '../commands/version.ts'
 
 import { run as runRepos } from '../commands/repos.ts'
+import { run as runChangelog } from '../commands/changelog.ts'
 import { run as runTask } from '../commands/task.ts'
 import { startServer } from '../devserver/webframework/webframework.ts'
 import process from 'node:process'
@@ -90,6 +92,20 @@ cli.register(
 	},
 )
 cli.register(
+	class ChangelogCommand extends Command {
+		static override paths = [[`changelog`]]
+		static override usage = Command.Usage({
+			description: `Manage changelog for repository`,
+		})
+
+		positionals = Option.Proxy()
+
+		async execute() {
+			await runChangelog({}, this.positionals)
+		}
+	},
+)
+cli.register(
 	class ScriptCommand extends Command {
 		static override paths = [[`task`]]
 		static override usage = Command.Usage({
@@ -115,6 +131,20 @@ cli.register(
 
 		async execute() {
 			startServer(this.positionals)
+		}
+	},
+)
+cli.register(
+	class VersionCommand extends Command {
+		static override paths = [[`version`]]
+		static override usage = Command.Usage({
+			description: `Manage project versioning`,
+		})
+
+		positionals = Option.Proxy()
+
+		async execute() {
+			await runVersion({}, this.positionals)
 		}
 	},
 )

@@ -1,5 +1,5 @@
 {
-	"window.title": "${folderName} ${separator}${activeRepositoryBranchName}${separator}${remoteName} (undefined)",
+	"window.title": "${folderName} ${separator}${activeRepositoryBranchName}${separator}${remoteName} (nodejs)",
 	"files.exclude": {
 		"**/.git": true,
 		"**/.data": true,
