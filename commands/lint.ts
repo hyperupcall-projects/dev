@@ -131,6 +131,7 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 	}
 
 	// Collect rule files that match the ecosystem.
+	await collect(`400-ecosystem/_/*`)
 	const ecosystems = await getEcosystems(Deno.cwd()) // TODO
 	for (const ecosystem of ecosystems) {
 		switch (ecosystem) {
@@ -163,13 +164,11 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 				break
 		}
 	}
-	await collect(`400-ecosystem/_/*`)
 
 	// Collect rule files that match the name.
 	{
 		if (project.type === 'with-remote-url') {
-			await collect(`500-name/${project.name}/_/*`)
-			await collect(`500-name/_/${project.name}/*`)
+			await collect(`500-name/${project.owner}/_/*`)
 			await collect(`500-name/${project.owner}/${project.name}/*`)
 		}
 	}
@@ -223,7 +222,6 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 	}
 
 	console.info('Done.')
-	Deno.exit(1) // TODO
 }
 
 async function fixFromFile(
@@ -311,7 +309,7 @@ async function fixFromFile(
 			}
 
 			if (shouldRunFix) {
-				await issue.fix(fixId)
+				await issue.fix()
 			} else {
 				console.info(`[${styleText('yellow', 'SKIP')}] ${fixId}`)
 				return
