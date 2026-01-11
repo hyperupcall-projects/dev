@@ -23,6 +23,41 @@ export const octokit = new Octokit({ auth: process.env.GITHUB_AUTH_TOKEN })
 
 export const skipHyperupcallFunding = ['ecc-computing-club']
 
+export async function* fileMustHaveName(
+	mapping: Record<string, string[]>,
+): AsyncGenerator<Issue> {
+	for (let goodFile in mapping) {
+		const badFiles = mapping[goodFile]
+		if (goodFile.slice(0, 2) === './') {
+			goodFile = goodFile.slice(2)
+		}
+
+		for (let badFile of badFiles) {
+			if (badFile.slice(0, 2) === './') {
+				badFile = badFile.slice(2)
+			}
+
+			if (await fileExists(badFile)) {
+				const correctFileExists = await fileExists(goodFile)
+				if (correctFileExists) {
+					yield {
+						message: dedent`
+							-> Expected file "${badFile}" to not exist because "${goodFile}" already exists
+							-> But, found both files exist`,
+					}
+				} else {
+					yield {
+						message: dedent`
+							-> Expected file to be named "${goodFile}"
+							-> But, found file named "${badFile}"`,
+						fix: () => fs.rename(badFile, goodFile),
+					}
+				}
+			}
+		}
+	}
+}
+
 export async function* filesMustHaveContent(
 	mapping: Record<string, null | string>,
 ): AsyncGenerator<Issue> {
