@@ -23,7 +23,7 @@ export const octokit = new Octokit({ auth: process.env.GITHUB_AUTH_TOKEN })
 
 export const skipHyperupcallFunding = ['ecc-computing-club']
 
-export async function* fileMustHaveName(
+export async function* filesMustHaveName(
 	mapping: Record<string, string[]>,
 ): AsyncGenerator<Issue> {
 	for (let goodFile in mapping) {

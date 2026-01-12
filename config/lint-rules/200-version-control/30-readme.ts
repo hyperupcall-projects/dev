@@ -68,7 +68,8 @@ export const issues: Issues = async function* issues({ project }) {
 	}
 
 	const content = await fs.readFile('README.md', 'utf-8')
-	if (!content.match('^#')) {
+	const firstLine = content.slice(0, content.indexOf('\n'))
+	if (!firstLine.match('^# ')) {
 		yield {
 			message: [
 				'Expected readme file to have a title matching the project name',
@@ -77,11 +78,13 @@ export const issues: Issues = async function* issues({ project }) {
 		}
 	}
 	if (
-		!content.toLowerCase().replaceAll(' ', '-').match(`^#-${project.name}`)
+		!firstLine.toLowerCase().replaceAll(' ', '-').slice(2).match(
+			`^(@[a-zA-Z0-9-_]+/)?${project.name}`,
+		)
 	) {
 		yield {
 			message: [
-				'Expected readme file to have a title matching the project name',
+				'Expected readme file to have a title that includes the project name',
 				'But, no title was found with this name',
 			],
 		}

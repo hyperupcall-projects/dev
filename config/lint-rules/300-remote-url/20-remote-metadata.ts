@@ -109,18 +109,19 @@ export const issues: Issues = async function* issues({ project }) {
 			// 		}),
 			// }
 		} else if (data.homepage !== expectedURL) {
-			yield {
-				message: [
-					`Expected GitHub repository to have a homepage URL of "${expectedURL}"`,
-					`But, homepage URL of "${data.homepage}" was found`,
-				],
-				fix: () =>
-					octokit.rest.repos.update({
-						owner: project.owner,
-						repo: project.name,
-						homepage: expectedURL,
-					}),
-			}
+			// TODO: Permissions bug
+			// yield {
+			// 	message: [
+			// 		`Expected GitHub repository to have a homepage URL of "${expectedURL}"`,
+			// 		`But, homepage URL of "${data.homepage}" was found`,
+			// 	],
+			// 	fix: () =>
+			// 		octokit.rest.repos.update({
+			// 			owner: project.owner,
+			// 			repo: project.name,
+			// 			homepage: expectedURL,
+			// 		}),
+			// }
 		}
 	}
 

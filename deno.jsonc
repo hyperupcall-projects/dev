@@ -3,7 +3,7 @@
 		"format": "hyperupcall-scripts-nodejs format",
 		"lint": "hyperupcall-scripts-nodejs lint",
 		"test": "node ./test/test.ts",
-		"dev": "deno run --watch --allow-all ./bin/dev.ts"
+		"dev": "deno run --watch --allow-all ./bin/dev.ts",
 	},
 	"nodeModulesDir": "auto",
 	"workspace": ["./devutils"],
@@ -11,29 +11,29 @@
 		"devserver/static",
 		"config/templates",
 		"./devserver/webframework",
-		"./config/.postcssrc.mjs"
+		"./config/.postcssrc.mjs",
 	],
 	"lint": {
 		"exclude": [
 			"devserver/static",
 			"config/templates",
-			"./devserver/webframework"
+			"./devserver/webframework",
 		],
 		"rules": {
 			"exclude": [
 				"require-await",
 				"no-unreachable",
 				"no-inner-declarations",
-				"no-unused-vars"
-			]
-		}
+				"no-unused-vars",
+			],
+		},
 	},
 	"fmt": {
 		"useTabs": true,
 		"lineWidth": 100,
 		"indentWidth": 3,
 		"semiColons": false,
-		"singleQuote": true
+		"singleQuote": true,
 	},
 	"imports": {
 		"#common": "./config/common.ts",
@@ -89,6 +89,7 @@
 		"vfile-reporter": "npm:vfile-reporter@^8.1.1",
 		"ws": "npm:ws@^8.18.3",
 		"xdg-basedir": "npm:xdg-basedir@^5.1.0",
+		"yaml": "npm:yaml@^2.6.0",
 		"yn": "npm:yn@^5.1.0",
 		"@hyperupcall/scripts-nodejs": "npm:@hyperupcall/scripts-nodejs@0.3.1",
 		"@octokit/types": "npm:@octokit/types@^13.10.0",
@@ -99,7 +100,7 @@
 		"@types/semver": "npm:@types/semver@^7.7.0",
 		"@types/ws": "npm:@types/ws@^8.18.1",
 		"kysely-codegen": "npm:kysely-codegen@^0.18.5",
-		"type-fest": "npm:type-fest@^4.41.0"
+		"type-fest": "npm:type-fest@^4.41.0",
 	},
 	"compilerOptions": {
 		"strict": true,
@@ -108,6 +109,6 @@
 		"lib": ["es2022", "DOM", "deno.ns"],
 		"noUnusedLocals": false,
 		"noUnusedParameters": false,
-		"useUnknownInCatchVariables": false
-	}
+		"useUnknownInCatchVariables": false,
+	},
 }

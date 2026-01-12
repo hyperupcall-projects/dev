@@ -58,6 +58,7 @@
     "npm:vfile-reporter@^8.1.1": "8.1.1",
     "npm:ws@^8.18.3": "8.18.3",
     "npm:xdg-basedir@^5.1.0": "5.1.0",
+    "npm:yaml@^2.6.0": "2.8.1",
     "npm:yn@^5.1.0": "5.1.0"
   },
   "jsr": {
@@ -4345,6 +4346,7 @@
       "npm:vfile-reporter@^8.1.1",
       "npm:ws@^8.18.3",
       "npm:xdg-basedir@^5.1.0",
+      "npm:yaml@^2.6.0",
       "npm:yn@^5.1.0"
     ],
     "members": {

@@ -1,13 +1,13 @@
 import type { Issues } from '#types'
-import { fileExists, fileMustHaveName, filesMustHaveContent } from '#common'
-import * as yaml from 'std/yaml'
+import { fileExists, filesMustHaveContent, filesMustHaveName } from '#common'
+import * as yaml from 'yaml'
 import { execa } from 'execa'
 
 export const issues: Issues = async function* issues() {
 	// Check that there is only one configuration file.
 	{
 		// https://lefthook.dev/configuration/index.html#config-file-name
-		yield* fileMustHaveName({
+		yield* filesMustHaveName({
 			'.lefthook.yaml': [
 				'.lefthook.yml',
 				'lefthook.yaml',

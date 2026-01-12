@@ -174,17 +174,22 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 	}
 
 	// Remove rule files that are superceded by another rule file.
-	for (let i = ruleFiles.length - 1; i >= 0; --i) {
-		const fixFile = ruleFiles[i]
-		const idx = ruleFiles.findIndex((item) => {
-			return (
-				path.parse(item).name.slice(item.indexOf('-') + 1) ===
-					path.parse(fixFile).name.slice(fixFile.indexOf('-') + 1)
-			)
-		})
+	for (let i = ruleFiles.length - 1; i >= 0; i -= 1) {
+		const highPriorityFilename = ruleFiles[i].match(/.*\/[0-9]*(.*?)\./)?.[1]
+		if (!highPriorityFilename) {
+			throw new TypeError(`Expected variable "highPriorityFilename" to not be falsy`)
+		}
 
-		if (i !== idx) {
-			ruleFiles.splice(idx, 1)
+		for (let j = 0; j < i; j += 1) {
+			const lowPriorityFilename = ruleFiles[j].match(/.*\/[0-9]*(.*?)\./)?.[1]
+			if (!lowPriorityFilename) {
+				throw new TypeError(`Expected variable "lowPriorityFilename" to not be falsy`)
+			}
+
+			if (highPriorityFilename == lowPriorityFilename) {
+				ruleFiles.splice(j, 1)
+				break
+			}
 		}
 	}
 
