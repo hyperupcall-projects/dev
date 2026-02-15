@@ -1,7 +1,7 @@
 import * as fs from 'node:fs/promises'
 import path from 'node:path'
 import spdxLicenseList from 'spdx-license-list/full.js'
-import * as inquirer from '@inquirer/prompts'
+import { select } from '#utilities/prompt.ts'
 
 import { pkgRoot } from '#common'
 import { globby } from 'globby'
@@ -25,10 +25,10 @@ export const issues: Issues = async function* issues() {
 					'But, found no license file was found',
 				],
 				fix: async () => {
-					const selectedLicenseId = await inquirer.select(
+					const selectedLicenseId = await select(
 						{
 							message: 'Choose file:',
-							choices: [
+							options: [
 								{ name: 'ISC License', value: 'ISC' },
 								{
 									name: 'BSD 3-Clause "New" or "Revised" License',
@@ -61,7 +61,6 @@ export const issues: Issues = async function* issues() {
 								},
 							],
 						},
-						{ clearPromptOnDone: true },
 					)
 
 					const licenseData = spdxLicenseList[selectedLicenseId]

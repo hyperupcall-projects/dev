@@ -3,11 +3,10 @@ import { existsSync } from 'node:fs'
 import * as path from 'node:path'
 import { styleText } from 'node:util'
 import * as os from 'node:os'
-import * as readline from 'node:readline/promises'
 import { execa } from 'execa'
 import untildify from 'untildify'
 import yn from 'yn'
-import * as inquirer from '@inquirer/prompts'
+import { search, confirm, select } from '#utilities/prompt.ts'
 
 import { fileExists, octokit } from '#common'
 import { collectGitHubRepositories, collectGitHubRepositories2 } from '#utilities/repositories.ts'
@@ -117,22 +116,17 @@ export async function run(options: CommandScriptOptions, positionals: string[]) 
 			}
 		}
 
-		const repository = await inquirer.search({
+		const repository = await search({
 			message: 'Select repository',
-			source: async (input) => {
-				return allRepoNames
-					.filter((fullName) => fullName.includes(input ?? ''))
-					.map((fullName) => ({
-						name: fullName,
-						value: fullName,
-						description: '',
-					}))
-			},
+			options: allRepoNames.map((fullName) => ({
+				name: fullName,
+				value: fullName,
+			})),
 		})
 		const dir = getRepositoryDestDirectory(repository)
 		if (!existsSync(dir)) {
 			if (
-				await inquirer.confirm({
+				await confirm({
 					message: 'Would you like to clone this repository?',
 				})
 			) {
@@ -142,9 +136,9 @@ export async function run(options: CommandScriptOptions, positionals: string[]) 
 				})`git clone git@github.com:${repository} ${dir}`
 			}
 		}
-		const action = await inquirer.select({
+		const action = await select({
 			message: 'Choose action',
-			choices: [
+			options: [
 				{
 					name: 'Open in VSCode (Default)',
 					value: 'vscode-default',
@@ -356,12 +350,7 @@ export async function syncRepositories({
 
 				if (!existsSync(repoDir)) {
 					console.info(`❌ Not cloned: ${orgName}/${repo.name}`)
-					const rl = readline.createInterface({
-						input: process.stdin,
-						output: process.stdout,
-					})
-					const input = await rl.question('Clone? (y/n): ')
-					rl.close()
+					const input = await prompt('Clone? (y/n): ')
 					if (yn(input)) {
 						await execa('git', ['clone', `gh:${orgName}/${repo.name}`, repoDir], {
 							stdin: 'inherit',
@@ -395,12 +384,7 @@ export async function syncRepositories({
 				}
 				if (!(await uptoDate(repoDir))) {
 					console.info(`❌ Not up to date: ${orgName}/${repo.name}`)
-					const rl = readline.createInterface({
-						input: process.stdin,
-						output: process.stdout,
-					})
-					const input = await rl.question('Pull? (y/n): ')
-					rl.close()
+					const input = await prompt('Pull? (y/n): ')
 					if (yn(input)) {
 						await execa('git', ['-C', repoDir, 'pull'], {
 							stdin: 'inherit',

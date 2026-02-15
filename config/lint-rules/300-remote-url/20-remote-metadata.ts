@@ -1,7 +1,7 @@
 import * as util from 'node:util'
 import child_process from 'node:child_process'
 
-import * as inquirer from '@inquirer/prompts'
+import { input } from '#utilities/prompt.ts'
 
 import { octokit } from '#common'
 import type { Issues } from '#types'
@@ -58,11 +58,10 @@ export const issues: Issues = async function* issues({ project }) {
 	}
 
 	async function fixSetDescription() {
-		const input = await inquirer.input({
+		const inputValue = await input({
 			message: 'Choose a description',
 			default: data.description ?? '',
-			required: true,
-			validate(str: string) {
+			validate: (str: string) => {
 				if (str.length > maxDescriptionLength) {
 					return `Must have at most ${maxDescriptionLength} UTF-16 code units`
 				}
@@ -77,7 +76,7 @@ export const issues: Issues = async function* issues({ project }) {
 		await octokit.rest.repos.update({
 			owner: project.owner,
 			repo: project.name,
-			description: input,
+			description: inputValue,
 		})
 		;({ data } = await octokit.rest.repos.get({
 			owner: project.owner,

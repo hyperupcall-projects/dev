@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: Copyright 2023 Edwin Kofler
 import * as path from 'node:path'
 import * as fs from 'node:fs/promises'
-import * as inquirer from '@inquirer/prompts'
+import { confirm } from '#utilities/prompt.ts'
 import { styleText } from 'node:util'
 import os from 'node:os'
 import { fileExists, pkgRoot } from '#common'
@@ -298,10 +298,10 @@ async function fixFromFile(
 				shouldRunFix = true
 			} else {
 				try {
-					shouldRunFix = await inquirer.confirm({
+					shouldRunFix = await confirm({
 						message: 'Would you like to fix this issue?',
 						default: true,
-					}, { clearPromptOnDone: true })
+					})
 				} catch (err) {
 					if (err.name === 'ExitPromptError') {
 						printWithTips(`[${styleText('red', 'FAIL')}] ${fixId}`, [

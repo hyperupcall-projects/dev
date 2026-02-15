@@ -1,5 +1,5 @@
 import * as fs from 'node:fs/promises'
-import * as inquirer from '@inquirer/prompts'
+import { input, select } from '#utilities/prompt.ts'
 import { execa } from 'execa'
 import semver from 'semver'
 
@@ -40,11 +40,11 @@ async function getLatestTag() {
 	if (tags.length === 0) {
 		console.log('No version tags found')
 
-		const initialVersion = await inquirer.input({
+		const initialVersion = await input({
 			message: 'Enter the initial version (without "v" prefix):',
 			default: '0.1.0',
-			validate: (input) => {
-				if (!semver.valid(input)) {
+			validate: (value: string) => {
+				if (!semver.valid(value)) {
 					return 'Please enter a valid semantic version (e.g., 0.1.0)'
 				}
 				return true
@@ -107,9 +107,9 @@ async function askForNewVersion(currentVersion: string) {
 	const minorVersion = semver.inc(currentVersion, 'minor')!
 	const majorVersion = semver.inc(currentVersion, 'major')!
 
-	const newVersion = await inquirer.select({
+	const newVersion = await select({
 		message: 'What version would you like to update to?',
-		choices: [
+		options: [
 			{ name: `Patch: v${patchVersion} (bug fixes)`, value: patchVersion },
 			{ name: `Minor: v${minorVersion} (new features)`, value: minorVersion },
 			{ name: `Major: v${majorVersion} (breaking changes)`, value: majorVersion },
@@ -119,13 +119,13 @@ async function askForNewVersion(currentVersion: string) {
 
 	let finalVersion: string
 	if (newVersion === 'custom') {
-		finalVersion = await inquirer.input({
+		finalVersion = await input({
 			message: 'Enter custom version (without "v" prefix):',
-			validate: (input) => {
-				if (!semver.valid(input)) {
+			validate: (value: string) => {
+				if (!semver.valid(value)) {
 					return 'Please enter a valid semantic version (e.g., 1.2.3)'
 				}
-				if (semver.lte(input, currentVersion)) {
+				if (semver.lte(value, currentVersion)) {
 					return `Version must be greater than current version ${currentVersion}`
 				}
 				return true

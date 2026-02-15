@@ -42,7 +42,6 @@
 		"#components/": "./devserver/components/",
 		"#pages/": "./devserver/pages/",
 		"#utilities/": "./utilities/",
-		"@inquirer/prompts": "npm:@inquirer/prompts@^7.8.4",
 		"@types/terminal-kit": "npm:@types/terminal-kit@^2.5.7",
 		"micromatch": "npm:micromatch@^4.0.8",
 		"spdx-license-list": "npm:spdx-license-list@^6.11.0",

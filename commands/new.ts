@@ -4,7 +4,7 @@ import * as path from 'node:path'
 import { execa } from 'execa'
 import Handlebars from 'handlebars'
 import { fileExists } from '#common'
-import * as inquirer from '@inquirer/prompts'
+import { input, confirm, select } from '#utilities/prompt.ts'
 
 import type { CommandNewOptions } from '#types'
 import { existsSync } from 'node:fs'
@@ -13,14 +13,14 @@ const _dirname = import.meta.dirname
 
 export async function run(options: CommandNewOptions, positionals: string[]) {
 	if (!positionals[0]) {
-		const input = await inquirer.input({
+		const inputValue = await input({
 			message: 'Choose a directory',
 		})
-		positionals = [input]
+		positionals = [inputValue]
 	}
 
 	if (!existsSync(positionals[0])) {
-		const input = await inquirer.confirm({
+		const input = await confirm({
 			message: 'Would you like to create the directory?',
 		})
 
@@ -30,9 +30,9 @@ export async function run(options: CommandNewOptions, positionals: string[]) {
 	}
 
 	if (!options.ecosystem) {
-		const input = await inquirer.select({
+		const input = await select({
 			message: 'Choose an ecosystem',
-			choices: [
+			options: [
 				{ name: 'Deno', value: 'deno' },
 				{ name: 'NodeJS', value: 'nodejs' },
 				{ name: 'Rust', value: 'rust' },
@@ -51,9 +51,9 @@ export async function run(options: CommandNewOptions, positionals: string[]) {
 			throw new Error(`Ecosystem "${options.ecosystem}" not supported`)
 		}
 
-		const value = await inquirer.select({
+		const value = await select({
 			message: `Choose a template`,
-			choices: Object.entries(parameters).map(([id, { name }]) => ({
+			options: Object.entries(parameters).map(([id, { name }]) => ({
 				name,
 				value: id,
 			})),
@@ -63,7 +63,7 @@ export async function run(options: CommandNewOptions, positionals: string[]) {
 	}
 
 	if (!options.projectName) {
-		const value = await inquirer.input({
+		const value = await input({
 			message: 'What is the project name?',
 		})
 

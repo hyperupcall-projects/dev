@@ -1,6 +1,5 @@
 import * as path from 'node:path'
 import * as os from 'node:os'
-import * as readline from 'node:readline/promises'
 
 import { minimatch } from 'minimatch'
 import micromatch from 'micromatch'
@@ -224,12 +223,7 @@ export async function symlinkHiddenDirs(positionals: string[]) {
 				!oldHiddenDirStat.isSymbolicLink() &&
 				oldHiddenDirStat.isDirectory()
 			) {
-				const rl = readline.createInterface({
-					input: process.stdin,
-					output: process.stdout,
-				})
-				const input = await rl.question(`Move? ${newHiddenDirPretty} (y/n): `)
-				rl.close()
+				const input = await prompt(`Move? ${newHiddenDirPretty} (y/n): `)
 				if (yn(input)) {
 					Deno.mkdirSync(path.dirname(newHiddenDir), {
 						recursive: true,
