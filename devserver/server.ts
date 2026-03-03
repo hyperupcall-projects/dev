@@ -60,4 +60,11 @@ export function createApp(app: Express, wss: WebSocketServer) {
 
 	app.get('/tools/dictionary-watcher', renderPage)
 	dictionaryWatcherApi(app, wss)
+
+	// Serve static files from CATALOGS_DIR
+	const catalogsDir = process.env.CATALOGS_DIR || '~/Documents/Catalogs/build'
+	const resolvedCatalogsDir = catalogsDir.startsWith('~')
+		? path.join(os.homedir(), catalogsDir.slice(1))
+		: catalogsDir
+	app.use('/catalogs', express.static(resolvedCatalogsDir))
 }

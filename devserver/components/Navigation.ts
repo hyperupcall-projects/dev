@@ -34,6 +34,7 @@ export function Navigation() {
 			>
 				<div class="navbar-start has-dropdown">
 					<a class="navbar-item" href="/">Home</a>
+					<a class="navbar-item" href="/catalogs">Catalogs</a>
 					<div class="navbar-item has-dropdown is-hoverable">
 						<a href="/tools" class="navbar-item">Tools</a>
 
