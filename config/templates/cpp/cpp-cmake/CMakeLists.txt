@@ -1,0 +1,72 @@
+cmake_minimum_required(VERSION 3.16)
+project(__PROJECT_NAME__ LANGUAGES CXX)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_COLOR_DIAGNOSTICS ON)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_C++_COMPILER gcc)
+
+find_package(imgui REQUIRED)
+find_package(glfw3 REQUIRED)
+find_package(opengl_system REQUIRED)
+find_package(efsw REQUIRED)
+find_package(toml11 REQUIRED)
+
+# Hacky, but it works.
+if (imgui_PACKAGE_FOLDER_DEBUG)
+	set(IMGUI_BACKENDS_DIR ${imgui_PACKAGE_FOLDER_DEBUG}/res/bindings)
+else()
+	set(IMGUI_BACKENDS_DIR ${imgui_PACKAGE_FOLDER_RELEASE}/res/bindings)
+endif()
+
+set(APP_SOURCES
+	__APP_SOURCES__
+)
+
+add_executable(${PROJECT_NAME} ${APP_SOURCES})
+
+target_include_directories(${PROJECT_NAME} PRIVATE
+	${CMAKE_CURRENT_SOURCE_DIR}/src
+	${IMGUI_BACKENDS_DIR}
+)
+
+target_link_libraries(${PROJECT_NAME} PRIVATE
+	imgui::imgui
+	glfw
+	opengl::opengl
+	efsw::efsw
+	toml11::toml11
+	pthread
+	m
+	rt
+)
+
+# Installation rules
+include(GNUInstallDirs)
+
+# Install the executable
+install(TARGETS ${PROJECT_NAME}
+	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+# Install XDG desktop entry
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/config/__PROJECT_NAME_LOWER__.desktop
+	DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications
+)
+
+# Install application icon (rename assets/icon.png to __PROJECT_NAME_LOWER__.png on install)
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/assets/icon.png")
+	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/assets/icon.png
+		RENAME __PROJECT_NAME_LOWER__.png
+		DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/256x256/apps
+	)
+endif()
+
+if (PROJECT_IS_TOP_LEVEL AND UNIX)
+	execute_process(
+		COMMAND ${CMAKE_COMMAND} -E create_symlink
+		${CMAKE_BINARY_DIR}/compile_commands.json
+		${CMAKE_CURRENT_SOURCE_DIR}/compile_commands.json
+	)
+endif()

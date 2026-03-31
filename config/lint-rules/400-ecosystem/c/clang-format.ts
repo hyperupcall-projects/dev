@@ -3,17 +3,22 @@ import type { Issues } from '#types'
 import dedent from 'dedent'
 
 export const issues: Issues = async function* issues() {
-	// TODO: AlignEscapedNewlines: LeftWithLastLine,
 	const content = dedent`
+		# Requires clang-format 19.
 		{
-			BasedOnStyle: LLVM,
-			UseTab: ForIndentation,
-			IndentWidth: 3,
-			TabWidth: 3,
-			AlignEscapedNewlines: Left,
-			AllowShortFunctionsOnASingleLine: Empty,
-			AlwaysBreakTemplateDeclarations: Yes,
-			ColumnLimit: 120,
+		  BasedOnStyle: LLVM,
+		  UseTab: Never,
+		  IndentWidth: 3,
+		  TabWidth: 3,
+		  ContinuationIndentWidth: 3,
+		  AlignAfterOpenBracket: BlockIndent,
+		  AlignEscapedNewlines: LeftWithLastLine,
+		  AllowShortFunctionsOnASingleLine: None,
+		  BreakTemplateDeclarations: true,
+		  AllowShortIfStatementsOnASingleLine: WithoutElse,
+		  AllowShortLoopsOnASingleLine: false,
+		  AllowShortBlocksOnASingleLine: Never,
+		  ColumnLimit: 120,
 		}\n`
 	yield* filesMustHaveContent({ '.clang-format': content })
 }

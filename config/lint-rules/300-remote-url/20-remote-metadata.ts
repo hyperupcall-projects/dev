@@ -158,7 +158,7 @@ export const issues: Issues = async function* issues({ project }) {
 					id: 'disable-projects-tab',
 					message: [
 						'Expected GitHub repository to have the "projects" tab disabled',
-						'But, the "projects" tab is enabled (and has no projects)',
+						'But, the "projects" tab is enabled and there are no projects',
 					],
 					fix: () =>
 						octokit.rest.repos.update({

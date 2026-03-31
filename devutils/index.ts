@@ -1,5 +1,6 @@
 import { globby } from 'globby'
 import fs from 'node:fs/promises'
+import path from 'node:path'
 import type { PackageJson } from 'type-fest'
 
 export async function getEcosystems(rootDir: string): Promise<string[]> {
@@ -54,6 +55,10 @@ export async function getEcosystems(rootDir: string): Promise<string[]> {
 
 	if (await fileExists('basalt.toml')) {
 		ecosystems.push('bash')
+	}
+
+	if (await fileExists('manifest.ini') && await fileExists('tools')) {
+		ecosystems.push('woof-plugin')
 	}
 
 	// https://zed.dev/docs/extensions/developing-extensions

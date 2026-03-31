@@ -102,7 +102,10 @@ export async function* filesMustHaveContent(
 						${'='.repeat(80)}
 						-> But, the file does not exist
 						`,
-					fix: () => fs.writeFile(file, expectedContent),
+					fix: async () => {
+						await fs.mkdir(path.dirname(file), { recursive: true })
+						await fs.writeFile(file, expectedContent)
+					},
 				}
 			}
 		}

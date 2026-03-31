@@ -9,8 +9,6 @@ import path from 'node:path'
 import os from 'node:os'
 import { fileExists } from '#common'
 
-await import('#utilities/db.ts')
-
 export function createApp(app: Express, wss: WebSocketServer) {
 	app.use(express.json())
 	app.use((req, _res, next) => {
@@ -19,7 +17,10 @@ export function createApp(app: Express, wss: WebSocketServer) {
 	})
 	app.get('/', renderPage)
 	app.get('/ublacklist', (req, res) => {
-		res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+		res.setHeader(
+			'Cache-Control',
+			'no-store, no-cache, must-revalidate, proxy-revalidate',
+		)
 		res.setHeader('Pragma', 'no-cache')
 		res.setHeader('Expires', '0')
 		res.setHeader('Surrogate-Control', 'no-store')
@@ -29,7 +30,10 @@ export function createApp(app: Express, wss: WebSocketServer) {
 		})
 	})
 	app.get('/ublacklist-severity*number', async (req, res) => {
-		res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+		res.setHeader(
+			'Cache-Control',
+			'no-store, no-cache, must-revalidate, proxy-revalidate',
+		)
 		res.setHeader('Pragma', 'no-cache')
 		res.setHeader('Expires', '0')
 		res.setHeader('Surrogate-Control', 'no-store')
@@ -39,12 +43,9 @@ export function createApp(app: Express, wss: WebSocketServer) {
 			`.dotfiles/config/ublacklist-severity${req.params.number}.txt`,
 		)
 		if (await fileExists(file)) {
-			res.sendFile(
-				file,
-				{
-					dotfiles: 'allow',
-				},
-			)
+			res.sendFile(file, {
+				dotfiles: 'allow',
+			})
 		} else {
 			res.setHeader('Content-Type', 'text/plain')
 			res.send('# File not found.')

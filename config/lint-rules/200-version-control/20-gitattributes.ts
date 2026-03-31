@@ -2,8 +2,6 @@ import { fileExists } from '#common'
 import type { Issues } from '#types'
 import fs from 'node:fs/promises'
 
-export const skip = true
-
 export const issues: Issues = async function* issues() {
 	const configFile = '.gitattributes'
 

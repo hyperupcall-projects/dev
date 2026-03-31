@@ -72,6 +72,8 @@ export type Issue = {
 	message: string | string[]
 	fix?: (() => void) | (() => Promise<void>)
 	strict?: boolean
+} | {
+	skip?: string
 }
 
 // Install.

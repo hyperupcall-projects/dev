@@ -142,7 +142,7 @@ export async function createProject(ctx: Context) {
 					await fs.writeFile(outputFile, outputContent)
 				} catch (err) {
 					console.error(`Failed to template file "${inputFile}"`)
-					throw err
+					// throw err
 				}
 			}
 		}
@@ -219,6 +219,9 @@ function getTemplateData(): Record<
 		},
 		cpp: {
 			templates: {
+				'cmake': {
+					name: 'cpp-cmake',
+				},
 				'hello-world': {
 					name: 'Hello World',
 				},

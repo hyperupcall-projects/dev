@@ -17,7 +17,10 @@ import { spawnSync } from 'node:child_process'
 import process from 'node:process'
 import walk from 'ignore-walk'
 
-export async function run(options: CommandScriptOptions, positionals: string[]) {
+export async function run(
+	options: CommandScriptOptions,
+	positionals: string[],
+) {
 	const task = positionals[0]
 
 	const helpText = `script <taskName>
@@ -45,7 +48,9 @@ create-vscode-launchers
 	} else if (task === 'create-vscode-launchers') {
 		await createVSCodeLaunchers(positionals.slice(1))
 	} else {
-		Deno.stdout.write(new TextEncoder().encode('Error: Failed to pass task name\n'))
+		Deno.stdout.write(
+			new TextEncoder().encode('Error: Failed to pass task name\n'),
+		)
 		process.exit(1)
 	}
 }
@@ -171,7 +176,10 @@ export async function symlinkHiddenDirs(positionals: string[]) {
 		config.organizationsDir,
 		async function run({ orgDir, orgEntry, repoDir, repoEntry }) {
 			const oldHiddenDir = path.join(repoDir, '.hidden')
-			const newHiddenDir = path.join(config.hiddenDirsRepositoryDir, repoEntry.name)
+			const newHiddenDir = path.join(
+				config.hiddenDirsRepositoryDir,
+				repoEntry.name,
+			)
 			const newHiddenDirPretty = path.join(
 				path.basename(path.dirname(newHiddenDir)),
 				path.basename(newHiddenDir),
@@ -203,7 +211,9 @@ export async function symlinkHiddenDirs(positionals: string[]) {
 				!oldHiddenDirStat.isSymbolicLink() &&
 				!oldHiddenDirStat.isDirectory()
 			) {
-				console.error(`Error: Hidden directory must be a directory: ${oldHiddenDir}`)
+				console.error(
+					`Error: Hidden directory must be a directory: ${oldHiddenDir}`,
+				)
 				process.exit(1)
 			}
 
@@ -212,7 +222,9 @@ export async function symlinkHiddenDirs(positionals: string[]) {
 				!newHiddenDirStat.isSymbolicLink() &&
 				!newHiddenDirStat.isDirectory()
 			) {
-				console.error(`Error: Hidden directory must be a directory: ${newHiddenDir}`)
+				console.error(
+					`Error: Hidden directory must be a directory: ${newHiddenDir}`,
+				)
 				process.exit(1)
 			}
 
@@ -243,14 +255,12 @@ export async function symlinkHiddenDirs(positionals: string[]) {
 }
 
 async function validateFoxArchives(positionals: string[]) {
-	for await (
-		const { data: repositories } of octokit.paginate.iterator(
-			octokit.rest.repos.listForOrg,
-			{
-				org: 'fox-archives',
-			},
-		)
-	) {
+	for await (const { data: repositories } of octokit.paginate.iterator(
+		octokit.rest.repos.listForOrg,
+		{
+			org: 'fox-archives',
+		},
+	)) {
 		for (const repository of repositories) {
 			if (repository.name === '.github') {
 				continue
@@ -258,7 +268,9 @@ async function validateFoxArchives(positionals: string[]) {
 			console.info(`Checking ${repository.name}`)
 
 			if (!repository.archived) {
-				console.error(`Error: Repository is not archived: ${repository.name}`)
+				console.error(
+					`Error: Repository is not archived: ${repository.name}`,
+				)
 				process.exit(1)
 			}
 		}
@@ -266,20 +278,28 @@ async function validateFoxArchives(positionals: string[]) {
 }
 
 async function createVSCodeLaunchers(positionals: string[]) {
-	const extensions: { dirname: string; packageJson: PackageJson }[] = await (await fetch(
-		`https://raw.githubusercontent.com/fox-self/vscode-hyperupcall-packs/refs/heads/main/extension-list.json`,
-	)).json()
+	const extensions: { dirname: string; packageJson: PackageJson }[] = await (
+		await fetch(
+			`https://raw.githubusercontent.com/fox-self/vscode-hyperupcall-packs/refs/heads/main/extension-list.json`,
+		)
+	).json()
 
 	for (const { dirname, packageJson } of extensions) {
 		if (!packageJson.name) {
 			throw new Error('packageJson should have field "name"')
 		}
-		if (!packageJson.displayName || typeof packageJson.displayName !== 'string') {
-			throw new Error('packageJson should have field "displayName" and be a string')
+		if (
+			!packageJson.displayName ||
+			typeof packageJson.displayName !== 'string'
+		) {
+			throw new Error(
+				'packageJson should have field "displayName" and be a string',
+			)
 		}
 
 		if (
-			!dirname.startsWith('pack-ecosystem-') || dirname === 'pack-ecosystem-all' ||
+			!dirname.startsWith('pack-ecosystem-') ||
+			dirname === 'pack-ecosystem-all' ||
 			dirname === 'pack-ecosystem-other'
 		) {
 			continue
@@ -292,7 +312,8 @@ async function createVSCodeLaunchers(positionals: string[]) {
 		const dataDir = (Deno.env.get('XDG_DATA_HOME') ?? '').startsWith('/')
 			? Deno.env.get('XDG_DATA_HOME')
 			: path.join(os.homedir(), '.config')
-		const vscodeDataDir = path.join( // TODO
+		const vscodeDataDir = path.join(
+			// TODO
 			os.homedir(),
 			'.dotfiles/.data/vscode-datadirs',
 			extensionNameShort,
@@ -307,8 +328,13 @@ async function createVSCodeLaunchers(positionals: string[]) {
 			`applications/${packageJson.name}.desktop`,
 		)
 		const ecosystemName = dirname.split('-').at(-1)
-		const ecosystemNamePretty = (packageJson.displayName ?? '').split(':')[1].trimStart()
-		const iconFile = path.join(dataDir, `icons/hicolor/512x512/${packageJson.name}.png`)
+		const ecosystemNamePretty = (packageJson.displayName ?? '')
+			.split(':')[1]
+			.trimStart()
+		const iconFile = path.join(
+			dataDir,
+			`icons/hicolor/512x512/${packageJson.name}.png`,
+		)
 
 		Deno.writeTextFile(
 			desktopFile,
@@ -342,7 +368,11 @@ Icon=${iconFile}`,
 		Deno.chmodSync(desktopFile, 0o755)
 		console.info(`Created desktop entry for "${ecosystemNamePretty}"`)
 
-		for (const filename of ['keybindings.json', 'settings.json', 'snippets']) {
+		for (const filename of [
+			'keybindings.json',
+			'settings.json',
+			'snippets',
+		]) {
 			const source = path.join(configDir, 'Code/User', filename)
 			const target = path.join(vscodeDataDir, 'User', filename)
 			let targetStat = null
@@ -361,15 +391,17 @@ Icon=${iconFile}`,
 				Deno.symlinkSync(source, target)
 			} else {
 				console.info(
-					`${
-						styleText('yellow', 'WARN:')
-					} Skipping symlink "${filename}" for "${packageJson.name}" VSCode extension`,
+					`${styleText(
+						'yellow',
+						'WARN:',
+					)} Skipping symlink "${filename}" for "${packageJson.name}" VSCode extension`,
 				)
 			}
 		}
 
 		if (
-			!fs.existsSync(vscodeDataDir) || !fs.existsSync(vscodeExtDir) ||
+			!fs.existsSync(vscodeDataDir) ||
+			!fs.existsSync(vscodeExtDir) ||
 			Array.from(Deno.readDirSync(vscodeExtDir)).length < 2
 		) {
 			console.info(
@@ -391,14 +423,18 @@ Icon=${iconFile}`,
 			)
 		} else {
 			console.info(
-				`${
-					styleText('blue', 'NOTE:')
-				} Already installed "${packageJson.name}" VSCode extension`,
+				`${styleText(
+					'blue',
+					'NOTE:',
+				)} Already installed "${packageJson.name}" VSCode extension`,
 			)
 		}
 
 		{
-			await writeRule('Description', 'Generated rules for ecosystem ' + ecosystemNamePretty)
+			await writeRule(
+				'Description',
+				'Generated rules for ecosystem ' + ecosystemNamePretty,
+			)
 			await writeRule('desktopfile', desktopFile)
 			await writeRule('desktopfilerule', '2')
 			await writeRule('title', `(${ecosystemName})`)
@@ -410,12 +446,14 @@ Icon=${iconFile}`,
 			await writeRule('wmclassmatch', '1')
 
 			const [{ stdout: count }, { stdout: rules }] = await Promise.all([
-				execa`kreadconfig6 --file ${
-					path.join(configDir, 'kwinrulesrc')
-				} --group General --key count`,
-				execa`kreadconfig6 --file ${
-					path.join(configDir, 'kwinrulesrc')
-				} --group General --key rules`,
+				execa`kreadconfig6 --file ${path.join(
+					configDir,
+					'kwinrulesrc',
+				)} --group General --key count`,
+				execa`kreadconfig6 --file ${path.join(
+					configDir,
+					'kwinrulesrc',
+				)} --group General --key rules`,
 			])
 			if (!rules.includes('vscode-hyperupcall-pack-' + ecosystemName)) {
 				await writeRule('count', String(Number(count) + 1), 'General')
@@ -431,9 +469,10 @@ Icon=${iconFile}`,
 				value: string,
 				group = 'vscode-hyperupcall-pack-' + ecosystemName,
 			) {
-				await execa`kwriteconfig6 --notify --file ${
-					path.join(configDir, 'kwinrulesrc')
-				} --group ${group} --key ${key} ${value}`
+				await execa`kwriteconfig6 --notify --file ${path.join(
+					configDir,
+					'kwinrulesrc',
+				)} --group ${group} --key ${key} ${value}`
 			}
 		}
 	}

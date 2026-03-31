@@ -1,0 +1,80 @@
+on:
+  workflow_call:
+
+defaults:
+  run:
+    shell: 'bash'
+
+jobs:
+  bats:
+    name: 'Bats'
+    runs-on: '${{ matrix.os }}'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ['ubuntu-latest']
+        images:
+          - 'debian:11'
+          - 'debian:12'
+          - 'ubuntu:22.04'
+          - 'ubuntu:24.04'
+          - 'fedora:37'
+          - 'fedora:38'
+          - 'archlinux:latest'
+    container:
+      image: '${{ matrix.images }}'
+    steps:
+      - name: 'Install Dependencies'
+        run: |
+          if command -v apt-get >/dev/null 2>&1; then
+            DEBIAN_FRONTEND=noninteractive apt-get update -y
+            DEBIAN_FRONTEND=noninteractive apt-get install -y curl git
+          elif command -v dnf >/dev/null 2>&1; then
+            dnf update -y
+            dnf install -y curl git
+          elif command -v zypper >/dev/null 2>&1; then
+            zypper update -y
+            zypper install -y tar curl git bash
+          elif command -v pacman >/dev/null 2>&1; then
+            pacman -Syu --noconfirm curl git
+          fi
+      - name: 'Install Basalt'
+        run: |
+          set -e
+          git clone https://github.com/hyperupcall/basalt "${XDG_DATA_HOME:-$HOME/.local/share}/basalt/source"
+          PATH="${XDG_DATA_HOME:-$HOME/.local/share}/basalt/source/pkg/bin:$PATH"
+
+          mkdir -p /basalt /github/home/.config/basalt
+          printf '%s\n' "${{ github.token }}" > /basalt/token
+          printf '%s\n' "${{ github.token }}" > /github/home/.config/basalt/token
+
+          eval "$(basalt global init bash)"
+          (
+            cd "${XDG_DATA_HOME:-$HOME/.local/share}/basalt/source"
+            basalt install
+          )
+          printf '%s\n' "${XDG_DATA_HOME:-$HOME/.local/share}/basalt/source/pkg/bin" >> "$GITHUB_PATH"
+      - name: 'Install Bats'
+        run: |
+          subdir="$HOME/.tools"
+          bats_version='1.4.1'
+
+          mkdir -p "$subdir"
+          curl -LsSo "$subdir/bats-core.tar.gz" --create-dirs \
+            https://github.com/bats-core/bats-core/archive/v$bats_version.tar.gz
+          tar --extract --transform "s,bats-core-$bats_version,bats-core," -C "$subdir" -f "$subdir/bats-core.tar.gz"
+          ls -al "$subdir/bats-core/bin"
+          echo i am pwd: "$PWD"
+          printf '%s\n' "$subdir/bats-core/bin" >> "$GITHUB_PATH"
+      - uses: 'actions/checkout@v6'
+      - name: 'Run Test'
+        run: |
+          git config --global user.email "user@example.com"
+          git config --global user.name "User Name"
+
+          bash --version
+          eval "$(basalt global init bash)"
+          basalt install
+          sleep 10
+          touch .basalt/generated/done.sh
+          time bats --tap tests

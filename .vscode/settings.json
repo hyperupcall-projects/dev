@@ -1,5 +1,5 @@
 {
-	"window.title": "${folderName} ${separator}${activeRepositoryBranchName}${separator}${remoteName} (nodejs)",
+	"window.title": "${folderName} ${separator}${activeRepositoryBranchName}${separator}${remoteName} (undefined)",
 	"files.exclude": {
 		"**/.git": true,
 		"**/.data": true,
@@ -8,5 +8,86 @@
 	},
 	"[typescript]": {
 		"editor.defaultFormatter": "denoland.vscode-deno"
-	}
+	},
+	"prettier.enable": false,
+	"editor.formatOnSave": false,
+	"editor.codeActionsOnSave": {
+		"source.fixAll.eslint": "explicit",
+		"source.organizeImports": "never"
+	},
+	"eslint.rules.customizations": [
+		{
+			"rule": "style/*",
+			"severity": "off",
+			"fixable": true
+		},
+		{
+			"rule": "format/*",
+			"severity": "off",
+			"fixable": true
+		},
+		{
+			"rule": "*-indent",
+			"severity": "off",
+			"fixable": true
+		},
+		{
+			"rule": "*-spacing",
+			"severity": "off",
+			"fixable": true
+		},
+		{
+			"rule": "*-spaces",
+			"severity": "off",
+			"fixable": true
+		},
+		{
+			"rule": "*-order",
+			"severity": "off",
+			"fixable": true
+		},
+		{
+			"rule": "*-dangle",
+			"severity": "off",
+			"fixable": true
+		},
+		{
+			"rule": "*-newline",
+			"severity": "off",
+			"fixable": true
+		},
+		{
+			"rule": "*quotes",
+			"severity": "off",
+			"fixable": true
+		},
+		{
+			"rule": "*semi",
+			"severity": "off",
+			"fixable": true
+		}
+	],
+	"eslint.validate": [
+		"javascript",
+		"javascriptreact",
+		"typescript",
+		"typescriptreact",
+		"vue",
+		"html",
+		"markdown",
+		"json",
+		"jsonc",
+		"yaml",
+		"toml",
+		"xml",
+		"gql",
+		"graphql",
+		"astro",
+		"svelte",
+		"css",
+		"less",
+		"scss",
+		"pcss",
+		"postcss"
+	]
 }

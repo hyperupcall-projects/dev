@@ -1,0 +1,7 @@
+build/
+external/
+test_books/
+test_target/
+.cache/
+CMakeUserPresets.json
+compile_commands.json

@@ -12,6 +12,7 @@ import { execa } from 'execa'
 import { globby } from 'globby'
 import ansiEscapes from 'ansi-escapes'
 import * as jsonc from 'jsonc-parser'
+import { parseJSON } from 'jsonc-eslint-parser'
 import { xdgConfig } from 'xdg-basedir'
 import { getEcosystems } from '../devutils/index.ts'
 
@@ -26,19 +27,14 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 
 	const project = await getProject()
 
-	const globalConfig = {
-		skippedOrganizations: ['bash-bastion'],
-		skippedRepositories: ['SchemaStore/schemastore'],
-	}
-
 	let config: Config = {
 		rules: {
 			...(project.type === 'with-remote-url' &&
-					`${project.owner}/${project.name}` === 'awesome-lists/awesome-bash'
+			`${project.owner}/${project.name}` === 'awesome-lists/awesome-bash'
 				? {
-					'remote-url/remote-metadata/disable-projects-tab': 'off',
-					'remote-url/remote-metadata/default-branch-main': 'off',
-				}
+						'remote-url/remote-metadata/disable-projects-tab': 'off',
+						'remote-url/remote-metadata/default-branch-main': 'off',
+					}
 				: {}),
 		},
 	}
@@ -55,20 +51,7 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 		}
 	}
 
-	if (
-		project.type === 'with-remote-url' &&
-		(globalConfig.skippedRepositories.includes(
-			`${project.owner}/${project.name}`,
-		) ||
-			globalConfig.skippedOrganizations.includes(project.owner))
-	) {
-		console.info(
-			`[${styleText('yellow', 'SKIP')}] ${project.owner}/${project.name}`,
-		)
-		return
-	}
-
-	// FIX EDITOR SETTINGS
+	// Fix editor settings.
 	if (await fileExists('.vscode/settings.json')) {
 		const userSettingsJsonFile = path.join(
 			xdgConfig,
@@ -99,6 +82,14 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 			)
 			await fs.writeFile('.vscode/settings.json', output)
 		}
+
+		// Merge ESLint config settings from antfu/eslint-config
+		await mergeVSCodeESLintSettings('.vscode/settings.json')
+	}
+
+	// Fix Zed editor settings
+	if (await fileExists('.zed/settings.json')) {
+		await mergeZedESLintSettings('.zed/settings.json')
 	}
 
 	const ruleFiles: string[] = []
@@ -162,6 +153,9 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 			case 'java':
 				await collect(`400-ecosystem/java/*`)
 				break
+			case 'woof-plugin':
+				await collect(`400-ecosystem/woof-plugin/*`)
+				break
 		}
 	}
 
@@ -177,13 +171,18 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 	for (let i = ruleFiles.length - 1; i >= 0; i -= 1) {
 		const highPriorityFilename = ruleFiles[i].match(/.*\/[0-9]*(.*?)\./)?.[1]
 		if (!highPriorityFilename) {
-			throw new TypeError(`Expected variable "highPriorityFilename" to not be falsy`)
+			throw new TypeError(
+				`Expected variable "highPriorityFilename" to not be falsy`,
+			)
 		}
 
 		for (let j = 0; j < i; j += 1) {
-			const lowPriorityFilename = ruleFiles[j].match(/.*\/[0-9]*(.*?)\./)?.[1]
+			const lowPriorityFilename =
+				ruleFiles[j].match(/.*\/[0-9]*(.*?)\./)?.[1]
 			if (!lowPriorityFilename) {
-				throw new TypeError(`Expected variable "lowPriorityFilename" to not be falsy`)
+				throw new TypeError(
+					`Expected variable "lowPriorityFilename" to not be falsy`,
+				)
 			}
 
 			if (highPriorityFilename == lowPriorityFilename) {
@@ -201,18 +200,14 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 		let str = ''
 		str += `${styleText(['blue', 'bold'], 'Directory:')}  ${homedirPretty}\n`
 		if (project.type === 'with-remote-url') {
-			str += `${styleText(['blue', 'bold'], 'Project:')}    ${
-				ansiEscapes.link(
-					`${project.owner}/${project.name}`,
-					`https://github.com/${project.owner}/${project.name}`,
-				)
-			}\n`
+			str += `${styleText(['blue', 'bold'], 'Project:')}    ${ansiEscapes.link(
+				`${project.owner}/${project.name}`,
+				`https://github.com/${project.owner}/${project.name}`,
+			)}\n`
 		}
-		str += `${styleText(['blue', 'bold'], 'Ecosystems:')} ${
-			new Intl.ListFormat().format(
-				ecosystems,
-			)
-		}\n`
+		str += `${styleText(['blue', 'bold'], 'Ecosystems:')} ${new Intl.ListFormat().format(
+			ecosystems,
+		)}\n`
 
 		Deno.stdout.write(new TextEncoder().encode(str))
 	}
@@ -257,6 +252,13 @@ async function fixFromFile(
 		let failed = false
 		const issues: AsyncGenerator<Issue> = module.issues({ project })
 		for await (const issue of issues) {
+			if (issue.skip) {
+				console.info(
+					`[${styleText('yellow', 'SKIP')}] ${fixId}${issue.id ? '/' + issue.id : ''}: ${issue.skip}`,
+				)
+				continue
+			}
+
 			if (issue.strict && !options.strict) {
 				console.info(
 					`[${styleText('yellow', 'SKIP')}] ${fixId}/${issue.id}`,
@@ -420,5 +422,181 @@ function printWithTips(str: string, tips: string[]) {
 	console.info(str)
 	for (const tip of tips) {
 		console.info(` -> ${tip}`)
+	}
+}
+
+async function mergeVSCodeESLintSettings(settingsPath: string) {
+	const settingsText = await fs.readFile(settingsPath, 'utf-8')
+	const ast = parseJSON(settingsText)
+
+	// ESLint settings from antfu/eslint-config VSCode section
+	const vscodeConfigPath = path.join(pkgRoot(), 'config/vscode-config.jsonc')
+	const settingsToAdd = jsonc.parse(
+		await fs.readFile(vscodeConfigPath, 'utf-8'),
+	)
+
+	const output = mergeJSONWithComments(settingsText, ast, settingsToAdd)
+	await fs.writeFile(settingsPath, output)
+}
+
+async function mergeZedESLintSettings(settingsPath: string) {
+	const settingsText = await fs.readFile(settingsPath, 'utf-8')
+	const ast = parseJSON(settingsText)
+
+	const zedConfigPath = path.join(pkgRoot(), 'config/zed-config.jsonc')
+	const settingsToMerge = jsonc.parse(
+		await fs.readFile(zedConfigPath, 'utf-8'),
+	)
+
+	const output = mergeJSONWithComments(settingsText, ast, settingsToMerge)
+	await fs.writeFile(settingsPath, output)
+}
+
+function mergeJSONWithComments(
+	originalText: string,
+	ast: any,
+	newSettings: Record<string, any>,
+): string {
+	const replacements: Array<{ key: string; oldValue: any; newValue: any }> = []
+	const arrayMerges: Array<{ key: string; added: any[] }> = []
+	const additions: Array<{ key: string }> = []
+
+	function deepEquals(a: any, b: any): boolean {
+		if (a === b) return true
+		if (a == null || b == null) return false
+		if (typeof a !== typeof b) return false
+
+		if (Array.isArray(a) && Array.isArray(b)) {
+			if (a.length !== b.length) return false
+			return a.every((val, idx) => deepEquals(val, b[idx]))
+		}
+
+		if (typeof a === 'object' && typeof b === 'object') {
+			const keysA = Object.keys(a)
+			const keysB = Object.keys(b)
+			if (keysA.length !== keysB.length) return false
+			return keysA.every((key) => deepEquals(a[key], b[key]))
+		}
+
+		return false
+	}
+
+	const existingJson =
+		ast.type === 'JSONObjectExpression' ? jsonASTToValue(ast) : {}
+
+	function deepMerge(
+		newObj: Record<string, any>,
+		existingObj: any,
+		pathPrefix: string[] = [],
+	): any {
+		const result: Record<string, any> = { ...existingObj }
+
+		for (const [key, newValue] of Object.entries(newObj)) {
+			const path = [...pathPrefix, key]
+			const pathStr = path.join('.')
+			const existingValue = existingObj?.[key]
+
+			if (existingValue === undefined) {
+				result[key] = newValue
+				additions.push({ key: pathStr })
+			} else if (Array.isArray(newValue) && Array.isArray(existingValue)) {
+				const elementsToAdd: any[] = []
+				for (const newElement of newValue) {
+					const exists = existingValue.some((existingElement) =>
+						deepEquals(newElement, existingElement),
+					)
+					if (!exists) {
+						elementsToAdd.push(newElement)
+					}
+				}
+
+				if (elementsToAdd.length > 0) {
+					result[key] = [...existingValue, ...elementsToAdd]
+					arrayMerges.push({ key: pathStr, added: elementsToAdd })
+				}
+			} else if (
+				typeof newValue === 'object' &&
+				newValue !== null &&
+				!Array.isArray(newValue) &&
+				typeof existingValue === 'object' &&
+				existingValue !== null &&
+				!Array.isArray(existingValue)
+			) {
+				result[key] = deepMerge(newValue, existingValue, path)
+			} else {
+				result[key] = newValue
+				replacements.push({
+					key: pathStr,
+					oldValue: existingValue,
+					newValue,
+				})
+			}
+		}
+
+		return result
+	}
+
+	const mergedJson = deepMerge(newSettings, existingJson)
+
+	for (const { key } of additions) {
+		console.info(`  ${styleText('green', 'ADD')} ${key}`)
+	}
+	for (const { key, oldValue, newValue } of replacements) {
+		console.info(
+			`  ${styleText('yellow', 'REPLACE')} ${key}: ${JSON.stringify(oldValue)} → ${JSON.stringify(
+				newValue,
+			)}`,
+		)
+	}
+	for (const { key, added } of arrayMerges) {
+		console.info(
+			`  ${styleText('cyan', 'MERGE')} ${key}: added ${added.length} new element(s): ${JSON.stringify(
+				added,
+			)}`,
+		)
+	}
+
+	let output = originalText
+
+	for (const [key, value] of Object.entries(mergedJson)) {
+		const edits = jsonc.modify(output, [key], value, {
+			formattingOptions: { tabSize: 1, insertSpaces: false },
+		})
+		output = jsonc.applyEdits(output, edits)
+	}
+
+	return output
+}
+
+function jsonASTToValue(node: any): any {
+	if (!node) return undefined
+
+	switch (node.type) {
+		case 'JSONObjectExpression': {
+			const obj: Record<string, any> = {}
+			if (node.properties) {
+				for (const prop of node.properties) {
+					if (prop.key?.type === 'JSONLiteral') {
+						obj[prop.key.value] = jsonASTToValue(prop.value)
+					}
+				}
+			}
+			return obj
+		}
+		case 'JSONArrayExpression':
+			return node.elements ? node.elements.map(jsonASTToValue) : []
+
+		case 'JSONLiteral':
+			return node.value
+
+		case 'JSONIdentifier':
+			return node.name === 'true'
+				? true
+				: node.name === 'false'
+					? false
+					: null
+
+		default:
+			return undefined
 	}
 }
