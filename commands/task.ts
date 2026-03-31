@@ -35,7 +35,7 @@ create-vscode-launchers
 		console.info(helpText)
 	}
 	if (!task) {
-		Deno.stdout.write(new TextEncoder().encode(helpText))
+		process.stdout.write(helpText)
 		process.exit(1)
 	}
 
@@ -48,9 +48,7 @@ create-vscode-launchers
 	} else if (task === 'create-vscode-launchers') {
 		await createVSCodeLaunchers(positionals.slice(1))
 	} else {
-		Deno.stdout.write(
-			new TextEncoder().encode('Error: Failed to pass task name\n'),
-		)
+		process.stdout.write('Error: Failed to pass task name\n')
 		process.exit(1)
 	}
 }
@@ -185,12 +183,12 @@ export async function symlinkHiddenDirs(positionals: string[]) {
 				path.basename(newHiddenDir),
 			)
 
-			let oldHiddenDirStat
-			let newHiddenDirStat
+			let oldHiddenDirStat: fs.Stats | undefined
+			let newHiddenDirStat: fs.Stats | undefined
 			const restat = async function restat() {
 				try {
 					oldHiddenDirStat = fs.lstatSync(oldHiddenDir)
-				} catch (err) {
+				} catch (err: any) {
 					if (err.code !== 'ENOENT') {
 						throw err
 					}
@@ -198,7 +196,7 @@ export async function symlinkHiddenDirs(positionals: string[]) {
 
 				try {
 					newHiddenDirStat = fs.lstatSync(newHiddenDir)
-				} catch (err) {
+				} catch (err: any) {
 					if (err.code !== 'ENOENT') {
 						throw err
 					}
@@ -237,18 +235,18 @@ export async function symlinkHiddenDirs(positionals: string[]) {
 			) {
 				const input = await prompt(`Move? ${newHiddenDirPretty} (y/n): `)
 				if (yn(input)) {
-					Deno.mkdirSync(path.dirname(newHiddenDir), {
+					fs.mkdirSync(path.dirname(newHiddenDir), {
 						recursive: true,
 						mode: 0o755,
 					})
-					Deno.renameSync(oldHiddenDir, newHiddenDir)
+					fs.renameSync(oldHiddenDir, newHiddenDir)
 					await restat()
 				}
 			}
 
 			fs.rmSync(oldHiddenDir, { force: true })
 			if (newHiddenDirStat) {
-				Deno.symlinkSync(newHiddenDir, oldHiddenDir)
+				fs.symlinkSync(newHiddenDir, oldHiddenDir)
 			}
 		},
 	)
@@ -306,11 +304,11 @@ async function createVSCodeLaunchers(positionals: string[]) {
 		}
 
 		const extensionNameShort = packageJson.name.slice('vscode-'.length)
-		const configDir = (Deno.env.get('XDG_CONFIG_HOME') ?? '').startsWith('/')
-			? Deno.env.get('XDG_CONFIG_HOME')
+		const configDir = (process.env.XDG_CONFIG_HOME ?? '').startsWith('/')
+			? process.env.XDG_CONFIG_HOME
 			: path.join(os.homedir(), '.config')
-		const dataDir = (Deno.env.get('XDG_DATA_HOME') ?? '').startsWith('/')
-			? Deno.env.get('XDG_DATA_HOME')
+		const dataDir = (process.env.XDG_DATA_HOME ?? '').startsWith('/')
+			? process.env.XDG_DATA_HOME
 			: path.join(os.homedir(), '.config')
 		const vscodeDataDir = path.join(
 			// TODO
@@ -336,7 +334,7 @@ async function createVSCodeLaunchers(positionals: string[]) {
 			`icons/hicolor/512x512/${packageJson.name}.png`,
 		)
 
-		Deno.writeTextFile(
+		fs.writeFileSync(
 			desktopFile,
 			`[Desktop Entry]
 Name=VSCode: ${ecosystemNamePretty}
@@ -356,8 +354,9 @@ Keywords=vscode;
 Name=New Empty Window: ${ecosystemNamePretty}
 Exec=code --user-data-dir ${vscodeDataDir} --extensions-dir ${vscodeExtDir} --new-window %F
 Icon=${iconFile}`,
+			'utf-8',
 		)
-		Deno.copyFileSync(
+		fs.copyFileSync(
 			path.join(
 				os.homedir(),
 				'.devresources/ecosystem-icons/output/vscode-desktop',
@@ -365,7 +364,7 @@ Icon=${iconFile}`,
 			),
 			iconFile,
 		)
-		Deno.chmodSync(desktopFile, 0o755)
+		fs.chmodSync(desktopFile, 0o755)
 		console.info(`Created desktop entry for "${ecosystemNamePretty}"`)
 
 		for (const filename of [
@@ -377,18 +376,18 @@ Icon=${iconFile}`,
 			const target = path.join(vscodeDataDir, 'User', filename)
 			let targetStat = null
 			try {
-				targetStat = Deno.lstatSync(target)
+				targetStat = fs.lstatSync(target)
 			} catch (err) {
-				if (!(err instanceof Deno.errors.NotFound)) {
+				if (err.code !== 'ENOENT') {
 					throw err
 				}
 			}
 			if (!targetStat) {
-				Deno.mkdirSync(path.dirname(target), { recursive: true })
-				Deno.symlinkSync(source, target)
-			} else if (targetStat.isSymlink) {
+				fs.mkdirSync(path.dirname(target), { recursive: true })
+				fs.symlinkSync(source, target)
+			} else if (targetStat.isSymbolicLink()) {
 				fs.unlinkSync(target)
-				Deno.symlinkSync(source, target)
+				fs.symlinkSync(source, target)
 			} else {
 				console.info(
 					`${styleText(
@@ -402,7 +401,7 @@ Icon=${iconFile}`,
 		if (
 			!fs.existsSync(vscodeDataDir) ||
 			!fs.existsSync(vscodeExtDir) ||
-			Array.from(Deno.readDirSync(vscodeExtDir)).length < 2
+			fs.readdirSync(vscodeExtDir).length < 2
 		) {
 			console.info(
 				`${styleText('blue', 'NOTE:')} Installing "${packageJson.name}" VSCode extension`,

@@ -1,7 +1,8 @@
 import * as util from 'node:util'
 import child_process from 'node:child_process'
+import process from 'node:process'
 
-import { input } from '#utilities/prompt.ts'
+import * as clack from '@clack/prompts'
 
 import { octokit } from '#common'
 import type { Issues } from '#types'
@@ -34,7 +35,9 @@ export const issues: Issues = async function* issues({ project }) {
 		}
 	}
 	if (!data.description) {
-		throw new TypeError(`Expected variable "data.description" to not be falsy`)
+		throw new TypeError(
+			`Expected variable "data.description" to not be falsy`,
+		)
 	}
 
 	if (!data.description.endsWith('.') && !data.description.endsWith('!')) {
@@ -58,10 +61,10 @@ export const issues: Issues = async function* issues({ project }) {
 	}
 
 	async function fixSetDescription() {
-		const inputValue = await input({
+		const inputValue = await clack.text({
 			message: 'Choose a description',
-			default: data.description ?? '',
-			validate: (str: string) => {
+			defaultValue: data.description ?? '',
+			validate: (str) => {
 				if (str.length > maxDescriptionLength) {
 					return `Must have at most ${maxDescriptionLength} UTF-16 code units`
 				}
@@ -69,10 +72,12 @@ export const issues: Issues = async function* issues({ project }) {
 				if (!str.endsWith('.') && !str.endsWith('!')) {
 					return 'Must end with either a period or exclamation mark'
 				}
-
-				return true
 			},
 		})
+
+		if (clack.isCancel(inputValue)) {
+			process.exit(1)
+		}
 		await octokit.rest.repos.update({
 			owner: project.owner,
 			repo: project.name,
@@ -180,7 +185,10 @@ export const issues: Issues = async function* issues({ project }) {
 
 		if (data.has_wiki) {
 			// TODO
-			if (!project.owner.match(/^[\w-]+/) || !project.name.match(/^[\w-]+/)) {
+			if (
+				!project.owner.match(/^[\w-]+/) ||
+				!project.name.match(/^[\w-]+/)
+			) {
 				throw new Error(
 					`The "owner" or "name" of the GitHub repository contains invalid characters`,
 				)
@@ -202,7 +210,10 @@ export const issues: Issues = async function* issues({ project }) {
 				// If we get a valid response, then the wiki repository exists (and has content). Therefore,
 				// we should not automatically disable the wiki tab and let the user decide what to do.
 			} catch (err) {
-				if (!err.killed && err.stderr.includes('fatal: could not read Username')) {
+				if (
+					!err.killed &&
+					err.stderr.includes('fatal: could not read Username')
+				) {
 					// We attempt to access the wiki repository. As per security best practices, GitHub will
 					// ask for authentication, if either the wiki repository either does not exist, or is private.
 					// At this point, we can safely assume that both the wiki and the repository are not private.

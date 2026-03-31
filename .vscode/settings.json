@@ -1,13 +1,10 @@
 {
-	"window.title": "${folderName} ${separator}${activeRepositoryBranchName}${separator}${remoteName} (undefined)",
+	"window.title": "${folderName} ${separator}${activeRepositoryBranchName}${separator}${remoteName} (nodejs)",
 	"files.exclude": {
 		"**/.git": true,
 		"**/.data": true,
 		"config/templates": true,
-		"devserver/static/vendor": true
-	},
-	"[typescript]": {
-		"editor.defaultFormatter": "denoland.vscode-deno"
+		"devserver/static/vendor": true,
 	},
 	"prettier.enable": false,
 	"editor.formatOnSave": false,
@@ -89,5 +86,5 @@
 		"scss",
 		"pcss",
 		"postcss"
-	]
+	],
 }

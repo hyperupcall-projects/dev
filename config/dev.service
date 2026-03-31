@@ -3,7 +3,7 @@ Description=Global Development Server
 
 [Service]
 Type=notify
-ExecStart=%h/.dev/.data/bin/node start-dev-server
+ExecStart=/usr/bin/env pnpm --dir %h/.dev start
 
 [Install]
 WantedBy=default.target

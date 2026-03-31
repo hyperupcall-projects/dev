@@ -10,14 +10,12 @@
 	"exclude": [
 		"devserver/static",
 		"config/templates",
-		"./devserver/webframework",
 		"./config/.postcssrc.mjs",
 	],
 	"lint": {
 		"exclude": [
 			"devserver/static",
 			"config/templates",
-			"./devserver/webframework",
 		],
 		"rules": {
 			"exclude": [
@@ -38,9 +36,6 @@
 	"imports": {
 		"#common": "./config/common.ts",
 		"#types": "./types.d.ts",
-		"#webframeworklib": "./devserver/webframework/lib.ts",
-		"#components/": "./devserver/components/",
-		"#pages/": "./devserver/pages/",
 		"#utilities/": "./utilities/",
 		"@types/terminal-kit": "npm:@types/terminal-kit@^2.5.7",
 		"jsonc-eslint-parser": "npm:jsonc-eslint-parser@^3.1.0",

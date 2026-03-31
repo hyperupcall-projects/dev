@@ -2,7 +2,7 @@
 // SPDX-FileCopyrightText: Copyright 2023 Edwin Kofler
 import * as path from 'node:path'
 import * as fs from 'node:fs/promises'
-import { confirm } from '#utilities/prompt.ts'
+import * as clack from '@clack/prompts'
 import { styleText } from 'node:util'
 import os from 'node:os'
 import { fileExists, pkgRoot } from '#common'
@@ -63,7 +63,7 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 
 		const settingsText = await fs.readFile('.vscode/settings.json', 'utf-8')
 		const settingsJson = jsonc.parse(settingsText)
-		const ecosystem = (await getEcosystems(Deno.cwd()))[0]
+		const ecosystem = (await getEcosystems(process.cwd()))[0]
 		if (settingsJson['window.title']) {
 			const output = settingsText.replace(
 				/"window\.title"[ \t]*:[ \t]*".*?"/m,
@@ -123,7 +123,7 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 
 	// Collect rule files that match the ecosystem.
 	await collect(`400-ecosystem/_/*`)
-	const ecosystems = await getEcosystems(Deno.cwd()) // TODO
+	const ecosystems = await getEcosystems(process.cwd()) // TODO
 	for (const ecosystem of ecosystems) {
 		switch (ecosystem) {
 			case 'nodejs':
@@ -209,7 +209,7 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 			ecosystems,
 		)}\n`
 
-		Deno.stdout.write(new TextEncoder().encode(str))
+		process.stdout.write(str)
 	}
 
 	for (const fixFile of ruleFiles) {
@@ -299,19 +299,16 @@ async function fixFromFile(
 			if (options.yes) {
 				shouldRunFix = true
 			} else {
-				try {
-					shouldRunFix = await confirm({
-						message: 'Would you like to fix this issue?',
-						default: true,
-					})
-				} catch (err) {
-					if (err.name === 'ExitPromptError') {
-						printWithTips(`[${styleText('red', 'FAIL')}] ${fixId}`, [
-							'Failed because the user exited the prompt',
-						])
-						Deno.exit(1)
-					}
-					throw err
+				shouldRunFix = await clack.confirm({
+					message: 'Would you like to fix this issue?',
+					initialValue: true,
+				})
+
+				if (clack.isCancel(shouldRunFix)) {
+					printWithTips(`[${styleText('red', 'FAIL')}] ${fixId}`, [
+						'Failed because the user exited the prompt',
+					])
+					process.exit(1)
 				}
 			}
 
@@ -326,21 +323,14 @@ async function fixFromFile(
 		if (!failed) {
 			console.info(`[${styleText('green', 'PASS')}] ${fixId}`)
 		} else {
-			Deno.exit(1)
+			process.exit(1)
 		}
 	} catch (err) {
-		if (err.name === 'ExitPromptError') {
-			printWithTips(`[${styleText('red', 'FAIL')}] ${fixId}`, [
-				'Failed because the user exited the prompt',
-			])
-			Deno.exit()
-		}
-
 		printWithTips(`[${styleText('red', 'FAIL')}] ${fixId}`, [
 			'Failed because an error was caught',
 		])
 		console.error(err)
-		Deno.exit(1)
+		process.exit(1)
 	}
 }
 
@@ -348,8 +338,8 @@ async function getProject(): Promise<Project> {
 	if (!(await fileExists('.git'))) {
 		return {
 			type: 'only-directory',
-			rootDir: Deno.cwd(),
-			name: path.basename(Deno.cwd()),
+			rootDir: process.cwd(),
+			name: path.basename(process.cwd()),
 		}
 	}
 
@@ -388,8 +378,8 @@ async function getProject(): Promise<Project> {
 	if (!remoteName) {
 		return {
 			type: 'under-version-control',
-			rootDir: Deno.cwd(),
-			name: path.basename(Deno.cwd()),
+			rootDir: process.cwd(),
+			name: path.basename(process.cwd()),
 			branchName,
 		}
 	}
@@ -404,12 +394,12 @@ async function getProject(): Promise<Project> {
 			`Failed to extract repository name and owner for remote name "${remoteName}"`,
 			[`Remote name has URL of "${remoteUrl}"`],
 		)
-		Deno.exit(1)
+		process.exit(1)
 	}
 
 	return {
 		type: 'with-remote-url',
-		rootDir: Deno.cwd(),
+		rootDir: process.cwd(),
 		name: match.groups.name,
 		branchName,
 		remoteName,

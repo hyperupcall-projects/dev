@@ -1,4 +1,4 @@
-#!/usr/bin/env -S deno run --allow-all
+#!/usr/bin/env node
 import { Builtins, Cli, Command, Option } from 'clipanion'
 
 import { run as runNew } from '../commands/new.ts'
@@ -8,7 +8,7 @@ import { run as runVersion } from '../commands/version.ts'
 import { run as runRepos } from '../commands/repos.ts'
 import { run as runChangelog } from '../commands/changelog.ts'
 import { run as runTask } from '../commands/task.ts'
-import { startServer } from '../devserver/webframework/webframework.ts'
+import { execa } from 'execa'
 import process from 'node:process'
 
 const version = '0.4.0' // TODO
@@ -126,11 +126,10 @@ cli.register(
 			description: `Start the global development server`,
 		})
 
-		prebundle = Option.Boolean('--bundle')
-		positionals = Option.Proxy()
-
 		async execute() {
-			startServer(this.positionals)
+			await execa('pnpm', ['start'], {
+				stdio: 'inherit',
+			})
 		}
 	},
 )

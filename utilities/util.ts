@@ -1,7 +1,10 @@
-import { execa } from 'execa'
+import { execFile } from 'node:child_process'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import type { Dirent } from 'node:fs'
+import { promisify } from 'node:util'
+
+const execFileAsync = promisify(execFile)
 
 type RunnerParam = {
 	orgDir: string
@@ -75,15 +78,15 @@ export async function getServiceData() {
 	const data = await Promise.all(
 		services.map(async (service) => {
 			const [isActive, statusOutput] = await Promise.all([
-				execa('systemctl', [
+				execFileAsync('systemctl', [
 					...(service.isUserService ? ['--user'] : []),
 					'is-active',
 					'--quiet',
 					service.name,
 				])
-					.then(({ failed }) => !failed)
+					.then(() => true)
 					.catch(() => false),
-				execa('systemctl', [
+				execFileAsync('systemctl', [
 					...(service.isUserService ? ['--user'] : []),
 					'status',
 					service.name,

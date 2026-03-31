@@ -2,6 +2,7 @@ import { serveFile } from 'jsr:@std/http/file-server'
 import tsBlankSpace from 'ts-blank-space'
 import * as path from 'jsr:@std/path'
 import { expandGlob } from 'jsr:@std/fs/expand-glob'
+import * as fs from 'node:fs/promises'
 
 const Backends = await getPageBackends()
 
@@ -38,8 +39,8 @@ export async function requestHandler(req: Request) {
 	for (const slug of ['components', 'layouts', 'pages', 'utilities']) {
 		if (url.pathname.startsWith(`/${slug}`)) {
 			if (!import.meta.dirname) throw TypeError('Bad import.meta.dirname')
-			const tsFile = path.join(Deno.cwd(), url.pathname)
-			const text = await Deno.readTextFile(tsFile)
+			const tsFile = path.join(process.cwd(), url.pathname)
+			const text = await fs.readFile(tsFile, 'utf-8')
 			const output = tsBlankSpace(text)
 			return new Response(output, {
 				headers: {
@@ -57,14 +58,15 @@ export async function requestHandler(req: Request) {
 		if (!filepath.startsWith(staticDir)) {
 			throw new Error('Bad path')
 		}
-		await Deno.stat(filepath)
+		await fs
+			.stat(filepath)
 			.then((stat) => {
 				return serveFile(req, filepath, {
 					fileInfo: stat,
 				})
 			})
 			.catch((err) => {
-				if (err instanceof Deno.errors.NotFound) return null
+				if (err.code === 'ENOENT') return null
 				throw err
 			})
 	}
@@ -83,12 +85,15 @@ async function renderPage(pagepath: string, options: { layout: string }) {
 	])
 
 	if (PageResult.status === 'rejected') {
-		return new Response(`Failed to find page: "${pagepath}"\n${PageResult.reason}\n`, {
-			status: 404,
-			headers: {
-				'Content-Type': 'text/plain',
+		return new Response(
+			`Failed to find page: "${pagepath}"\n${PageResult.reason}\n`,
+			{
+				status: 404,
+				headers: {
+					'Content-Type': 'text/plain',
+				},
 			},
-		})
+		)
 	}
 	if (typeof PageResult.value?.Page !== 'function') {
 		return new Response(`No "Page" function found in file: "${pagepath}"`, {
@@ -99,7 +104,9 @@ async function renderPage(pagepath: string, options: { layout: string }) {
 		})
 	}
 
-	const imports = JSON.parse(await Deno.readTextFile('./deno.jsonc')).imports
+	const imports = JSON.parse(
+		await fs.readFile('./deno.jsonc', 'utf-8'),
+	).imports
 	for (const id in imports) {
 		if (imports[id].startsWith('./')) {
 			imports[id] = imports[id].slice(1)
@@ -140,7 +147,7 @@ async function getPageBackends(): Promise<
 	const backends = []
 
 	const entries = expandGlob('**/*.server.ts', {
-		root: Deno.cwd(),
+		root: process.cwd(),
 	})
 
 	for await (const entry of entries) {

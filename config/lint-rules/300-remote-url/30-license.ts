@@ -1,7 +1,8 @@
 import * as fs from 'node:fs/promises'
 import path from 'node:path'
+import process from 'node:process'
 import spdxLicenseList from 'spdx-license-list/full.js'
-import { select } from '#utilities/prompt.ts'
+import * as clack from '@clack/prompts'
 
 import { pkgRoot } from '#common'
 import { globby } from 'globby'
@@ -25,45 +26,47 @@ export const issues: Issues = async function* issues() {
 					'But, found no license file was found',
 				],
 				fix: async () => {
-					const selectedLicenseId = await select(
-						{
-							message: 'Choose file:',
-							options: [
-								{ name: 'ISC License', value: 'ISC' },
-								{
-									name: 'BSD 3-Clause "New" or "Revised" License',
-									value: 'BSD-3-Clause',
-								},
-								{
-									name: 'Mozilla Public License 2.0',
-									value: 'MPL-2.0',
-								},
-								{ name: 'Apache License 2.0', value: 'Apache-2.0' },
-								{
-									name: 'GNU General Public License v2.0',
-									value: 'GPL-2.0-only',
-								},
-								{
-									name: 'GNU General Public License v3.0',
-									value: 'GPL-3.0-only',
-								},
-								{
-									name: 'GNU Lesser General Public License v2.1',
-									value: 'LGPL-2.1-only',
-								},
-								{
-									name: 'GNU Lesser General Public License v3.0',
-									value: 'LGPL-3.0-only',
-								},
-								{
-									name: 'GNU Affero General Public License v3.0',
-									value: 'AGPL-3.0-only',
-								},
-							],
-						},
-					)
+					const selectedLicenseId = await clack.select({
+						message: 'Choose file:',
+						options: [
+							{ label: 'ISC License', value: 'ISC' },
+							{
+								label: 'BSD 3-Clause "New" or "Revised" License',
+								value: 'BSD-3-Clause',
+							},
+							{
+								label: 'Mozilla Public License 2.0',
+								value: 'MPL-2.0',
+							},
+							{ label: 'Apache License 2.0', value: 'Apache-2.0' },
+							{
+								label: 'GNU General Public License v2.0',
+								value: 'GPL-2.0-only',
+							},
+							{
+								label: 'GNU General Public License v3.0',
+								value: 'GPL-3.0-only',
+							},
+							{
+								label: 'GNU Lesser General Public License v2.1',
+								value: 'LGPL-2.1-only',
+							},
+							{
+								label: 'GNU Lesser General Public License v3.0',
+								value: 'LGPL-3.0-only',
+							},
+							{
+								label: 'GNU Affero General Public License v3.0',
+								value: 'AGPL-3.0-only',
+							},
+						],
+					})
 
-					const licenseData = spdxLicenseList[selectedLicenseId]
+					if (clack.isCancel(selectedLicenseId)) {
+						process.exit(1)
+					}
+
+					const licenseData = spdxLicenseList[selectedLicenseId as string]
 					if (!licenseData) {
 						throw new Error(
 							`License "${selectedLicenseId}" is not an SPDX license`,

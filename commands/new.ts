@@ -1,10 +1,11 @@
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
+import process from 'node:process'
 
 import { execa } from 'execa'
 import Handlebars from 'handlebars'
 import { fileExists } from '#common'
-import { input, confirm, select } from '#utilities/prompt.ts'
+import * as clack from '@clack/prompts'
 
 import type { CommandNewOptions } from '#types'
 import { existsSync } from 'node:fs'
@@ -13,35 +14,49 @@ const _dirname = import.meta.dirname
 
 export async function run(options: CommandNewOptions, positionals: string[]) {
 	if (!positionals[0]) {
-		const inputValue = await input({
+		const inputValue = await clack.text({
 			message: 'Choose a directory',
 		})
+
+		if (clack.isCancel(inputValue)) {
+			process.exit(1)
+		}
+
 		positionals = [inputValue]
 	}
 
 	if (!existsSync(positionals[0])) {
-		const input = await confirm({
+		const shouldCreate = await clack.confirm({
 			message: 'Would you like to create the directory?',
 		})
 
-		if (input) {
+		if (clack.isCancel(shouldCreate)) {
+			process.exit(1)
+		}
+
+		if (shouldCreate) {
 			await fs.mkdir(positionals[0], { recursive: true })
 		}
 	}
 
 	if (!options.ecosystem) {
-		const input = await select({
+		const ecosystemChoice = await clack.select({
 			message: 'Choose an ecosystem',
 			options: [
-				{ name: 'Deno', value: 'deno' },
-				{ name: 'NodeJS', value: 'nodejs' },
-				{ name: 'Rust', value: 'rust' },
-				{ name: 'Go', value: 'go' },
-				{ name: 'C++', value: 'cpp' },
-				{ name: 'Java', value: 'java' },
+				{ label: 'Deno', value: 'deno' },
+				{ label: 'NodeJS', value: 'nodejs' },
+				{ label: 'Rust', value: 'rust' },
+				{ label: 'Go', value: 'go' },
+				{ label: 'C++', value: 'cpp' },
+				{ label: 'Java', value: 'java' },
 			],
 		})
-		options.ecosystem = input
+
+		if (clack.isCancel(ecosystemChoice)) {
+			process.exit(1)
+		}
+
+		options.ecosystem = ecosystemChoice as string
 	}
 
 	if (!options.templateName) {
@@ -51,21 +66,29 @@ export async function run(options: CommandNewOptions, positionals: string[]) {
 			throw new Error(`Ecosystem "${options.ecosystem}" not supported`)
 		}
 
-		const value = await select({
+		const value = await clack.select({
 			message: `Choose a template`,
 			options: Object.entries(parameters).map(([id, { name }]) => ({
-				name,
+				label: name,
 				value: id,
 			})),
 		})
 
-		options.templateName = value
+		if (clack.isCancel(value)) {
+			process.exit(1)
+		}
+
+		options.templateName = value as string
 	}
 
 	if (!options.projectName) {
-		const value = await input({
+		const value = await clack.text({
 			message: 'What is the project name?',
 		})
+
+		if (clack.isCancel(value)) {
+			process.exit(1)
+		}
 
 		options.projectName = value
 	}
@@ -90,9 +113,10 @@ type Context = Readonly<{
 }>
 
 export async function createProject(ctx: Context) {
-	if (!_dirname) throw new TypeError('Variable "import.meta.dirname" is not truthy')
+	if (!_dirname)
+		throw new TypeError('Variable "import.meta.dirname" is not truthy')
 
-	const outputDir = path.resolve(Deno.cwd(), ctx.dir)
+	const outputDir = path.resolve(process.cwd(), ctx.dir)
 
 	if (!(await fileExists(outputDir))) {
 		await fs.mkdir(outputDir, { recursive: true })
@@ -101,7 +125,7 @@ export async function createProject(ctx: Context) {
 	if (!ctx.forceTemplate) {
 		if ((await fs.readdir(outputDir)).length > 0) {
 			console.error(`Error: Directory must be empty: "${outputDir}"`)
-			Deno.exit(1)
+			process.exit(1)
 		}
 	}
 
@@ -129,15 +153,18 @@ export async function createProject(ctx: Context) {
 				try {
 					const template = await fs.readFile(inputFile, 'utf-8')
 					const runtimeTemplate = Handlebars.compile(template)
-					const outputContent = runtimeTemplate({
-						key: 'value',
-					}, {
-						helpers: {
-							'raw': function (options: any) {
-								return options.fn()
+					const outputContent = runtimeTemplate(
+						{
+							key: 'value',
+						},
+						{
+							helpers: {
+								raw: function (options: any) {
+									return options.fn()
+								},
 							},
 						},
-					})
+					)
 					await fs.mkdir(path.dirname(outputFile), { recursive: true })
 					await fs.writeFile(outputFile, outputContent)
 				} catch (err) {
@@ -153,7 +180,10 @@ export async function createProject(ctx: Context) {
 
 function getTemplateData(): Record<
 	string,
-	{ templates: Record<string, { name: string }>; onRun?: (ctx: unknown) => Promise<void> }
+	{
+		templates: Record<string, { name: string }>
+		onRun?: (ctx: unknown) => Promise<void>
+	}
 > {
 	return {
 		nodejs: {
@@ -219,7 +249,7 @@ function getTemplateData(): Record<
 		},
 		cpp: {
 			templates: {
-				'cmake': {
+				cmake: {
 					name: 'cpp-cmake',
 				},
 				'hello-world': {

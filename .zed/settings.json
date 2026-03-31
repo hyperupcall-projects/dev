@@ -3,100 +3,114 @@
 	"lsp": {
 		"eslint": {
 			"settings": {
-				"experimental": {
-					"useFlatConfig": false,
-				},
 				"rulesCustomizations": [
 					{
 						"rule": "style/*",
 						"severity": "off",
-						"fixable": true,
+						"fixable": true
 					},
 					{
 						"rule": "format/*",
 						"severity": "off",
-						"fixable": true,
+						"fixable": true
 					},
 					{
 						"rule": "*-indent",
 						"severity": "off",
-						"fixable": true,
+						"fixable": true
 					},
 					{
 						"rule": "*-spacing",
 						"severity": "off",
-						"fixable": true,
+						"fixable": true
 					},
 					{
 						"rule": "*-spaces",
 						"severity": "off",
-						"fixable": true,
+						"fixable": true
 					},
 					{
 						"rule": "*-order",
 						"severity": "off",
-						"fixable": true,
+						"fixable": true
 					},
 					{
 						"rule": "*-dangle",
 						"severity": "off",
-						"fixable": true,
+						"fixable": true
 					},
 					{
 						"rule": "*-newline",
 						"severity": "off",
-						"fixable": true,
+						"fixable": true
 					},
 					{
 						"rule": "*quotes",
 						"severity": "off",
-						"fixable": true,
+						"fixable": true
 					},
 					{
 						"rule": "*semi",
 						"severity": "off",
-						"fixable": true,
-					},
-				],
-			},
+						"fixable": true
+					}
+				]
+			}
 		},
 		"yaml-language-server": {
 			"settings": {
 				"yaml": {
 					"format": {
-						"enable": true,
-						"singleQuote": true,
-						"bracketSpacing": true,
-					},
-					"validate": true,
-					"hover": true,
-					"completion": true,
-					"keyOrdering": false,
-				},
-			},
-		},
+						"enable": true
+					}
+				}
+			}
+		}
 	},
 	"languages": {
 		"HTML": {
-			"language_servers": ["eslint"],
+			"language_servers": [
+				"...",
+				"eslint"
+			]
 		},
 		"Markdown": {
-			"language_servers": ["eslint"],
+			"language_servers": [
+				"...",
+				"eslint"
+			]
 		},
 		"JSON": {
-			"language_servers": ["eslint"],
+			"language_servers": [
+				"...",
+				"eslint"
+			]
 		},
 		"JSONC": {
-			"language_servers": ["eslint"],
+			"language_servers": [
+				"...",
+				"eslint"
+			]
 		},
 		"YAML": {
-			"language_servers": ["yaml-language-server", "..."],
-			"formatter": "language_server",
+			"language_servers": [
+				"...",
+				"eslint"
+			]
 		},
 		"CSS": {
-			"language_servers": ["eslint"],
-		},
+			"language_servers": [
+				"...",
+				"eslint"
+			]
+		}
 	},
+	"format_on_save": "on",
+	"formatter": [
+		{
+			"code_action": "source.fixAll.eslint"
+		}
+	],
 	// "format_on_save": "on",
 	// "formatter": [
 	// 	{

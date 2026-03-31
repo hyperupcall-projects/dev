@@ -1,5 +1,5 @@
 node_modules/
 .env
 .data/
-devserver/static/repositories.json
-devserver/static/repositories2.json
+devserver/dist/
+.tanstack/

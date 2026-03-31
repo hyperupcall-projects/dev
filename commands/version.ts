@@ -1,18 +1,27 @@
 import * as fs from 'node:fs/promises'
-import { input, select } from '#utilities/prompt.ts'
+import process from 'node:process'
+import * as clack from '@clack/prompts'
 import { execa } from 'execa'
 import semver from 'semver'
 
 import { getEcosystems } from '../devutils/index.ts'
 import type { CommandVersionOptions } from '#types'
 
-export async function run(options: CommandVersionOptions, positionals: string[]) {
+export async function run(
+	options: CommandVersionOptions,
+	positionals: string[],
+) {
 	const ecosystems = await getEcosystems(process.cwd())
 
-	const { stdout: statusOutput } = await execa('git', ['status', '--porcelain'])
+	const { stdout: statusOutput } = await execa('git', [
+		'status',
+		'--porcelain',
+	])
 	if (statusOutput.trim() !== '') {
-		console.error('Working directory is not clean. Please commit or stash your changes first.')
-		Deno.exit(1)
+		console.error(
+			'Working directory is not clean. Please commit or stash your changes first.',
+		)
+		process.exit(1)
 	}
 
 	if (ecosystems.includes('nodejs')) {
@@ -40,16 +49,19 @@ async function getLatestTag() {
 	if (tags.length === 0) {
 		console.log('No version tags found')
 
-		const initialVersion = await input({
+		const initialVersion = await clack.text({
 			message: 'Enter the initial version (without "v" prefix):',
-			default: '0.1.0',
-			validate: (value: string) => {
+			defaultValue: '0.1.0',
+			validate: (value) => {
 				if (!semver.valid(value)) {
 					return 'Please enter a valid semantic version (e.g., 0.1.0)'
 				}
-				return true
 			},
 		})
+
+		if (clack.isCancel(initialVersion)) {
+			process.exit(1)
+		}
 
 		return initialVersion
 	}
@@ -68,12 +80,12 @@ async function handleNodeJsEcosystem() {
 	const currentVersion = latestTag.replace(/^v/, '')
 	console.log(`\nCurrent version: ${latestTag}`)
 	const finalVersion = await askForNewVersion(currentVersion)
-	const packageJsonText = await Deno.readTextFile('./package.json')
+	const packageJsonText = await fs.readFile('./package.json', 'utf-8')
 	const finalText = packageJsonText.replace(
 		/"version"\s*:\s*"[^"]*"/,
 		`"version": "${finalVersion}"`,
 	)
-	await Deno.writeTextFile('./package.json', finalText)
+	await fs.writeFile('./package.json', finalText)
 	await execa`git add package.json`
 
 	await createVersionCommitAndTag(`v${finalVersion}`)
@@ -85,8 +97,10 @@ async function handleCEcosystem() {
 		const currentVersion = latestTag.replace(/^v/, '')
 
 		if (!semver.valid(currentVersion)) {
-			console.error(`Latest tag "${latestTag}" is not a valid semantic version`)
-			Deno.exit(1)
+			console.error(
+				`Latest tag "${latestTag}" is not a valid semantic version`,
+			)
+			process.exit(1)
 		}
 
 		console.log(`\nCurrent version: ${latestTag}`)
@@ -98,7 +112,7 @@ async function handleCEcosystem() {
 		} else {
 			console.error('Error:', err.message)
 		}
-		Deno.exit(1)
+		process.exit(1)
 	}
 }
 
@@ -107,32 +121,47 @@ async function askForNewVersion(currentVersion: string) {
 	const minorVersion = semver.inc(currentVersion, 'minor')!
 	const majorVersion = semver.inc(currentVersion, 'major')!
 
-	const newVersion = await select({
+	const newVersion = await clack.select({
 		message: 'What version would you like to update to?',
 		options: [
-			{ name: `Patch: v${patchVersion} (bug fixes)`, value: patchVersion },
-			{ name: `Minor: v${minorVersion} (new features)`, value: minorVersion },
-			{ name: `Major: v${majorVersion} (breaking changes)`, value: majorVersion },
-			{ name: 'Custom version', value: 'custom' },
+			{ label: `Patch: v${patchVersion} (bug fixes)`, value: patchVersion },
+			{
+				label: `Minor: v${minorVersion} (new features)`,
+				value: minorVersion,
+			},
+			{
+				label: `Major: v${majorVersion} (breaking changes)`,
+				value: majorVersion,
+			},
+			{ label: 'Custom version', value: 'custom' },
 		],
 	})
 
+	if (clack.isCancel(newVersion)) {
+		process.exit(1)
+	}
+
 	let finalVersion: string
 	if (newVersion === 'custom') {
-		finalVersion = await input({
+		const customVersion = await clack.text({
 			message: 'Enter custom version (without "v" prefix):',
-			validate: (value: string) => {
+			validate: (value) => {
 				if (!semver.valid(value)) {
 					return 'Please enter a valid semantic version (e.g., 1.2.3)'
 				}
 				if (semver.lte(value, currentVersion)) {
 					return `Version must be greater than current version ${currentVersion}`
 				}
-				return true
 			},
 		})
+
+		if (clack.isCancel(customVersion)) {
+			process.exit(1)
+		}
+
+		finalVersion = customVersion
 	} else {
-		finalVersion = newVersion
+		finalVersion = newVersion as string
 	}
 
 	return finalVersion
@@ -156,6 +185,6 @@ async function createVersionCommitAndTag(version: string) {
 		console.log(`  git push && git push --tags`)
 	} catch (error: any) {
 		console.error('Error creating commit and tag:', error.message)
-		Deno.exit(1)
+		process.exit(1)
 	}
 }

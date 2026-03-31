@@ -5,7 +5,10 @@
 		"checkJs": true,
 		"module": "node16",
 		"moduleResolution": "node16",
-		"lib": ["es2022", "DOM"],
+		"lib": [
+			"es2022",
+			"dom"
+		],
 		"noUnusedLocals": false,
 		"noUnusedParameters": false,
 		"baseUrl": "./",
@@ -14,11 +17,15 @@
 		"allowImportingTsExtensions": true,
 		"useUnknownInCatchVariables": false,
 		"paths": {
-			"#common": ["config/common.ts"],
-			"#types": ["./types.d.ts"],
-			"#webframeworklib": ["devserver/webframework/lib.ts"],
-			"#components/*": ["devserver/components/*"],
-			"#utilities/*": ["./utilities/*"]
+			"#common": [
+				"config/common.ts"
+			],
+			"#types": [
+				"./types.d.ts"
+			],
+			"#utilities/*": [
+				"./utilities/*"
+			]
 		}
 	}
 }
