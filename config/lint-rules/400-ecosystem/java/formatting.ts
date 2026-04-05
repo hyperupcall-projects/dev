@@ -11,7 +11,7 @@ export const issues: Issues = async function* issues() {
 
 		// This is a strict rule - only runs when --strict flag is passed
 		for await (
-			const issue of filesMustHaveContent({
+			const issue of filesMustHaveContent('eclipse-formatter', {
 				'formatter.xml': formatterContent,
 			})
 		) {

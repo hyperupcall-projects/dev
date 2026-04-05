@@ -16,7 +16,7 @@ export const issues: Issues = async function* issues({ project }) {
 			}
 		}
 
-		yield* filesMustHaveContent({
+		yield* filesMustHaveContent('github-funding', {
 			[fundingFile]: fundingFileContents,
 		})
 	}

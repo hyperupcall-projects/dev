@@ -27,25 +27,35 @@ export const issues: Issues = async function* issues({ project }) {
 	}
 
 	packageJson = JSON.parse(await fs.readFile('package.json', 'utf-8'))
-	if (packageJson.private) {
-		yield* filesMustHaveShape({
+	if (project.type === 'with-remote-url') {
+		if (packageJson.private) {
+			yield* filesMustHaveShape('package-json', {
+				'package.json': {
+					author: { __delete: null },
+					bugs: { __delete: null },
+					repository: { __delete: null },
+				},
+			})
+		} else {
+			yield* filesMustHaveShape('package-json', {
+				'package.json': {
+					author: 'Edwin Kofler <edwin@kofler.dev> (https://edwinkofler.com)',
+					bugs: {
+						url: `https://github.com/${project.owner}/${project.name}/issues`,
+					},
+					repository: {
+						type: 'git',
+						url: `https://github.com/${project.owner}/${project.name}`,
+					},
+				},
+			})
+		}
+	} else {
+		yield* filesMustHaveShape('package-json', {
 			'package.json': {
 				author: { __delete: null },
 				bugs: { __delete: null },
 				repository: { __delete: null },
-			},
-		})
-	} else {
-		yield* filesMustHaveShape({
-			'package.json': {
-				author: 'Edwin Kofler <edwin@kofler.dev> (https://edwinkofler.com)',
-				bugs: {
-					url: `https://github.com/${project.owner}/${project.name}/issues`,
-				},
-				repository: {
-					type: 'git',
-					url: `https://github.com/${project.owner}/${project.name}`,
-				},
 			},
 		})
 	}

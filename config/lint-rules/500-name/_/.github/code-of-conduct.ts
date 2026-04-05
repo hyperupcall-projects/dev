@@ -5,12 +5,11 @@ import type { Issues } from '#types'
 import { findCodeOfConductFiles } from '#common'
 
 /**
- * Check if the code of Conduct file (if it exists) conforms to my standards.
+ * Check if the code of Conduct file (if it exists) conforms to my rules.
  *
  * If the project is hosted on GitHub, there should be a Code of Conduct file. But,
  * the code of conduct file must exist in the organization's ".github" repository.
  */
-
 export const issues: Issues = async function* issues() {
 	const files = await findCodeOfConductFiles()
 

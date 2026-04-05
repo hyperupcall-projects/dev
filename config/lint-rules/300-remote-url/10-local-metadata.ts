@@ -3,7 +3,7 @@ import type { Issues } from '#types'
 
 export const issues: Issues = async function* issues({ project }) {
 	if (project.type !== 'with-remote-url') {
-		throw new Error(`Expected project to be associated with a remote`)
+		throw new Error(`Expected project to be associated with a remote forge`)
 	}
 
 	const { data } = await octokit.rest.repos.get({

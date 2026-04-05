@@ -13,12 +13,12 @@ import { globby } from 'globby'
 import ansiEscapes from 'ansi-escapes'
 import * as jsonc from 'jsonc-parser'
 import { parseJSON } from 'jsonc-eslint-parser'
-import { xdgConfig } from 'xdg-basedir'
 import { getEcosystems } from '../devutils/index.ts'
 
 import type { CommandFixOptions, Config, Issue, Project } from '#types'
 import _ from 'lodash'
 import process from 'node:process'
+import { mergeJSONWithComments } from '#utilities/util.ts'
 
 export async function run(options: CommandFixOptions, positionals: string[]) {
 	if (positionals.length > 0) {
@@ -53,8 +53,11 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 
 	// Fix editor settings.
 	if (await fileExists('.vscode/settings.json')) {
+		const configDir = (process.env.XDG_CONFIG_HOME ?? '').startsWith('/')
+			? (process.env.XDG_CONFIG_HOME ?? '')
+			: path.join(os.homedir(), '.config')
 		const userSettingsJsonFile = path.join(
-			xdgConfig,
+			configDir,
 			'Code/User/settings.json',
 		)
 		const defaultTitle = jsonc.parse(
@@ -147,6 +150,9 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 			case 'python':
 				await collect(`400-ecosystem/python/*`)
 				break
+			case 'rust':
+					await collect(`400-ecosystem/rust/*`)
+					break
 			case 'zed-extension':
 				await collect(`400-ecosystem/zed-extension/*`)
 				break
@@ -256,7 +262,7 @@ async function fixFromFile(
 				console.info(
 					`[${styleText('yellow', 'SKIP')}] ${fixId}${issue.id ? '/' + issue.id : ''}: ${issue.skip}`,
 				)
-				continue
+				return
 			}
 
 			if (issue.strict && !options.strict) {
@@ -278,7 +284,7 @@ async function fixFromFile(
 				}
 			}
 
-			console.info(`[EVAL] ${fixId}`)
+			console.info(`[QUES] ${fixId}`)
 			if (Array.isArray(issue.message)) {
 				for (const message of issue.message) {
 					console.info(` -> ${message}`)
@@ -415,11 +421,11 @@ function printWithTips(str: string, tips: string[]) {
 	}
 }
 
+// TODO: revisit and duplication with task.ts toggletools
 async function mergeVSCodeESLintSettings(settingsPath: string) {
 	const settingsText = await fs.readFile(settingsPath, 'utf-8')
 	const ast = parseJSON(settingsText)
 
-	// ESLint settings from antfu/eslint-config VSCode section
 	const vscodeConfigPath = path.join(pkgRoot(), 'config/vscode-config.jsonc')
 	const settingsToAdd = jsonc.parse(
 		await fs.readFile(vscodeConfigPath, 'utf-8'),
@@ -440,153 +446,4 @@ async function mergeZedESLintSettings(settingsPath: string) {
 
 	const output = mergeJSONWithComments(settingsText, ast, settingsToMerge)
 	await fs.writeFile(settingsPath, output)
-}
-
-function mergeJSONWithComments(
-	originalText: string,
-	ast: any,
-	newSettings: Record<string, any>,
-): string {
-	const replacements: Array<{ key: string; oldValue: any; newValue: any }> = []
-	const arrayMerges: Array<{ key: string; added: any[] }> = []
-	const additions: Array<{ key: string }> = []
-
-	function deepEquals(a: any, b: any): boolean {
-		if (a === b) return true
-		if (a == null || b == null) return false
-		if (typeof a !== typeof b) return false
-
-		if (Array.isArray(a) && Array.isArray(b)) {
-			if (a.length !== b.length) return false
-			return a.every((val, idx) => deepEquals(val, b[idx]))
-		}
-
-		if (typeof a === 'object' && typeof b === 'object') {
-			const keysA = Object.keys(a)
-			const keysB = Object.keys(b)
-			if (keysA.length !== keysB.length) return false
-			return keysA.every((key) => deepEquals(a[key], b[key]))
-		}
-
-		return false
-	}
-
-	const existingJson =
-		ast.type === 'JSONObjectExpression' ? jsonASTToValue(ast) : {}
-
-	function deepMerge(
-		newObj: Record<string, any>,
-		existingObj: any,
-		pathPrefix: string[] = [],
-	): any {
-		const result: Record<string, any> = { ...existingObj }
-
-		for (const [key, newValue] of Object.entries(newObj)) {
-			const path = [...pathPrefix, key]
-			const pathStr = path.join('.')
-			const existingValue = existingObj?.[key]
-
-			if (existingValue === undefined) {
-				result[key] = newValue
-				additions.push({ key: pathStr })
-			} else if (Array.isArray(newValue) && Array.isArray(existingValue)) {
-				const elementsToAdd: any[] = []
-				for (const newElement of newValue) {
-					const exists = existingValue.some((existingElement) =>
-						deepEquals(newElement, existingElement),
-					)
-					if (!exists) {
-						elementsToAdd.push(newElement)
-					}
-				}
-
-				if (elementsToAdd.length > 0) {
-					result[key] = [...existingValue, ...elementsToAdd]
-					arrayMerges.push({ key: pathStr, added: elementsToAdd })
-				}
-			} else if (
-				typeof newValue === 'object' &&
-				newValue !== null &&
-				!Array.isArray(newValue) &&
-				typeof existingValue === 'object' &&
-				existingValue !== null &&
-				!Array.isArray(existingValue)
-			) {
-				result[key] = deepMerge(newValue, existingValue, path)
-			} else {
-				result[key] = newValue
-				replacements.push({
-					key: pathStr,
-					oldValue: existingValue,
-					newValue,
-				})
-			}
-		}
-
-		return result
-	}
-
-	const mergedJson = deepMerge(newSettings, existingJson)
-
-	for (const { key } of additions) {
-		console.info(`  ${styleText('green', 'ADD')} ${key}`)
-	}
-	for (const { key, oldValue, newValue } of replacements) {
-		console.info(
-			`  ${styleText('yellow', 'REPLACE')} ${key}: ${JSON.stringify(oldValue)} → ${JSON.stringify(
-				newValue,
-			)}`,
-		)
-	}
-	for (const { key, added } of arrayMerges) {
-		console.info(
-			`  ${styleText('cyan', 'MERGE')} ${key}: added ${added.length} new element(s): ${JSON.stringify(
-				added,
-			)}`,
-		)
-	}
-
-	let output = originalText
-
-	for (const [key, value] of Object.entries(mergedJson)) {
-		const edits = jsonc.modify(output, [key], value, {
-			formattingOptions: { tabSize: 1, insertSpaces: false },
-		})
-		output = jsonc.applyEdits(output, edits)
-	}
-
-	return output
-}
-
-function jsonASTToValue(node: any): any {
-	if (!node) return undefined
-
-	switch (node.type) {
-		case 'JSONObjectExpression': {
-			const obj: Record<string, any> = {}
-			if (node.properties) {
-				for (const prop of node.properties) {
-					if (prop.key?.type === 'JSONLiteral') {
-						obj[prop.key.value] = jsonASTToValue(prop.value)
-					}
-				}
-			}
-			return obj
-		}
-		case 'JSONArrayExpression':
-			return node.elements ? node.elements.map(jsonASTToValue) : []
-
-		case 'JSONLiteral':
-			return node.value
-
-		case 'JSONIdentifier':
-			return node.name === 'true'
-				? true
-				: node.name === 'false'
-					? false
-					: null
-
-		default:
-			return undefined
-	}
 }

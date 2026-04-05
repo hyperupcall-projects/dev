@@ -14,14 +14,14 @@ export const issues: Issues = async function* issues({ project }) {
 		extends: './node_modules/@hyperupcall/markdownlint-config/.markdownlint.json',
 	}
 
-	yield* filesMustHaveShape({
+	yield* filesMustHaveShape('package-json', {
 		'package.json': {
 			'markdownlint-cli2': markdownlintConfig,
 		},
 	})
 
 	// https://github.com/DavidAnson/markdownlint-cli2#configuration
-	yield* filesMustHaveContent({
+	yield* filesMustHaveContent('markdownlint', {
 		'.markdownlint-cli2.jsonc': null,
 		'.markdownlint-cli2.yaml': null,
 		'.markdownlint-cli2.cjs': null,

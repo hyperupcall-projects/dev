@@ -12,7 +12,7 @@ export const issues: Issues = async function* issues({ project }) {
 			'./node_modules/@hyperupcall/npm-package-json-lint-config/npmpackagejsonlintrc.json',
 	}
 
-	yield* filesMustHaveShape({
+	yield* filesMustHaveShape('package-json', {
 		'package.json': {
 			npmpackagejsonlint: {
 				extends: 'npm-package-json-lint-config-default',
@@ -21,7 +21,7 @@ export const issues: Issues = async function* issues({ project }) {
 	})
 
 	// https://npmpackagejsonlint.org/docs/configuration#config-sources
-	yield* filesMustHaveContent({
+	yield* filesMustHaveContent('npmPackageJsonLint', {
 		'.npmpackagejsonlintrc': null,
 		'.npmpackagejsonlintrc.json': null,
 		'npmpackagejsonlint.config.ts': null,

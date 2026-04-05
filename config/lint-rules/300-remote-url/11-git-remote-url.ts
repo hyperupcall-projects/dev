@@ -3,6 +3,10 @@ import type { Issues } from '#types'
 import { styleText } from 'node:util'
 
 export const issues: Issues = async function* issues({ project }) {
+	if (project.type !== 'with-remote-url') {
+		throw new Error(`Expected project to be associated with a remote forge`)
+	}
+
 	const output = await execa('git', ['remote', '--verbose'])
 	if (!output.stdout) return
 

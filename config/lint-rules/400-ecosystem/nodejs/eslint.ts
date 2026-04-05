@@ -18,7 +18,7 @@ export const issues: Issues = async function* issues({ project }) {
 
 		// https://eslint.org/docs/latest/use/configure/configuration-files-deprecated
 		// https://eslint.org/docs/latest/use/configure/configuration-files
-		yield* filesMustHaveContent({
+		yield* filesMustHaveContent('eslint', {
 			'.eslintrc.ts': null,
 			'.eslintrc.cjs': null,
 			'.eslintrc.yaml': null,
@@ -31,7 +31,7 @@ export const issues: Issues = async function* issues({ project }) {
 			'eslint.config.mts': null,
 			'eslint.config.cts': null,
 		})
-		yield* filesMustHaveShape({
+		yield* filesMustHaveShape('package-json', {
 			'package.json': {
 				eslintConfig: { __delete: null },
 			},
@@ -41,7 +41,7 @@ export const issues: Issues = async function* issues({ project }) {
 	// Check that all the necessary dependencies are installed.
 	{
 		const [version] = await getNpmLatestVersion(['@hyperupcall/scripts-nodejs'])
-		yield* filesMustHaveShape({
+		yield* filesMustHaveShape('package-json', {
 			'package.json': {
 				scripts: {
 					lint: 'hyperupcall-scripts-nodejs lint',

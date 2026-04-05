@@ -11,6 +11,7 @@
   "scripts": {
     "format": "hyperupcall-scripts-nodejs format",
     "lint": "hyperupcall-scripts-nodejs lint",
+    "typecheck": "tsc -p .",
     "test": "node ./test/test.ts",
     "cli": "node --enable-source-maps ./bin/dev.ts",
     "dev": "vite dev --config ./vite.config.ts",
@@ -64,14 +65,16 @@
     "vite": "^7.1.12",
     "vite-plugin-solid": "^2.11.8",
     "ws": "^8.20.0",
-    "xdg-basedir": "^5.1.0",
     "yaml": "^2.8.3",
     "yn": "^5.1.0"
   },
   "devDependencies": {
+    "@hyperupcall/scripts-nodejs": "0.8.0",
     "@octokit/types": "^16.0.0",
     "@types/better-sqlite3": "^7.6.13",
+    "@types/ignore-walk": "^4.0.3",
     "@types/lodash": "^4.17.24",
+    "@types/micromatch": "^4.0.10",
     "@types/node": "^25.5.0",
     "@types/semver": "^7.7.1",
     "@types/terminal-kit": "^2.5.7",
@@ -79,7 +82,7 @@
     "jsonc-eslint-parser": "^3.1.0",
     "kysely-codegen": "^0.18.5",
     "type-fest": "^4.41.0",
-    "@hyperupcall/scripts-nodejs": "0.8.0"
+    "typescript": "^6.0.2"
   },
   "markdownlint-cli2": {
     "extends": "./node_modules/@hyperupcall/markdownlint-config/.markdownlint.json"

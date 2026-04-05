@@ -1,5 +1,8 @@
 {
+	// TODO: do not ignore devserver/src
+	"exclude": ["**/config/templates/**", "**/devserver/dist/**", "**/devserver/src/**", "**/devserver/src/routeTree.gen.ts"],
 	"compilerOptions": {
+		"skipLibCheck": true,
 		"strict": true,
 		"noImplicitAny": true,
 		"checkJs": true,
@@ -11,14 +14,13 @@
 		],
 		"noUnusedLocals": false,
 		"noUnusedParameters": false,
-		"baseUrl": "./",
 		"forceConsistentCasingInFileNames": true,
 		"noEmit": true,
 		"allowImportingTsExtensions": true,
 		"useUnknownInCatchVariables": false,
 		"paths": {
 			"#common": [
-				"config/common.ts"
+				"./config/common.ts"
 			],
 			"#types": [
 				"./types.d.ts"

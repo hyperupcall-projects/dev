@@ -6,8 +6,13 @@ import type { Issues } from '#types'
 /**
  * Check that the repository does not have a license.
  */
+export const issues: Issues = async function* issues({ project }) {
+	if (project.type !== 'only-directory') {
+		yield {
+			skip: 'Project must have type of "only-directory"'
+		}
+	}
 
-export const issues: Issues = async function* issues() {
 	const files = await globby(['*license*', '.github/*readme*'], {
 		caseSensitiveMatch: false,
 	})

@@ -59,9 +59,9 @@ export async function run(
 			'ecc-cs-club/*',
 			'quasipanacea/*',
 			'semantic-hotkeys/*',
-			'fox-archives/*',
-			'fox-templates/*',
-			'fox-forks/*',
+			'hyperupcall-archives/*',
+			'hyperupcall-templates/*',
+			'hyperupcall-forks/*',
 
 			'fix-js/*',
 			'big-blocks/*',
@@ -91,7 +91,7 @@ export async function run(
 				'gamedevunite-at-smc/*',
 				'cs-club-smc/*',
 				'hyperupcall-archives/*',
-				'fox-forks/*', // TODO
+				'hyperupcall-forks/*', // TODO
 				'foxium-browser/*',
 				'hyperupcall-forks/*',
 				'asdf-contrib-hyperupcall/*',

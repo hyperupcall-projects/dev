@@ -1,5 +1,4 @@
 /* eslint-disable no-param-reassign */
-
 export const paginate = (schema) => {
 	/**
 	 * @typedef {Object} QueryResult

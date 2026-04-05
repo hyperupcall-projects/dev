@@ -1,0 +1,140 @@
+{
+	"editor.formatOnSave": true,
+	"files.insertFinalNewline": true,
+
+	// JAVASCRIPT/TYPESCRIPT
+	"[javascript]": {
+		"editor.formatOnSave": true
+	},
+	"[javascriptreact]": {
+		"editor.formatOnSave": true
+	},
+	"[typescript]": {
+		"editor.formatOnSave": true
+	},
+	"[typescriptreact]": {
+		"editor.formatOnSave": true
+	},
+	"[graphql]": {
+		"editor.formatOnSave": true
+	},
+	"eslint.enable": true,
+
+	// JSON
+	"[json]": {
+		"editor.formatOnSave": true
+	},
+	"[jsonnet]": {
+		"editor.formatOnSave": true
+	},
+
+	// TOML
+	"[toml]": {
+		"editor.formatOnSave": true
+	},
+
+	// YAML
+	"[yaml]": {
+		"editor.formatOnSave": true
+	},
+	"yaml.format.enable": true,
+	"yaml.validate": true,
+
+	// HTML
+	"[html]": {
+		"editor.formatOnSave": true
+	},
+	"html.format.enable": true,
+	"[vue]": {
+		"editor.formatOnSave": true
+	},
+	"[handlebars]": {
+		"editor.formatOnSave": true
+	},
+
+	// CSS
+	"[css]": {
+		"editor.formatOnSave": true
+	},
+	"css.validate": true,
+	"[scss]": {
+		"editor.formatOnSave": true
+	},
+	"scss.validate": true,
+
+	// MARKDOWN
+	"[markdown]": {
+		"editor.formatOnSave": true
+	},
+	"[juliamarkdown]": {
+		"editor.formatOnSave": true
+	},
+	"markdownlint.severityForWarning": "Warning",
+	"markdownlint.severityForError": "Warning",
+
+	// PYTHON
+	"[python]": {
+		"editor.formatOnSave": true
+	},
+	"python.analysis.typeCheckingMode": "basic",
+	"ruff.enable": true,
+
+	// GO
+	"[go]": {
+		"editor.formatOnSave": true
+	},
+
+	// JAVA
+	"[java]": {
+		"editor.formatOnSave": true
+	},
+	"[kotlin]": {
+		"editor.formatOnSave": true
+	},
+	"[gradle]": {
+		"editor.formatOnSave": true
+	},
+	"java.format.onType.enabled": true,
+
+	// PERL
+	"[perl]": {
+		"editor.formatOnSave": true
+	},
+
+	// DOCKER
+	"[dockerfile]": {
+		"editor.formatOnSave": true
+	},
+
+	// RUST
+	"[rust]": {
+		"editor.formatOnSave": true
+	},
+
+	// LATEX
+	"[latex]": {
+		"editor.formatOnSave": true
+	},
+
+	// C/C++
+	"[c]": {
+		"editor.formatOnSave": true
+	},
+	"[cpp]": {
+		"editor.formatOnSave": true
+	},
+	"[cuda-cpp]": {
+		"editor.formatOnSave": true
+	},
+
+	// SHELLS
+	"[shellscript]": {
+		"editor.formatOnSave": true
+	},
+	"shellcheck.enable": true,
+	"[fish]": {
+		"editor.formatOnSave": true
+	},
+
+	"cSpell.enabled": true
+}

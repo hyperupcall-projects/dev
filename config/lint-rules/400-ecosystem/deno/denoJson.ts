@@ -24,7 +24,7 @@ export const issues: Issues = async function* issues() {
 		}
 	}
 
-	yield* filesMustHaveShape({
+	yield* filesMustHaveShape('deno.jsonc', {
 		'deno.jsonc': {
 			fmt: {
 				useTabs: true,

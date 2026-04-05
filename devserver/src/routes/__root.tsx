@@ -1,4 +1,3 @@
-/// <reference types="vite/client" />
 import 'bulma/css/bulma.css'
 import * as Solid from 'solid-js'
 import { onMount } from 'solid-js'

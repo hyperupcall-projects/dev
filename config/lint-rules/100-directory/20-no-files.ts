@@ -4,13 +4,13 @@ import { filesMustHaveContent, filesMustHaveName } from '#common'
 /**
  * Check that certain files do not exist.
  */
-
 export const issues: Issues = async function* issues() {
 	yield* filesMustHaveName({
 		'dev.toml': ['project.toml'],
 	})
 
-	yield* filesMustHaveContent({
+	yield* filesMustHaveContent('foxxo', {
 		'foxxo.toml': null,
+		'foxxy.toml': null,
 	})
 }

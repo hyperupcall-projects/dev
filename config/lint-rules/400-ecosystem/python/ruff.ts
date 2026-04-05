@@ -16,7 +16,8 @@ export const issues: Issues = async function* issues({ project }) {
 	// Check that there is only one configuration file.
 	{
 		const configContent = `[lint]
-# https://docs.astral.sh/ruff/formatter/#format-suppression
+# Disable linting rules that conflict with the formatter.
+# See more: https://docs.astral.sh/ruff/formatter/#conflicting-lint-rules.
 ignore = [
 	'W191',   # tab-indentation
 	'E111',   # indentation-with-invalid-multiple
@@ -35,24 +36,26 @@ ignore = [
 [format]
 docstring-code-format = true
 docstring-code-line-length = 20
+quote-style = 'single'
 indent-style = 'tab'
 `
 
 		// https://docs.astral.sh/ruff/configuration/#config-file-discovery
-		yield* filesMustHaveContent({
+		yield* filesMustHaveContent('ruff', {
 			'ruff.toml': configContent,
 		})
 
-		if (await fileExists('pyproject.toml')) {
-			yield* filesMustHaveShape({
-				'pyproject.toml': {
-					tool: {
-						ruff: {
-							__delete: null,
-						},
-					},
-				},
-			})
-		}
+		// TODO: filesMustHaveShape TOML
+		// if (await fileExists('pyproject.toml')) {
+		// 	yield* filesMustHaveShape('pyproject-toml', {
+		// 		'pyproject.toml': {
+		// 			tool: {
+		// 				ruff: {
+		// 					__delete: null,
+		// 				},
+		// 			},
+		// 		},
+		// 	})
+		// }
 	}
 }

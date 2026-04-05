@@ -1,24 +1,15 @@
-import { filesMustHaveContent } from '#common'
+import {
+	filesMustHaveContent,
+	pkgRoot,
+} from '#common'
+import fs from 'node:fs/promises'
+import path from 'node:path'
 import type { Issues } from '#types'
-import dedent from 'dedent'
 
 export const issues: Issues = async function* issues() {
-	const content = dedent`
-		# Requires clang-format 19.
-		{
-		  BasedOnStyle: LLVM,
-		  UseTab: Never,
-		  IndentWidth: 3,
-		  TabWidth: 3,
-		  ContinuationIndentWidth: 3,
-		  AlignAfterOpenBracket: BlockIndent,
-		  AlignEscapedNewlines: LeftWithLastLine,
-		  AllowShortFunctionsOnASingleLine: None,
-		  BreakTemplateDeclarations: true,
-		  AllowShortIfStatementsOnASingleLine: WithoutElse,
-		  AllowShortLoopsOnASingleLine: false,
-		  AllowShortBlocksOnASingleLine: Never,
-		  ColumnLimit: 120,
-		}\n`
-	yield* filesMustHaveContent({ '.clang-format': content })
+	yield* filesMustHaveContent('clang-format', {
+		'.clang-format': await fs.readFile(
+			path.join(pkgRoot(), 'config/.clang-format'), 'utf-8',
+		),
+	})
 }

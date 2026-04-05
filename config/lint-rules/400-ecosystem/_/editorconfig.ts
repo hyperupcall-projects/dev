@@ -8,7 +8,6 @@ import type { Issues } from '#types'
 /**
  * Check that the EditorConfig file exists and has the correct content.
  */
-
 export const issues: Issues = async function* issues() {
 	const configFile = '.editorconfig'
 	const configPath = path.join(pkgRoot(), 'config', configFile)

@@ -10,7 +10,8 @@ export const issues: Issues = async function* issues() {
 	// Check that there is only one configuration file.
 	{
 		// https://prettier.io/docs/en/configuration.html
-		yield* filesMustHaveContent({
+		// TODO: filesMustHaveName
+		yield* filesMustHaveContent('prettier', {
 			'.prettierrc': null,
 			'.prettierrc.json': null,
 			'.prettierrc.yml': null,
@@ -25,7 +26,7 @@ export const issues: Issues = async function* issues() {
 			'.prettierrc.toml': null,
 		})
 
-		yield* filesMustHaveShape({
+		yield* filesMustHaveShape('package-json', {
 			'package.json': {
 				prettier: '@hyperupcall/scripts-nodejs/config-prettier.js',
 			},
@@ -35,7 +36,7 @@ export const issues: Issues = async function* issues() {
 	// Check that all the necessary dependencies are installed.
 	{
 		const [version] = await getNpmLatestVersion(['@hyperupcall/scripts-nodejs'])
-		yield* filesMustHaveShape({
+		yield* filesMustHaveShape('package-json', {
 			'package.json': {
 				scripts: {
 					format: 'hyperupcall-scripts-nodejs format',

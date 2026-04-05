@@ -14,11 +14,17 @@ export async function getEcosystems(rootDir: string): Promise<string[]> {
 	if (await fileExists('package.json')) {
 		ecosystems.push('nodejs')
 
-		const content: PackageJson = JSON.parse(
-			await fs.readFile('package.json', 'utf-8'),
-		)
-		if (content.displayName) {
-			ecosystems.push('vscode-extension')
+		try {
+			const content: PackageJson = JSON.parse(
+				await fs.readFile('package.json', 'utf-8'),
+			)
+			if (content.displayName) {
+				ecosystems.push('vscode-extension')
+			}
+		} catch (err) {
+			if (!(err instanceof SyntaxError)) {
+				throw err
+			}
 		}
 	}
 
@@ -30,7 +36,7 @@ export async function getEcosystems(rootDir: string): Promise<string[]> {
 		ecosystems.push('c')
 	}
 
-	if ((await globby('*.py')).length > 0) {
+	if (await fileExists('pyproject.toml') || (await globby('*.py')).length > 0) {
 		ecosystems.push('python')
 	}
 
@@ -46,9 +52,7 @@ export async function getEcosystems(rootDir: string): Promise<string[]> {
 			ecosystems.push('cpp')
 		} else {
 			// TODO
-			console.error(
-				`CMAkeLists.txt should have language defined in project()`,
-			)
+			console.error(`CMAkeLists.txt should have language defined in project()`)
 			process.exit(1)
 		}
 	}
@@ -57,7 +61,7 @@ export async function getEcosystems(rootDir: string): Promise<string[]> {
 		ecosystems.push('bash')
 	}
 
-	if (await fileExists('manifest.ini') && await fileExists('tools')) {
+	if ((await fileExists('manifest.ini')) && (await fileExists('tools'))) {
 		ecosystems.push('woof-plugin')
 	}
 
@@ -67,10 +71,15 @@ export async function getEcosystems(rootDir: string): Promise<string[]> {
 	}
 
 	if (
-		(await fileExists('gradlew')) || (await fileExists('build.gradle')) ||
+		(await fileExists('gradlew')) ||
+		(await fileExists('build.gradle')) ||
 		(await fileExists('build.gradle.kts'))
 	) {
 		ecosystems.push('java')
+	}
+
+	if (await fileExists('Cargo.toml')) {
+		ecosystems.push('rust')
 	}
 
 	// TODO: Could be empty

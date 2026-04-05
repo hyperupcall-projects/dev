@@ -9,12 +9,11 @@ import type { Issues } from '#types'
 
 /**
  * Check that various fields of the the GitHub repository metadata conforms
- * to my standards.
+ * to my rules.
  */
-
 export const issues: Issues = async function* issues({ project }) {
 	if (project.type !== 'with-remote-url') {
-		throw new Error(`Expected project to be associated with a remote`)
+		throw new Error(`Expected project to be associated with a remote forge`)
 	}
 
 	const maxDescriptionLength = 96

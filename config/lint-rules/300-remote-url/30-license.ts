@@ -3,7 +3,8 @@ import path from 'node:path'
 import process from 'node:process'
 import spdxLicenseList from 'spdx-license-list/full.js'
 import * as clack from '@clack/prompts'
-
+import type { Issues } from '#types'
+import { styleText } from 'node:util'
 import { pkgRoot } from '#common'
 import { globby } from 'globby'
 
@@ -13,14 +14,17 @@ import { globby } from 'globby'
  * See more: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/licensing-a-repository
  */
 
-import type { Issues } from '#types'
-import { styleText } from 'node:util'
-export const issues: Issues = async function* issues() {
+export const issues: Issues = async function* issues({ project }) {
+	if (project.type !== 'with-remote-url') {
+		throw new Error(`Expected project to be associated with a remote forge`)
+	}
+
 	// Check that the number and names of licenses are correct
 	{
 		const files = await globby(['*license*'], { caseSensitiveMatch: false })
 		if (files.length === 0) {
 			yield {
+				id: 'must-have-license-file',
 				message: [
 					'Expected to find a license file',
 					'But, found no license file was found',
@@ -79,6 +83,7 @@ export const issues: Issues = async function* issues() {
 		} else if (files.length === 1) {
 			if (files[0] !== 'LICENSE') {
 				yield {
+					id: 'must-have-license-file',
 					message: [
 						'For a single license file, expected the file to have a name of "LICENSE"',
 						`But, found license file with name of "${files[0]}"`,
@@ -89,6 +94,7 @@ export const issues: Issues = async function* issues() {
 		} else if (files.length > 1) {
 			if (files.some((file) => !file.startsWith('LICENSE-'))) {
 				yield {
+					id: 'must-have-license-file',
 					message: [
 						'For multiple license files, expected to find all of their names prefixed with "LICENSE-"',
 						'But, found at least one without that prefix',
@@ -108,6 +114,7 @@ export const issues: Issues = async function* issues() {
 			const content = await fs.readFile(file, 'utf-8')
 			if (content.length === 0) {
 				yield {
+					id: 'must-have-correct-contents',
 					message: [
 						'Expected to find all license files with content',
 						`But, found license file "${file}" with no content`,

@@ -59,6 +59,7 @@ export async function* filesMustHaveName(
 }
 
 export async function* filesMustHaveContent(
+	id: string,
 	mapping: Record<string, null | string>,
 ): AsyncGenerator<Issue> {
 	for (let file in mapping) {
@@ -71,6 +72,7 @@ export async function* filesMustHaveContent(
 		if (expectedContent === null) {
 			if (await fileExists(file)) {
 				yield {
+					id: `${id}-must-have-content`,
 					message: [`Expected file "${file}" to not exist`, 'But, found the file'],
 					fix: () => fs.rm(file),
 				}
@@ -80,7 +82,8 @@ export async function* filesMustHaveContent(
 				const content = await fs.readFile(file, 'utf-8')
 				if (content !== expectedContent) {
 					yield {
-						message: dedent`
+						id: `${id}-must-have-content`,
+						message: dedent.withOptions({ alignValues: true })`
 							-> Expected file "${file}" to have content:
 							${'='.repeat(80)}
 							${expectedContent}
@@ -95,7 +98,8 @@ export async function* filesMustHaveContent(
 				}
 			} else {
 				yield {
-					message: dedent`
+					id: `${id}-must-have-content`,
+					message: dedent.withOptions({ alignValues: true })`
 						-> Expected file "${file}" to exist and have content:
 						${'='.repeat(80)}
 						${expectedContent}
@@ -113,6 +117,7 @@ export async function* filesMustHaveContent(
 }
 
 export async function* filesMustHaveShape(
+	id: string,
 	mapping: Record<string, Record<string, unknown>>,
 ): AsyncGenerator<Issue> {
 	for (let file in mapping) {
@@ -139,10 +144,12 @@ export async function* filesMustHaveShape(
 				.replaceAll(/\n-(?!\-)/g, '\n' + styleText('red', '-'))
 
 			yield {
-				message: dedent`
+				id: `${id}-must-have-correct-shape`,
+				message: dedent.withOptions({ alignValues: true })`
 					-> Expected file "${file}" to have the correct shape:
 					${'='.repeat(80)}
-					${patch.replaceAll('\n', '\n' + '\t'.repeat(5))}${'='.repeat(80)}
+					${patch}
+					${'='.repeat(80)}
 					`,
 				fix: () =>
 					fs.writeFile(
@@ -171,6 +178,7 @@ export async function* packageJsonMustNotHaveDependencies(substr: string) {
 		for (const dependencyName in packageJson[dependencyKey] ?? {}) {
 			if (dependencyName.includes(substr)) {
 				yield {
+					id: `${substr}-must-not-have-dependencies`,
 					message: [
 						`Expected to find no dependencies that included the string "${substr}"`,
 						`But, found "${dependencyName}"`,

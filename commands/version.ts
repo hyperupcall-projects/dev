@@ -146,7 +146,7 @@ async function askForNewVersion(currentVersion: string) {
 		const customVersion = await clack.text({
 			message: 'Enter custom version (without "v" prefix):',
 			validate: (value) => {
-				if (!semver.valid(value)) {
+				if (!value || !semver.valid(value)) {
 					return 'Please enter a valid semantic version (e.g., 1.2.3)'
 				}
 				if (semver.lte(value, currentVersion)) {

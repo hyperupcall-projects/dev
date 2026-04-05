@@ -1,0 +1,72 @@
+{
+	"format_on_save": "on",
+	"languages": {
+		"JavaScript": {
+			"format_on_save": "on"
+		},
+		"TypeScript": {
+			"format_on_save": "on"
+		},
+		"JSON": {
+			"format_on_save": "on"
+		},
+		"TOML": {
+			"format_on_save": "on"
+		},
+		"YAML": {
+			"format_on_save": "on"
+		},
+		"HTML": {
+			"format_on_save": "on"
+		},
+		"CSS": {
+			"format_on_save": "on"
+		},
+		"Markdown": {
+			"format_on_save": "on"
+		},
+		"Markdown-Inline": {
+			"format_on_save": "on"
+		},
+		"Python": {
+			"format_on_save": "on"
+		},
+		"Go": {
+			"format_on_save": "on"
+		},
+		"Java": {
+			"format_on_save": "on"
+		},
+		"Kotlin": {
+			"format_on_save": "on"
+		},
+		"Perl": {
+			"format_on_save": "on"
+		},
+		"Rust": {
+			"format_on_save": "on"
+		},
+		"LaTeX": {
+			"format_on_save": "on"
+		},
+		"C": {
+			"format_on_save": "on"
+		},
+		"C++": {
+			"format_on_save": "on"
+		},
+		"Shell Script": {
+			"format_on_save": "on"
+		},
+	},
+	"lsp": {
+		"ruff": {
+			"initialization_options": {
+				"settings": {
+					"lint": { "enable": true },
+					"format": { "enable": true }
+				}
+			},
+		},
+	}
+}

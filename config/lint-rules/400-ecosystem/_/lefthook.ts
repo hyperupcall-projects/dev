@@ -12,7 +12,7 @@ export const issues: Issues = async function* issues() {
 			'.lefthook.yaml': ['.lefthook.yml', 'lefthook.yaml', 'lefthook.yml'],
 		})
 
-		yield* filesMustHaveContent({
+		yield* filesMustHaveContent('lefthook', {
 			'.lefthook.toml': null,
 			'.lefthook.json': null,
 			'lefthook.toml': null,

@@ -1,14 +1,12 @@
 {
-	// Disable Prettier and default formatting in favor of ESLint
-	"prettier.enable": false,
-	"editor.formatOnSave": false,
 
 	// Auto fix on save using ESLint
-	"editor.codeActionsOnSave": {
-		"source.fixAll.eslint": "explicit",
-		"source.organizeImports": "never",
-	},
+	// "editor.codeActionsOnSave": {
+	// 	"source.fixAll.eslint": "explicit",
+	// 	"source.organizeImports": "never",
+	// },
 
+	// ESLint settings from antfu/eslint-config VSCode section.
 	// Silent the stylistic rules in your IDE, but still auto fix them
 	"eslint.rules.customizations": [
 		{ "rule": "style/*", "severity": "off", "fixable": true },

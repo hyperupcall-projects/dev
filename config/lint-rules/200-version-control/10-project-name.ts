@@ -6,9 +6,11 @@ import type { Issues } from '#types'
 /**
  * Check that the name of the remote repository matches the local directory name.
  */
-
 export const issues: Issues = async function* issues({ project }) {
-	// Loop through all remotes instead of just `project.name`.
+	if (project.type === 'only-directory') {
+		throw new Error(`Expected project to be associated with a Git repository`)
+	}
+
 	const output = await execa('git', ['remote', '--verbose'])
 	if (!output.stdout) return
 

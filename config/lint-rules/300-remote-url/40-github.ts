@@ -4,7 +4,11 @@ import { fileExists } from '#common'
 import { globby } from 'globby'
 import type { Issues } from '#types'
 
-export const issues: Issues = async function* issues() {
+export const issues: Issues = async function* issues({ project }) {
+	if (project.type !== 'with-remote-url') {
+		throw new Error(`Expected project to be associated with a remote forge`)
+	}
+
 	const workflowsDir = '.github/workflows'
 
 	if (!(await fileExists(workflowsDir))) {
