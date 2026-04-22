@@ -308,7 +308,6 @@ async function createVSCodeLaunchers(positionals: string[]) {
 				'edwinkofler.vscode-hyperupcall-pack-bundled-themes',
 				"edwinkofler.vscode-hyperupcall-pack-icons",
 				'edwinkofler.vscode-hyperupcall-pack-markdown',
-				'edwinkofler.vscode-hyperupcall-pack-syntax',
 				`edwinkofler.${packageJson.name}`,
 			]
 		})
@@ -322,7 +321,6 @@ async function createVSCodeLaunchers(positionals: string[]) {
 			'edwinkofler.vscode-hyperupcall-pack-bundled-themes',
 			"edwinkofler.vscode-hyperupcall-pack-icons",
 			'edwinkofler.vscode-hyperupcall-pack-markdown',
-			'edwinkofler.vscode-hyperupcall-pack-syntax',
 			'edwinkofler.vscode-hyperupcall-pack-unix',
 			'edwinkofler.vscode-hyperupcall-pack-python',
 			'edwinkofler.vscode-hyperupcall-pack-rust',
@@ -420,25 +418,19 @@ Icon=${iconFile}`,
 	console.info(`${styleText('blue', variantName + ':')} Symlinked keybindings, settings, and snippets`)
 
 
-	if (
-		!fs.existsSync(vscodeDataDir) ||
-		!fs.existsSync(vscodeExtDir) ||
-		fs.readdirSync(vscodeExtDir).length < 2
-	) {
-		console.info(`${styleText('blue', variantName + ':')} Installing...`)
-
-		spawnSync(
-			'code',
-			[
-				'--user-data-dir',
-				vscodeDataDir,
-				'--extensions-dir',
-				vscodeExtDir,
-				...extensions.flatMap(ext => ['--install-extension', ext]),
-			],
-			{ stdio: 'inherit' },
-		)
-	}
+	console.info(`${styleText('blue', variantName + ':')} Installing...`)
+	spawnSync(
+		'code',
+		[
+			'--user-data-dir',
+			vscodeDataDir,
+			'--extensions-dir',
+			vscodeExtDir,
+			'--force',
+			...extensions.flatMap(ext => ['--install-extension', ext]),
+		],
+		{ stdio: 'inherit' },
+	)
 	console.info(`${styleText('blue', variantName + ':')} Installed extensions`)
 
 	{

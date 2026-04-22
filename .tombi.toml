@@ -1,6 +1,6 @@
 [format]
 [format.rules]
-string-quote-style = 'single'
+string-quote-style = "single"
 
 [lsp]
 goto-type-definition.enabled = false

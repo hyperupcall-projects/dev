@@ -4,9 +4,11 @@ import viteSolid from 'vite-plugin-solid'
 import path from 'node:path'
 
 export default defineConfig({
-	root: path.resolve(process.cwd(), 'start'),
 	server: {
-		port: 3000,
+		port: Number(process.env.PORT) ?? 3000,
+	},
+	preview: {
+		port:Number(process.env.PORT) ?? 4173,
 	},
 	publicDir: path.resolve(process.cwd(), 'static'),
 	plugins: [

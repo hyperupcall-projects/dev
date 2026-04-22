@@ -68,6 +68,19 @@
 		}
 	},
 	"languages": {
+		"TypeScript": {
+			"language_servers": [
+				"!deno",
+				"...",
+			]
+		},
+		"JavaScript": {
+			"language_servers": [
+				"!deno",
+				"...",
+
+			]
+		},
 		"HTML": {
 			"language_servers": [
 				"...",
@@ -111,10 +124,4 @@
 			"code_action": "source.fixAll.eslint"
 		}
 	],
-	// "format_on_save": "on",
-	// "formatter": [
-	// 	{
-	// 		"code_action": "source.fixAll.eslint"
-	// 	}
-	// ],
 }

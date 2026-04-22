@@ -5,6 +5,8 @@ import {
 import type { Issues } from '#types'
 
 export const issues: Issues = async function* issues() {
+	// TODO: Ensure is enabled: enableGlobDot: true
+
 	// Check that there is only one configuration file.
 	{
 		// https://cspell.org/docs/Configuration

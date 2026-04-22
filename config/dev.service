@@ -1,5 +1,5 @@
 [Unit]
-Description=Global Development Server
+Description=Edwin's Central Dev Server
 
 [Service]
 Type=notify

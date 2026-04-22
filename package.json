@@ -14,9 +14,9 @@
     "typecheck": "tsc -p .",
     "test": "node ./test/test.ts",
     "cli": "node --enable-source-maps ./bin/dev.ts",
-    "dev": "vite dev --config ./vite.config.ts",
-    "build": "vite build --config ./vite.config.ts",
-    "start": "vite dev --config ./vite.config.ts --host localhost --port 3000"
+    "dev": "cd devserver && vite dev --config ./vite.config.ts",
+    "build": "cd devserver && vite build --config ./vite.config.ts",
+    "start": "cd devserver && vite preview"
   },
   "dependencies": {
     "@clack/prompts": "^1.1.0",
