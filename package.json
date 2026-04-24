@@ -71,6 +71,7 @@
   "devDependencies": {
     "@hyperupcall/scripts-nodejs": "0.8.0",
     "@octokit/types": "^16.0.0",
+    "@rsbuild/core": "^2.0.1",
     "@types/better-sqlite3": "^7.6.13",
     "@types/ignore-walk": "^4.0.3",
     "@types/lodash": "^4.17.24",

@@ -9,16 +9,66 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UblockoriginCompiledDottxtRouteImport } from './routes/ublockorigin-compiled[.]txt'
+import { Route as UblacklistDottxtRouteImport } from './routes/ublacklist[.]txt'
+import { Route as UblacklistSeverity4DottxtRouteImport } from './routes/ublacklist-severity4[.]txt'
+import { Route as UblacklistSeverity3DottxtRouteImport } from './routes/ublacklist-severity3[.]txt'
+import { Route as UblacklistSeverity2DottxtRouteImport } from './routes/ublacklist-severity2[.]txt'
+import { Route as UblacklistSeverity1DottxtRouteImport } from './routes/ublacklist-severity1[.]txt'
+import { Route as UblacklistCompiledDottxtRouteImport } from './routes/ublacklist-compiled[.]txt'
 import { Route as ToolsRouteImport } from './routes/tools'
 import { Route as ServicesRouteImport } from './routes/services'
 import { Route as LintRouteImport } from './routes/lint'
+import { Route as CatalogsAdminRouteImport } from './routes/catalogs-admin'
 import { Route as CatalogsRouteImport } from './routes/catalogs'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ToolsDictionaryWatcherRouteImport } from './routes/tools/dictionary-watcher'
 import { Route as CatalogsSplatRouteImport } from './routes/catalogs/$'
 import { Route as ApiServicesRouteImport } from './routes/api/services'
+import { Route as ApiCatalogsRunScriptRouteImport } from './routes/api/catalogs/run-script'
 import { Route as ApiToolsDictionaryWatcherProcessFilesRouteImport } from './routes/api/tools/dictionary-watcher/process-files'
 
+const UblockoriginCompiledDottxtRoute =
+  UblockoriginCompiledDottxtRouteImport.update({
+    id: '/ublockorigin-compiled.txt',
+    path: '/ublockorigin-compiled.txt',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const UblacklistDottxtRoute = UblacklistDottxtRouteImport.update({
+  id: '/ublacklist.txt',
+  path: '/ublacklist.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UblacklistSeverity4DottxtRoute =
+  UblacklistSeverity4DottxtRouteImport.update({
+    id: '/ublacklist-severity4.txt',
+    path: '/ublacklist-severity4.txt',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const UblacklistSeverity3DottxtRoute =
+  UblacklistSeverity3DottxtRouteImport.update({
+    id: '/ublacklist-severity3.txt',
+    path: '/ublacklist-severity3.txt',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const UblacklistSeverity2DottxtRoute =
+  UblacklistSeverity2DottxtRouteImport.update({
+    id: '/ublacklist-severity2.txt',
+    path: '/ublacklist-severity2.txt',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const UblacklistSeverity1DottxtRoute =
+  UblacklistSeverity1DottxtRouteImport.update({
+    id: '/ublacklist-severity1.txt',
+    path: '/ublacklist-severity1.txt',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const UblacklistCompiledDottxtRoute =
+  UblacklistCompiledDottxtRouteImport.update({
+    id: '/ublacklist-compiled.txt',
+    path: '/ublacklist-compiled.txt',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ToolsRoute = ToolsRouteImport.update({
   id: '/tools',
   path: '/tools',
@@ -32,6 +82,11 @@ const ServicesRoute = ServicesRouteImport.update({
 const LintRoute = LintRouteImport.update({
   id: '/lint',
   path: '/lint',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CatalogsAdminRoute = CatalogsAdminRouteImport.update({
+  id: '/catalogs-admin',
+  path: '/catalogs-admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CatalogsRoute = CatalogsRouteImport.update({
@@ -59,6 +114,11 @@ const ApiServicesRoute = ApiServicesRouteImport.update({
   path: '/api/services',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCatalogsRunScriptRoute = ApiCatalogsRunScriptRouteImport.update({
+  id: '/api/catalogs/run-script',
+  path: '/api/catalogs/run-script',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiToolsDictionaryWatcherProcessFilesRoute =
   ApiToolsDictionaryWatcherProcessFilesRouteImport.update({
     id: '/api/tools/dictionary-watcher/process-files',
@@ -69,35 +129,62 @@ const ApiToolsDictionaryWatcherProcessFilesRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/catalogs': typeof CatalogsRouteWithChildren
+  '/catalogs-admin': typeof CatalogsAdminRoute
   '/lint': typeof LintRoute
   '/services': typeof ServicesRoute
   '/tools': typeof ToolsRouteWithChildren
+  '/ublacklist-compiled.txt': typeof UblacklistCompiledDottxtRoute
+  '/ublacklist-severity1.txt': typeof UblacklistSeverity1DottxtRoute
+  '/ublacklist-severity2.txt': typeof UblacklistSeverity2DottxtRoute
+  '/ublacklist-severity3.txt': typeof UblacklistSeverity3DottxtRoute
+  '/ublacklist-severity4.txt': typeof UblacklistSeverity4DottxtRoute
+  '/ublacklist.txt': typeof UblacklistDottxtRoute
+  '/ublockorigin-compiled.txt': typeof UblockoriginCompiledDottxtRoute
   '/api/services': typeof ApiServicesRoute
   '/catalogs/$': typeof CatalogsSplatRoute
   '/tools/dictionary-watcher': typeof ToolsDictionaryWatcherRoute
+  '/api/catalogs/run-script': typeof ApiCatalogsRunScriptRoute
   '/api/tools/dictionary-watcher/process-files': typeof ApiToolsDictionaryWatcherProcessFilesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/catalogs': typeof CatalogsRouteWithChildren
+  '/catalogs-admin': typeof CatalogsAdminRoute
   '/lint': typeof LintRoute
   '/services': typeof ServicesRoute
   '/tools': typeof ToolsRouteWithChildren
+  '/ublacklist-compiled.txt': typeof UblacklistCompiledDottxtRoute
+  '/ublacklist-severity1.txt': typeof UblacklistSeverity1DottxtRoute
+  '/ublacklist-severity2.txt': typeof UblacklistSeverity2DottxtRoute
+  '/ublacklist-severity3.txt': typeof UblacklistSeverity3DottxtRoute
+  '/ublacklist-severity4.txt': typeof UblacklistSeverity4DottxtRoute
+  '/ublacklist.txt': typeof UblacklistDottxtRoute
+  '/ublockorigin-compiled.txt': typeof UblockoriginCompiledDottxtRoute
   '/api/services': typeof ApiServicesRoute
   '/catalogs/$': typeof CatalogsSplatRoute
   '/tools/dictionary-watcher': typeof ToolsDictionaryWatcherRoute
+  '/api/catalogs/run-script': typeof ApiCatalogsRunScriptRoute
   '/api/tools/dictionary-watcher/process-files': typeof ApiToolsDictionaryWatcherProcessFilesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/catalogs': typeof CatalogsRouteWithChildren
+  '/catalogs-admin': typeof CatalogsAdminRoute
   '/lint': typeof LintRoute
   '/services': typeof ServicesRoute
   '/tools': typeof ToolsRouteWithChildren
+  '/ublacklist-compiled.txt': typeof UblacklistCompiledDottxtRoute
+  '/ublacklist-severity1.txt': typeof UblacklistSeverity1DottxtRoute
+  '/ublacklist-severity2.txt': typeof UblacklistSeverity2DottxtRoute
+  '/ublacklist-severity3.txt': typeof UblacklistSeverity3DottxtRoute
+  '/ublacklist-severity4.txt': typeof UblacklistSeverity4DottxtRoute
+  '/ublacklist.txt': typeof UblacklistDottxtRoute
+  '/ublockorigin-compiled.txt': typeof UblockoriginCompiledDottxtRoute
   '/api/services': typeof ApiServicesRoute
   '/catalogs/$': typeof CatalogsSplatRoute
   '/tools/dictionary-watcher': typeof ToolsDictionaryWatcherRoute
+  '/api/catalogs/run-script': typeof ApiCatalogsRunScriptRoute
   '/api/tools/dictionary-watcher/process-files': typeof ApiToolsDictionaryWatcherProcessFilesRoute
 }
 export interface FileRouteTypes {
@@ -105,49 +192,134 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/catalogs'
+    | '/catalogs-admin'
     | '/lint'
     | '/services'
     | '/tools'
+    | '/ublacklist-compiled.txt'
+    | '/ublacklist-severity1.txt'
+    | '/ublacklist-severity2.txt'
+    | '/ublacklist-severity3.txt'
+    | '/ublacklist-severity4.txt'
+    | '/ublacklist.txt'
+    | '/ublockorigin-compiled.txt'
     | '/api/services'
     | '/catalogs/$'
     | '/tools/dictionary-watcher'
+    | '/api/catalogs/run-script'
     | '/api/tools/dictionary-watcher/process-files'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/catalogs'
+    | '/catalogs-admin'
     | '/lint'
     | '/services'
     | '/tools'
+    | '/ublacklist-compiled.txt'
+    | '/ublacklist-severity1.txt'
+    | '/ublacklist-severity2.txt'
+    | '/ublacklist-severity3.txt'
+    | '/ublacklist-severity4.txt'
+    | '/ublacklist.txt'
+    | '/ublockorigin-compiled.txt'
     | '/api/services'
     | '/catalogs/$'
     | '/tools/dictionary-watcher'
+    | '/api/catalogs/run-script'
     | '/api/tools/dictionary-watcher/process-files'
   id:
     | '__root__'
     | '/'
     | '/catalogs'
+    | '/catalogs-admin'
     | '/lint'
     | '/services'
     | '/tools'
+    | '/ublacklist-compiled.txt'
+    | '/ublacklist-severity1.txt'
+    | '/ublacklist-severity2.txt'
+    | '/ublacklist-severity3.txt'
+    | '/ublacklist-severity4.txt'
+    | '/ublacklist.txt'
+    | '/ublockorigin-compiled.txt'
     | '/api/services'
     | '/catalogs/$'
     | '/tools/dictionary-watcher'
+    | '/api/catalogs/run-script'
     | '/api/tools/dictionary-watcher/process-files'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   CatalogsRoute: typeof CatalogsRouteWithChildren
+  CatalogsAdminRoute: typeof CatalogsAdminRoute
   LintRoute: typeof LintRoute
   ServicesRoute: typeof ServicesRoute
   ToolsRoute: typeof ToolsRouteWithChildren
+  UblacklistCompiledDottxtRoute: typeof UblacklistCompiledDottxtRoute
+  UblacklistSeverity1DottxtRoute: typeof UblacklistSeverity1DottxtRoute
+  UblacklistSeverity2DottxtRoute: typeof UblacklistSeverity2DottxtRoute
+  UblacklistSeverity3DottxtRoute: typeof UblacklistSeverity3DottxtRoute
+  UblacklistSeverity4DottxtRoute: typeof UblacklistSeverity4DottxtRoute
+  UblacklistDottxtRoute: typeof UblacklistDottxtRoute
+  UblockoriginCompiledDottxtRoute: typeof UblockoriginCompiledDottxtRoute
   ApiServicesRoute: typeof ApiServicesRoute
+  ApiCatalogsRunScriptRoute: typeof ApiCatalogsRunScriptRoute
   ApiToolsDictionaryWatcherProcessFilesRoute: typeof ApiToolsDictionaryWatcherProcessFilesRoute
 }
 
 declare module '@tanstack/solid-router' {
   interface FileRoutesByPath {
+    '/ublockorigin-compiled.txt': {
+      id: '/ublockorigin-compiled.txt'
+      path: '/ublockorigin-compiled.txt'
+      fullPath: '/ublockorigin-compiled.txt'
+      preLoaderRoute: typeof UblockoriginCompiledDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ublacklist.txt': {
+      id: '/ublacklist.txt'
+      path: '/ublacklist.txt'
+      fullPath: '/ublacklist.txt'
+      preLoaderRoute: typeof UblacklistDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ublacklist-severity4.txt': {
+      id: '/ublacklist-severity4.txt'
+      path: '/ublacklist-severity4.txt'
+      fullPath: '/ublacklist-severity4.txt'
+      preLoaderRoute: typeof UblacklistSeverity4DottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ublacklist-severity3.txt': {
+      id: '/ublacklist-severity3.txt'
+      path: '/ublacklist-severity3.txt'
+      fullPath: '/ublacklist-severity3.txt'
+      preLoaderRoute: typeof UblacklistSeverity3DottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ublacklist-severity2.txt': {
+      id: '/ublacklist-severity2.txt'
+      path: '/ublacklist-severity2.txt'
+      fullPath: '/ublacklist-severity2.txt'
+      preLoaderRoute: typeof UblacklistSeverity2DottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ublacklist-severity1.txt': {
+      id: '/ublacklist-severity1.txt'
+      path: '/ublacklist-severity1.txt'
+      fullPath: '/ublacklist-severity1.txt'
+      preLoaderRoute: typeof UblacklistSeverity1DottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ublacklist-compiled.txt': {
+      id: '/ublacklist-compiled.txt'
+      path: '/ublacklist-compiled.txt'
+      fullPath: '/ublacklist-compiled.txt'
+      preLoaderRoute: typeof UblacklistCompiledDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tools': {
       id: '/tools'
       path: '/tools'
@@ -167,6 +339,13 @@ declare module '@tanstack/solid-router' {
       path: '/lint'
       fullPath: '/lint'
       preLoaderRoute: typeof LintRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/catalogs-admin': {
+      id: '/catalogs-admin'
+      path: '/catalogs-admin'
+      fullPath: '/catalogs-admin'
+      preLoaderRoute: typeof CatalogsAdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/catalogs': {
@@ -204,6 +383,13 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof ApiServicesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/catalogs/run-script': {
+      id: '/api/catalogs/run-script'
+      path: '/api/catalogs/run-script'
+      fullPath: '/api/catalogs/run-script'
+      preLoaderRoute: typeof ApiCatalogsRunScriptRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/tools/dictionary-watcher/process-files': {
       id: '/api/tools/dictionary-watcher/process-files'
       path: '/api/tools/dictionary-watcher/process-files'
@@ -239,10 +425,19 @@ const ToolsRouteWithChildren = ToolsRoute._addFileChildren(ToolsRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   CatalogsRoute: CatalogsRouteWithChildren,
+  CatalogsAdminRoute: CatalogsAdminRoute,
   LintRoute: LintRoute,
   ServicesRoute: ServicesRoute,
   ToolsRoute: ToolsRouteWithChildren,
+  UblacklistCompiledDottxtRoute: UblacklistCompiledDottxtRoute,
+  UblacklistSeverity1DottxtRoute: UblacklistSeverity1DottxtRoute,
+  UblacklistSeverity2DottxtRoute: UblacklistSeverity2DottxtRoute,
+  UblacklistSeverity3DottxtRoute: UblacklistSeverity3DottxtRoute,
+  UblacklistSeverity4DottxtRoute: UblacklistSeverity4DottxtRoute,
+  UblacklistDottxtRoute: UblacklistDottxtRoute,
+  UblockoriginCompiledDottxtRoute: UblockoriginCompiledDottxtRoute,
   ApiServicesRoute: ApiServicesRoute,
+  ApiCatalogsRunScriptRoute: ApiCatalogsRunScriptRoute,
   ApiToolsDictionaryWatcherProcessFilesRoute:
     ApiToolsDictionaryWatcherProcessFilesRoute,
 }

@@ -19,30 +19,14 @@ function HomePage() {
 	return (
 		<>
 			<Navigation />
-			<div style="border-inline: 1px solid lightgray">
-				<div style="display: grid; grid-template-columns: 1fr 1fr">
-					<div class="p-1" style="background-color: antiquewhite; border-inline-end: 1px solid lightgray">
-						<h1 class="title mb-0">Services</h1>
-						<div class="content">
-							<ul class="index-ul" style="margin-inline-start: 18px;">
-								{data().services.map((service) => (
-									<li>
-										<a
-											class="hover-bold"
-											style={service.isActive ? 'color: lightgreen' : 'color: red'}
-											href={`/services#${service.name}`}
-										>
-											{service.name}
-										</a>
-									</li>
-								))}
-							</ul>
-						</div>
-					</div>
-					<div class="p-1" style="background-color: aliceblue">
-						<h1 class="title mb-0">Recent Projects</h1>
-					</div>
-				</div>
+			<div style="border-inline: 1px solid lightgray; font-size: 24px;">
+				<p>You can do it!</p>
+				<p>Your priorities!</p>
+				<ol>
+					<li>- Being mindful</li>
+					<li>- Getting sleep (going to bed by midnight LATEST)</li>
+					<li>- School</li>
+				</ol>
 			</div>
 		</>
 	)

@@ -127,7 +127,7 @@ cli.register(
 		})
 
 		async execute() {
-			await execa('pnpm', ['start'], {
+			await execa('node', ['--run', 'start'], {
 				stdio: 'inherit',
 			})
 		}

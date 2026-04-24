@@ -30,7 +30,14 @@ export function Navigation() {
 			<div id="navbarBasicExample" class={isActive() ? 'navbar-menu is-active' : 'navbar-menu'}>
 				<div class="navbar-start has-dropdown">
 					<a class="navbar-item" href="/">Home</a>
-					<a class="navbar-item" href="/catalogs">Catalogs</a>
+					<div class="navbar-item has-dropdown is-hoverable">
+						<a href="/catalogs" class="navbar-link">Catalogs</a>
+						<div class="navbar-dropdown">
+							<a href="/catalogs" class="navbar-item">Browse Catalog</a>
+							<a href="/catalogs-admin" class="navbar-item">Catalog Admin</a>
+						</div>
+					</div>
+					<a class="navbar-item" href="/services">Services</a>
 					<div class="navbar-item has-dropdown is-hoverable">
 						<a href="/tools" class="navbar-item">Tools</a>
 						<div class="navbar-dropdown">

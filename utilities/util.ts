@@ -1,4 +1,4 @@
-import { execFile } from 'node:child_process'
+import { execFile, spawn } from 'node:child_process'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import type { Dirent } from 'node:fs'
@@ -67,44 +67,63 @@ export async function forEachRepository(
 	}
 }
 
-export async function getServiceData() {
-	const services = [
-		{
-			name: 'brain.service',
-			isUserService: true,
-		},
-		{ name: 'keymon.service', isUserService: false },
-	]
+const USER_SERVICES = [
+	'dev.service',
+	'hydroxide.service',
+	'keymon.service',
+	'maestral-daemon@.service',
+]
 
+export async function getServiceData() {
 	const data = await Promise.all(
-		services.map(async (service) => {
-			const [isActive, statusOutput] = await Promise.all([
-				execFileAsync('systemctl', [
-					...(service.isUserService ? ['--user'] : []),
-					'is-active',
-					'--quiet',
-					service.name,
-				])
+		USER_SERVICES.map(async (name) => {
+			const [isActive, activeState] = await Promise.all([
+				execFileAsync('systemctl', ['--user', 'is-active', '--quiet', name])
 					.then(() => true)
 					.catch(() => false),
-				execFileAsync('systemctl', [
-					...(service.isUserService ? ['--user'] : []),
-					'status',
-					service.name,
-				])
-					.then(({ stdout }) => stdout)
-					.catch(() => ''),
+				execFileAsync('systemctl', ['--user', 'show', name, '--property=ActiveState'])
+					.then(({ stdout }) => stdout.trim().replace('ActiveState=', ''))
+					.catch(() => 'unknown'),
 			])
 
-			return {
-				name: service.name,
-				isActive,
-				statusOutput,
-			}
+			return { name, isActive, activeState }
 		}),
 	)
 
 	return data
+}
+
+export async function launchServiceTerminal(
+	service: string,
+	action: 'status' | 'journal',
+): Promise<{ terminal: string }> {
+	const cmd =
+		action === 'status'
+			? `systemctl --user status ${service}; echo; read -p 'Press Enter to close...'`
+			: `journalctl --user -f -u ${service}`
+
+	const terminals = [
+		{ bin: 'kitty', args: ['bash', '-c', cmd] },
+		{ bin: 'alacritty', args: ['-e', 'bash', '-c', cmd] },
+		{ bin: 'foot', args: ['bash', '-c', cmd] },
+		{ bin: 'gnome-terminal', args: ['--', 'bash', '-c', cmd] },
+		{ bin: 'xterm', args: ['-e', 'bash', '-c', cmd] },
+	]
+
+	for (const { bin, args } of terminals) {
+		try {
+			await execFileAsync('which', [bin])
+			const proc = spawn(bin, args, { detached: true, stdio: 'ignore' })
+			proc.unref()
+			return { terminal: bin }
+		} catch {
+			continue
+		}
+	}
+
+	throw new Error(
+		'No terminal emulator found. Please install kitty, alacritty, foot, gnome-terminal, or xterm.',
+	)
 }
 
 export async function mergeYAML(file1: string, file2: string): Promise<string> {
