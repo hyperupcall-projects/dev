@@ -130,25 +130,7 @@ function CatalogsAdminPage() {
 		<>
 			<Navigation />
 			<div class="container p-4">
-				<div class="level mb-2">
-					<div class="level-left">
-						<div class="level-item">
-							<h1 class="title mb-0">Catalog Admin</h1>
-						</div>
-					</div>
-					<div class="level-right">
-						<div class="level-item">
-							<a
-								class="button is-link is-light"
-								href="/catalogs"
-								target="_blank"
-								rel="noopener noreferrer"
-							>
-								🔍 Browse Catalog
-							</a>
-						</div>
-					</div>
-				</div>
+				<h1 class="title mb-0">Catalog Admin</h1>
 
 				<p class="subtitle mb-5">
 					Build pipeline for <code>~/Documents/Catalogs</code>

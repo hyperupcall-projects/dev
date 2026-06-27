@@ -87,4 +87,108 @@
 		"pcss",
 		"postcss"
 	],
+	"files.insertFinalNewline": false,
+	"[javascript]": {
+		"editor.formatOnSave": false
+	},
+	"[javascriptreact]": {
+		"editor.formatOnSave": false
+	},
+	"[typescript]": {
+		"editor.formatOnSave": false
+	},
+	"[typescriptreact]": {
+		"editor.formatOnSave": false
+	},
+	"[graphql]": {
+		"editor.formatOnSave": false
+	},
+	"eslint.enable": false,
+	"[json]": {
+		"editor.formatOnSave": false
+	},
+	"[jsonnet]": {
+		"editor.formatOnSave": false
+	},
+	"[toml]": {
+		"editor.formatOnSave": false
+	},
+	"[yaml]": {
+		"editor.formatOnSave": false
+	},
+	"yaml.format.enable": false,
+	"yaml.validate": false,
+	"[html]": {
+		"editor.formatOnSave": false
+	},
+	"html.format.enable": false,
+	"[vue]": {
+		"editor.formatOnSave": false
+	},
+	"[handlebars]": {
+		"editor.formatOnSave": false
+	},
+	"[css]": {
+		"editor.formatOnSave": false
+	},
+	"css.validate": false,
+	"[scss]": {
+		"editor.formatOnSave": false
+	},
+	"scss.validate": false,
+	"[markdown]": {
+		"editor.formatOnSave": false
+	},
+	"[juliamarkdown]": {
+		"editor.formatOnSave": false
+	},
+	"markdownlint.severityForWarning": "Ignore",
+	"markdownlint.severityForError": "Ignore",
+	"[python]": {
+		"editor.formatOnSave": false
+	},
+	"python.analysis.typeCheckingMode": "basic",
+	"ruff.enable": false,
+	"[go]": {
+		"editor.formatOnSave": false
+	},
+	"[java]": {
+		"editor.formatOnSave": false
+	},
+	"[kotlin]": {
+		"editor.formatOnSave": false
+	},
+	"[gradle]": {
+		"editor.formatOnSave": false
+	},
+	"java.format.onType.enabled": false,
+	"[perl]": {
+		"editor.formatOnSave": false
+	},
+	"[dockerfile]": {
+		"editor.formatOnSave": false
+	},
+	"[rust]": {
+		"editor.formatOnSave": false
+	},
+	"[latex]": {
+		"editor.formatOnSave": false
+	},
+	"[c]": {
+		"editor.formatOnSave": false
+	},
+	"[cpp]": {
+		"editor.formatOnSave": false
+	},
+	"[cuda-cpp]": {
+		"editor.formatOnSave": false
+	},
+	"[shellscript]": {
+		"editor.formatOnSave": false
+	},
+	"shellcheck.enable": false,
+	"[fish]": {
+		"editor.formatOnSave": false
+	},
+	"cSpell.enabled": false,
 }

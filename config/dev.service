@@ -2,8 +2,10 @@
 Description=Edwin's Central Dev Server
 
 [Service]
-Type=notify
-ExecStart=/usr/bin/env pnpm --dir %h/.dev start
+Type=simple
+WorkingDirectory=%h/.dev
+ExecStart=%h/.dotfiles/.data/binexec/node --run start
+Environment='PORT=40000'
 
 [Install]
 WantedBy=default.target

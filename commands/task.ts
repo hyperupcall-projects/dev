@@ -288,8 +288,6 @@ async function createVSCodeLaunchers(positionals: string[]) {
 	).json()
 
 	for (const { dirname, packageJson } of extensions) {
-
-
 		if (
 			!dirname.startsWith('pack-ecosystem-') ||
 			dirname === 'pack-ecosystem-all' ||
@@ -328,23 +326,52 @@ async function createVSCodeLaunchers(positionals: string[]) {
 		]
 	})
 
+	const configDir = (process.env.XDG_CONFIG_HOME ?? '').startsWith('/')
+		? (process.env.XDG_CONFIG_HOME ?? '')
+		: path.join(os.homedir(), '.config')
+
+	await createVSCodeDesktopApplication({
+		variantId: 'vscode',
+		variantName: 'vscode',
+		overrides: {
+			datadir: path.join(configDir, 'Code'),
+			extdir: path.join(os.homedir(), '.vscode/extensions')
+		},
+		extensions: [
+			'edwinkofler.vscode-hyperupcall-pack-base',
+			'edwinkofler.vscode-hyperupcall-pack-bundled-themes',
+			"edwinkofler.vscode-hyperupcall-pack-icons",
+			'edwinkofler.vscode-hyperupcall-pack-markdown',
+			'edwinkofler.vscode-hyperupcall-pack-unix',
+			'edwinkofler.vscode-hyperupcall-pack-python',
+			'edwinkofler.vscode-hyperupcall-pack-rust',
+			'edwinkofler.vscode-hyperupcall-pack-web',
+			'edwinkofler.vscode-hyperupcall-pack-cpp',
+			'edwinkofler.vscode-hyperupcall-pack-go',
+		]
+	})
+
 	console.info(`Be sure to open "Window Rules" application and hit apply.`)
 
 }
 
-async function createVSCodeDesktopApplication({ variantId, variantName, extensions }: { variantId: string, variantName: string, extensions: string[] }) {
+async function createVSCodeDesktopApplication({ variantId, variantName, extensions, overrides }: {
+	variantId: string, variantName: string, extensions: string[], overrides?: {
+		datadir: string,
+		extdir: string
+} }) {
 	const configDir = (process.env.XDG_CONFIG_HOME ?? '').startsWith('/')
 		? (process.env.XDG_CONFIG_HOME ?? '')
 		: path.join(os.homedir(), '.config')
 	const dataDir = (process.env.XDG_DATA_HOME ?? '').startsWith('/')
 		? (process.env.XDG_DATA_HOME ?? '')
 		: path.join(os.homedir(), '.config')
-	const vscodeDataDir = path.join(
+	const vscodeDataDir = overrides?.datadir ?? path.join(
 		os.homedir(),
 		'.dotfiles/.data/vscode-datadirs',
 		`hyperupcall-pack-${variantId}`,
 	)
-	const vscodeExtDir = path.join(
+	const vscodeExtDir = overrides?.extdir ?? path.join(
 		os.homedir(),
 		'.dotfiles/.data/vscode-extensions',
 		`hyperupcall-pack-${variantId}`,
@@ -384,7 +411,7 @@ Icon=${iconFile}`,
 	fs.copyFileSync(
 		path.join(
 			os.homedir(),
-			'.devresources/ecosystem-icons/output/vscode-desktop',
+			'.devhidden/ecosystem-icons/output/vscode-desktop',
 			`${variantId}.png`,
 		),
 		iconFile,

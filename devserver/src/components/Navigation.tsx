@@ -44,6 +44,7 @@ export function Navigation() {
 							<a href="/tools/dictionary-watcher" class="navbar-item">Dictionary Watcher</a>
 						</div>
 					</div>
+					<a class="navbar-item" href="/about">About</a>
 				</div>
 			</div>
 		</nav>

@@ -39,7 +39,7 @@ def main():
             override = tomlkit.load(f)
 
         merge_containers(doc, override)
-        print(tomlkit.dumps(doc), end='')
+        print(tomlkit.dumps(doc), end="")
 
     except FileNotFoundError as e:
         print(f"Error: {e}", file=sys.stderr)

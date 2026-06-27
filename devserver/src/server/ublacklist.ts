@@ -3,7 +3,7 @@ import { homedir } from 'node:os'
 import { join } from 'node:path'
 
 export async function serveUblacklistFile(filename: string): Promise<Response> {
-	const filePath = join(homedir(), '.devresources', filename)
+	const filePath = join(homedir(), '.devhidden', filename)
 	try {
 		const contents = await readFile(filePath, 'utf-8')
 		return new Response(contents, {

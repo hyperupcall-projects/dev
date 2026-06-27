@@ -18,9 +18,7 @@ export const Route = createRootRoute({
 				content: 'width=device-width, initial-scale=1.0',
 			},
 		],
-		links: [
-			{ rel: 'stylesheet', href: '/css/global.css' },
-		],
+		links: [{ rel: 'stylesheet', href: '/css/global.css' }],
 	}),
 	component: RootComponent,
 })
@@ -46,6 +44,8 @@ function RootDocument(props: Readonly<{ children: Solid.JSX.Element }>) {
 	return (
 		<html>
 			<head>
+				<link rel="icon" href="/favicon.ico" sizes="any" />
+			<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 				<HydrationScript />
 				<HeadContent />
 			</head>

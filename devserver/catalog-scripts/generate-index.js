@@ -353,84 +353,88 @@ function generateIndexHtml(groupedFiles) {
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            line-height: 1.6;
+            line-height: 1.3;
             color: #333;
-            background: #f5f5f5;
-            padding: 20px;
+            background: #fff;
+            padding: 4px 8px;
         }
 
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            gap: 8px 20px;
+            max-width: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container > h1,
+        .container > .subtitle {
+            flex: 1 1 100%;
+            width: 100%;
         }
 
         h1 {
-            color: #2c3e50;
-            margin-bottom: 10px;
-            font-size: 2.5em;
+            color: #222;
+            margin-bottom: 2px;
+            font-size: 1.25rem;
         }
 
         .subtitle {
-            color: #7f8c8d;
-            margin-bottom: 20px;
-            font-size: 1.1em;
+            color: #666;
+            margin-bottom: 6px;
+            font-size: 0.85em;
         }
 
         .section {
-            margin-bottom: 40px;
+            flex: 0 0 auto;
+            width: max-content;
+            margin-bottom: 0;
         }
 
         h2 {
-            color: #34495e;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #3498db;
-            font-size: 1.8em;
+            color: #333;
+            margin-bottom: 2px;
+            padding-bottom: 2px;
+            border-bottom: 1px solid #ccc;
+            font-size: 1rem;
         }
 
         .file-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            margin-top: 0;
         }
 
         .file-link {
             display: block;
-            padding: 15px 20px;
-            background: #ecf0f1;
-            border-radius: 5px;
+            padding: 1px 0;
             text-decoration: none;
-            color: #2c3e50;
-            border-left: 4px solid #3498db;
+            color: #222;
+            white-space: nowrap;
         }
 
         .file-link:hover {
-            background: #3498db;
-            color: white;
+            background: #eee;
         }
 
         .stats {
-            background: #e8f4f8;
-            padding: 15px 20px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            border-left: 4px solid #3498db;
+            flex: 1 1 100%;
+            width: 100%;
+            background: #f5f5f5;
+            padding: 4px 8px;
+            margin-bottom: 6px;
         }
 
         .stats-text {
-            color: #2c3e50;
-            font-size: 0.95em;
+            color: #333;
+            font-size: 0.85em;
         }
 
         .root-section .file-list {
-            background: #fff9e6;
-            padding: 20px;
-            border-radius: 5px;
+            padding: 0;
         }
     </style>
 </head>

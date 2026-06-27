@@ -1,65 +1,12 @@
 {
 	"file_scan_exclusions": ["**/.git", "**/.data"],
 	"lsp": {
-		"eslint": {
-			"settings": {
-				"rulesCustomizations": [
-					{
-						"rule": "style/*",
-						"severity": "off",
-						"fixable": true
+		"ruff": {
+			"initialization_options": {
+				"settings": {
+					"lint": {
+						"enable": true
 					},
-					{
-						"rule": "format/*",
-						"severity": "off",
-						"fixable": true
-					},
-					{
-						"rule": "*-indent",
-						"severity": "off",
-						"fixable": true
-					},
-					{
-						"rule": "*-spacing",
-						"severity": "off",
-						"fixable": true
-					},
-					{
-						"rule": "*-spaces",
-						"severity": "off",
-						"fixable": true
-					},
-					{
-						"rule": "*-order",
-						"severity": "off",
-						"fixable": true
-					},
-					{
-						"rule": "*-dangle",
-						"severity": "off",
-						"fixable": true
-					},
-					{
-						"rule": "*-newline",
-						"severity": "off",
-						"fixable": true
-					},
-					{
-						"rule": "*quotes",
-						"severity": "off",
-						"fixable": true
-					},
-					{
-						"rule": "*semi",
-						"severity": "off",
-						"fixable": true
-					}
-				]
-			}
-		},
-		"yaml-language-server": {
-			"settings": {
-				"yaml": {
 					"format": {
 						"enable": true
 					}
@@ -68,54 +15,62 @@
 		}
 	},
 	"languages": {
-		"TypeScript": {
-			"language_servers": [
-				"!deno",
-				"...",
-			]
-		},
 		"JavaScript": {
-			"language_servers": [
-				"!deno",
-				"...",
-
-			]
+			"format_on_save": "on"
 		},
-		"HTML": {
-			"language_servers": [
-				"...",
-				"eslint"
-			]
-		},
-		"Markdown": {
-			"language_servers": [
-				"...",
-				"eslint"
-			]
+		"TypeScript": {
+			"format_on_save": "on"
 		},
 		"JSON": {
-			"language_servers": [
-				"...",
-				"eslint"
-			]
+			"format_on_save": "on"
 		},
-		"JSONC": {
-			"language_servers": [
-				"...",
-				"eslint"
-			]
+		"TOML": {
+			"format_on_save": "on"
 		},
 		"YAML": {
-			"language_servers": [
-				"...",
-				"eslint"
-			]
+			"format_on_save": "on"
+		},
+		"HTML": {
+			"format_on_save": "on"
 		},
 		"CSS": {
-			"language_servers": [
-				"...",
-				"eslint"
-			]
+			"format_on_save": "on"
+		},
+		"Markdown": {
+			"format_on_save": "on"
+		},
+		"Markdown-Inline": {
+			"format_on_save": "on"
+		},
+		"Python": {
+			"format_on_save": "on"
+		},
+		"Go": {
+			"format_on_save": "on"
+		},
+		"Java": {
+			"format_on_save": "on"
+		},
+		"Kotlin": {
+			"format_on_save": "on"
+		},
+		"Perl": {
+			"format_on_save": "on"
+		},
+		"Rust": {
+			"format_on_save": "on"
+		},
+		"LaTeX": {
+			"format_on_save": "on"
+		},
+		"C": {
+			"format_on_save": "on"
+		},
+		"C++": {
+			"format_on_save": "on"
+		},
+		"Shell Script": {
+			"format_on_save": "on"
 		}
 	},
 	"format_on_save": "on",

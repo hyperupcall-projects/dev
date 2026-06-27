@@ -21,6 +21,7 @@ import { Route as ServicesRouteImport } from './routes/services'
 import { Route as LintRouteImport } from './routes/lint'
 import { Route as CatalogsAdminRouteImport } from './routes/catalogs-admin'
 import { Route as CatalogsRouteImport } from './routes/catalogs'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ToolsDictionaryWatcherRouteImport } from './routes/tools/dictionary-watcher'
 import { Route as CatalogsSplatRouteImport } from './routes/catalogs/$'
@@ -94,6 +95,11 @@ const CatalogsRoute = CatalogsRouteImport.update({
   path: '/catalogs',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -128,6 +134,7 @@ const ApiToolsDictionaryWatcherProcessFilesRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/catalogs': typeof CatalogsRouteWithChildren
   '/catalogs-admin': typeof CatalogsAdminRoute
   '/lint': typeof LintRoute
@@ -148,6 +155,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/catalogs': typeof CatalogsRouteWithChildren
   '/catalogs-admin': typeof CatalogsAdminRoute
   '/lint': typeof LintRoute
@@ -169,6 +177,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/catalogs': typeof CatalogsRouteWithChildren
   '/catalogs-admin': typeof CatalogsAdminRoute
   '/lint': typeof LintRoute
@@ -191,6 +200,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/about'
     | '/catalogs'
     | '/catalogs-admin'
     | '/lint'
@@ -211,6 +221,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/about'
     | '/catalogs'
     | '/catalogs-admin'
     | '/lint'
@@ -231,6 +242,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/about'
     | '/catalogs'
     | '/catalogs-admin'
     | '/lint'
@@ -252,6 +264,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
   CatalogsRoute: typeof CatalogsRouteWithChildren
   CatalogsAdminRoute: typeof CatalogsAdminRoute
   LintRoute: typeof LintRoute
@@ -355,6 +368,13 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof CatalogsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -424,6 +444,7 @@ const ToolsRouteWithChildren = ToolsRoute._addFileChildren(ToolsRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
   CatalogsRoute: CatalogsRouteWithChildren,
   CatalogsAdminRoute: CatalogsAdminRoute,
   LintRoute: LintRoute,
