@@ -14,7 +14,7 @@ export async function knowledgeManagerPage(): Promise<Response> {
 					<h1 class="title mb-1">Knowledge Manager</h1>
 					<p class="subtitle is-6 mb-0">
 						Select a knowledge folder and open it in Obsidian, your file manager,
-						or Zettlr
+						Zettlr, VS Code, or Zed
 					</p>
 				</div>
 
@@ -71,6 +71,8 @@ export async function knowledgeManagerPage(): Promise<Response> {
 											<option value="obsidian">Obsidian</option>
 											<option value="file-manager">File manager</option>
 											<option value="zettlr">Zettlr</option>
+											<option value="vscode">VS Code</option>
+											<option value="zed">Zed</option>
 										</select>
 									</div>
 								</div>
@@ -92,7 +94,7 @@ export async function knowledgeManagerPage(): Promise<Response> {
 							Knowledge is retrieved when doing work. To retrieve efficiently, the knowledge must be organized well. The rest of this section describes the organization of my knowledge.
 						</p>
 						<p>
-							The categores are below. Some of them can be "archived".
+							The categores are below. Some of them can be "archived". Some of it is inspired from <a href="https://diataxis.fr">Diátaxis</a>.
 						</p>
 						<h3>Personal Knowledge</h3>
 						<p>

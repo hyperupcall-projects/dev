@@ -286,7 +286,7 @@ export async function updateServicePort(
 
 export async function controlService(
 	service: string,
-	action: 'start' | 'stop' | 'enable' | 'disable',
+	action: 'start' | 'stop' | 'restart' | 'enable' | 'disable',
 ): Promise<ServiceInfo> {
 	const name = normalizeServiceName(service)
 	const registered = await listRegisteredServices()

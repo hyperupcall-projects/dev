@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url'
 import { getServiceData, launchServiceTerminal, controlService, updateServicePort } from '#utilities/util.ts'
 import {
 	activityManagerPage,
+	blocklistsPage,
 	dictionaryPage,
 	knowledgeManagerPage,
 	projectManagerPage,
@@ -17,6 +18,10 @@ import {
 	listActivityProjects,
 	openActivityProject,
 } from './server/activity-projects.ts'
+import {
+	compileBlocklists,
+	serveBlocklistFile,
+} from './server/blocklists.ts'
 import { getGardenCatalog } from './server/garden-projects.ts'
 import {
 	openKnowledgeFolder,
@@ -30,26 +35,21 @@ import {
 	listSavedGroups,
 	renameSavedGroup,
 } from './server/project-groups.ts'
-import { serveUblacklistFile } from './server/ublacklist.ts'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const repoRoot = path.resolve(__dirname, '../..')
 
 const app = new Hono()
 
-const ublacklistFiles = [
-	'ublacklist.txt',
-	'ublacklist-compiled.txt',
-	'ublacklist-severity1.txt',
-	'ublacklist-severity2.txt',
-	'ublacklist-severity3.txt',
-	'ublacklist-severity4.txt',
-	'ublockorigin-compiled.txt',
-] as const
-
-for (const filename of ublacklistFiles) {
-	app.get(`/${filename}`, () => serveUblacklistFile(filename))
-}
+app.use(async (c, next) => {
+	const pathname = new URL(c.req.url).pathname
+	const match = pathname.match(/^\/([A-Za-z0-9._-]+\.txt)$/)
+	if (!match) {
+		await next()
+		return
+	}
+	return serveBlocklistFile(match[1]!)
+})
 
 app.get('/api/services', async (c) => c.json(await getServiceData()))
 
@@ -74,12 +74,15 @@ app.post('/api/services/launch-terminal', async (c) => {
 app.post('/api/services/control', async (c) => {
 	const body = (await c.req.json()) as {
 		service?: string
-		action?: 'start' | 'stop' | 'enable' | 'disable'
+		action?: 'start' | 'stop' | 'restart' | 'enable' | 'disable'
 	}
-	const actions = ['start', 'stop', 'enable', 'disable'] as const
+	const actions = ['start', 'stop', 'restart', 'enable', 'disable'] as const
 	if (!body.service || !body.action || !actions.includes(body.action)) {
 		return c.json(
-			{ error: 'Expected { service, action: "start" | "stop" | "enable" | "disable" }' },
+			{
+				error:
+					'Expected { service, action: "start" | "stop" | "restart" | "enable" | "disable" }',
+			},
 			400,
 		)
 	}
@@ -210,6 +213,17 @@ app.post('/api/activity/open', async (c) => {
 	}
 })
 
+app.post('/api/blocklists/compile', async (c) => {
+	try {
+		return c.json(await compileBlocklists())
+	} catch (error) {
+		return c.json(
+			{ error: error instanceof Error ? error.message : String(error) },
+			500,
+		)
+	}
+})
+
 app.post('/api/knowledge/open', async (c) => {
 	const body = (await c.req.json()) as {
 		folderId?: string
@@ -250,6 +264,7 @@ app.get('/dictionary', (c) => dictionaryPage())
 app.get('/activity', (c) => activityManagerPage())
 app.get('/projects', (c) => projectManagerPage())
 app.get('/knowledge', (c) => knowledgeManagerPage())
+app.get('/apis/blocklists', (c) => blocklistsPage())
 
 app.get('/vendor/bulma.min.css', async () => {
 	const contents = await readFile(

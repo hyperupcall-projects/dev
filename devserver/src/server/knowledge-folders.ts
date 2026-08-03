@@ -11,6 +11,8 @@ export const KNOWLEDGE_OPENER_IDS = [
 	'obsidian',
 	'file-manager',
 	'zettlr',
+	'vscode',
+	'zed',
 ] as const
 
 export type KnowledgeOpenerId = (typeof KNOWLEDGE_OPENER_IDS)[number]
@@ -22,6 +24,10 @@ export type KnowledgeFolder = {
 }
 
 const ZETTLR_CANDIDATES = ['zettlr', 'Zettlr']
+
+const VSCODE_CANDIDATES = ['code', 'code-insiders']
+
+const ZED_CANDIDATES = ['zed']
 
 const FILE_MANAGER_CANDIDATES = ['xdg-open', 'dolphin', 'nautilus', 'thunar']
 
@@ -118,6 +124,26 @@ export async function openKnowledgeFolder(options: {
 			}
 			spawnDetached(xdgOpen, [uri])
 		}
+		return { folderId, opener, opened: folder.path }
+	}
+
+	if (opener === 'vscode') {
+		const binary = await resolveCommand(VSCODE_CANDIDATES)
+		if (!binary) {
+			throw new Error(
+				'Could not find VS Code. Install it or add code/code-insiders to PATH.',
+			)
+		}
+		spawnDetached(binary, [folder.path])
+		return { folderId, opener, opened: folder.path }
+	}
+
+	if (opener === 'zed') {
+		const binary = await resolveCommand(ZED_CANDIDATES)
+		if (!binary) {
+			throw new Error('Could not find the Zed executable. Install it or add it to PATH.')
+		}
+		spawnDetached(binary, [folder.path])
 		return { folderId, opener, opened: folder.path }
 	}
 

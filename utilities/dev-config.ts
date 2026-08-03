@@ -15,7 +15,7 @@ export type DevConfig = {
 		activityProjectsRoot: string
 		gardenYaml: string
 		serviceListDir: string
-		ublacklistDir: string
+		blocklistsDir: string
 		clonedRepositories: string
 		managedRepositories: string
 		symlinkedRepositories: string

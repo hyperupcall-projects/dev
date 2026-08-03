@@ -7,6 +7,7 @@ import { getDevConfig } from '#utilities/dev-config.ts'
 export { activityManagerPage } from './activity-manager-page.ts'
 export { projectManagerPage } from './project-manager-page.ts'
 export { knowledgeManagerPage } from './knowledge-manager-page.ts'
+export { blocklistsPage } from './blocklists-page.ts'
 
 export async function servicesPage(): Promise<Response> {
 	const services = await getServiceData()
@@ -96,6 +97,13 @@ export async function servicesPage(): Promise<Response> {
 												disabled=${!service.isActive}
 											>
 												Stop
+											</button>
+											<button
+												type="button"
+												class="button js-service-control"
+												data-action="restart"
+											>
+												Restart
 											</button>
 											<button
 												type="button"
@@ -206,7 +214,7 @@ export async function servicesPage(): Promise<Response> {
 				var buttons = control.closest('.buttons')
 				var service = buttons && buttons.getAttribute('data-service')
 				var action = control.getAttribute('data-action')
-				var allowed = { start: 1, stop: 1, enable: 1, disable: 1 }
+				var allowed = { start: 1, stop: 1, restart: 1, enable: 1, disable: 1 }
 				if (!service || !action || !allowed[action]) return
 				control.classList.add('is-loading')
 				fetch('/api/services/control', {

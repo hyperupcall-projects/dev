@@ -31,6 +31,12 @@ function navigation(): Html {
 					<a class="navbar-item" href="/projects">💻 Software Project Manager</a>
 					<a class="navbar-item" href="/services">⚙️ Service Manager</a>
 					<a class="navbar-item" href="/dictionary">📖 Dictionary Manager</a>
+					<div class="navbar-item has-dropdown is-hoverable" id="nav-apis">
+						<a class="navbar-link" href="#" id="nav-apis-link">🔌 APIs</a>
+						<div class="navbar-dropdown">
+							<a class="navbar-item" href="/apis/blocklists">Blocklists</a>
+						</div>
+					</div>
 				</div>
 			</div>
 		</nav>
@@ -46,6 +52,14 @@ const sharedClientScript = raw(`
 			burger.addEventListener('click', function () {
 				burger.classList.toggle('is-active')
 				menu.classList.toggle('is-active')
+			})
+		}
+		var apis = document.getElementById('nav-apis')
+		var apisLink = document.getElementById('nav-apis-link')
+		if (apis && apisLink) {
+			apisLink.addEventListener('click', function (event) {
+				event.preventDefault()
+				apis.classList.toggle('is-active')
 			})
 		}
 		try {
