@@ -1,11 +1,16 @@
 [Unit]
-Description=Edwin's Central Dev Server
+Description=Edwin Central Dev Server
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=simple
-WorkingDirectory=%h/.dev
+User=edwin
+WorkingDirectory=/home/edwin/.dev
 ExecStart=%h/.dotfiles/.data/binexec/node --run start
-Environment='PORT=40000'
+Environment=PORT=6000
+Restart=on-failure
+RestartSec=5s
 
 [Install]
 WantedBy=default.target

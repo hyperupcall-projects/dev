@@ -3,11 +3,9 @@ import * as path from 'node:path'
 import { octokit } from '#common'
 import { minimatch } from 'minimatch'
 import * as v from 'valibot'
-import untildify from 'untildify'
+import { getDevConfig } from '#utilities/dev-config.ts'
 
 export const Ctx = {
-	cloneDir: untildify('~/.dev/.data/cloned-repositories'),
-	symlinkedRepositoriesDir: untildify('~/Documents/Repositories'),
 	ignoredRepos: [
 		// Skip cloning from the following organizations:
 		'eshsrobotics/*',
@@ -227,10 +225,11 @@ export async function getCachedRepositoryDetails() {
 }
 
 export async function getRepositoryDetails(fullName: string): Promise<RepoDetailsT> {
+	const cloneDir = (await getDevConfig()).paths.clonedRepositories
 	return {
 		fullName,
 		isCloned: await fs
-			.stat(path.join(Ctx.cloneDir, fullName))
+			.stat(path.join(cloneDir, fullName))
 			.then((stat) => stat.isDirectory())
 			.catch((err) => {
 				if (err.code === 'ENOENT') return false

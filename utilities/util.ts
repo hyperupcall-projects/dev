@@ -1,11 +1,34 @@
 import { execFile, spawn } from 'node:child_process'
 import fs from 'node:fs/promises'
+import os from 'node:os'
 import path from 'node:path'
 import type { Dirent } from 'node:fs'
 import { promisify, styleText } from 'node:util'
 import * as jsonc from 'jsonc-parser'
+import { getDevConfig } from '#utilities/dev-config.ts'
 
 const execFileAsync = promisify(execFile)
+
+async function getServiceListDir(): Promise<string> {
+	return (await getDevConfig()).paths.serviceListDir
+}
+const USER_UNIT_DIRS = [
+	path.join(os.homedir(), '.config', 'systemd', 'user'),
+	path.join(os.homedir(), '.local', 'share', 'systemd', 'user'),
+]
+const WANTS_DIR = path.join(os.homedir(), '.config', 'systemd', 'user', 'default.target.wants')
+
+export type ServiceInfo = {
+	name: string
+	unit: string
+	unitPath: string | null
+	unitIsSymlink: boolean
+	symlinkStatus: 'enabled' | 'disabled' | 'unknown'
+	symlinkTarget: string | null
+	port: string | null
+	isActive: boolean
+	activeState: string
+}
 
 type RunnerParam = {
 	orgDir: string
@@ -67,40 +90,226 @@ export async function forEachRepository(
 	}
 }
 
-const USER_SERVICES = [
-	'dev.service',
-	'hydroxide.service',
-	'keymon.service',
-	'maestral-daemon@.service',
-]
+async function listRegisteredServices(): Promise<string[]> {
+	try {
+		const entries = await fs.readdir(await getServiceListDir(), { withFileTypes: true })
+		return entries
+			.filter((entry) => entry.isFile() && entry.name.endsWith('.ini'))
+			.map((entry) => entry.name.slice(0, -'.ini'.length))
+			.sort((a, b) => a.localeCompare(b))
+	} catch (error) {
+		if ((error as NodeJS.ErrnoException).code === 'ENOENT') return []
+		throw error
+	}
+}
 
-export async function getServiceData() {
-	const data = await Promise.all(
-		USER_SERVICES.map(async (name) => {
-			const [isActive, activeState] = await Promise.all([
-				execFileAsync('systemctl', ['--user', 'is-active', '--quiet', name])
+function normalizeServiceName(service: string): string {
+	return service.endsWith('.service') ? service.slice(0, -'.service'.length) : service
+}
+
+async function resolveUnitPath(unit: string): Promise<string | null> {
+	try {
+		const { stdout } = await execFileAsync('systemctl', [
+			'--user',
+			'show',
+			unit,
+			'--property=FragmentPath',
+			'--value',
+		])
+		const fragmentPath = stdout.trim()
+		if (fragmentPath) return fragmentPath
+	} catch {
+		// fall through to filesystem lookup
+	}
+
+	for (const dir of USER_UNIT_DIRS) {
+		const candidate = path.join(dir, unit)
+		try {
+			await fs.access(candidate)
+			return candidate
+		} catch {
+			continue
+		}
+	}
+	return null
+}
+
+async function resolveSymlinkStatus(
+	unit: string,
+): Promise<{ status: ServiceInfo['symlinkStatus']; target: string | null }> {
+	try {
+		const { stdout } = await execFileAsync('systemctl', [
+			'--user',
+			'is-enabled',
+			unit,
+		])
+		const state = stdout.trim()
+		if (state === 'enabled') {
+			const wantsLink = path.join(WANTS_DIR, unit)
+			try {
+				const target = await fs.readlink(wantsLink)
+				return { status: 'enabled', target }
+			} catch {
+				return { status: 'enabled', target: null }
+			}
+		}
+		if (state === 'disabled' || state === 'static' || state === 'masked') {
+			return { status: 'disabled', target: null }
+		}
+	} catch {
+		// fall through to filesystem check
+	}
+
+	const wantsLink = path.join(WANTS_DIR, unit)
+	try {
+		const target = await fs.readlink(wantsLink)
+		return { status: 'enabled', target }
+	} catch (error) {
+		if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+			return { status: 'disabled', target: null }
+		}
+		try {
+			await fs.lstat(wantsLink)
+			return { status: 'enabled', target: null }
+		} catch {
+			return { status: 'unknown', target: null }
+		}
+	}
+}
+
+const PORT_ENV_RE = /^\s*Environment=(?:'|")?PORT=(\d+)(?:'|")?\s*$/m
+
+async function parsePortFromUnit(unitPath: string | null): Promise<string | null> {
+	if (!unitPath) return null
+	try {
+		const content = await fs.readFile(unitPath, 'utf8')
+		return content.match(PORT_ENV_RE)?.[1] ?? null
+	} catch {
+		return null
+	}
+}
+
+async function unitPathIsSymlink(unitPath: string | null): Promise<boolean> {
+	if (!unitPath) return false
+	try {
+		const stat = await fs.lstat(unitPath)
+		return stat.isSymbolicLink()
+	} catch {
+		return false
+	}
+}
+
+export async function getServiceData(): Promise<ServiceInfo[]> {
+	const names = await listRegisteredServices()
+
+	return Promise.all(
+		names.map(async (name) => {
+			const unit = `${name}.service`
+			const [unitPath, symlink, isActive, activeState] = await Promise.all([
+				resolveUnitPath(unit),
+				resolveSymlinkStatus(unit),
+				execFileAsync('systemctl', ['--user', 'is-active', '--quiet', unit])
 					.then(() => true)
 					.catch(() => false),
-				execFileAsync('systemctl', ['--user', 'show', name, '--property=ActiveState'])
-					.then(({ stdout }) => stdout.trim().replace('ActiveState=', ''))
+				execFileAsync('systemctl', [
+					'--user',
+					'show',
+					unit,
+					'--property=ActiveState',
+					'--value',
+				])
+					.then(({ stdout }) => stdout.trim() || 'unknown')
 					.catch(() => 'unknown'),
 			])
+			const [port, unitIsSymlink] = await Promise.all([
+				parsePortFromUnit(unitPath),
+				unitPathIsSymlink(unitPath),
+			])
 
-			return { name, isActive, activeState }
+			return {
+				name,
+				unit,
+				unitPath,
+				unitIsSymlink,
+				symlinkStatus: symlink.status,
+				symlinkTarget: symlink.target,
+				port,
+				isActive,
+				activeState,
+			}
 		}),
 	)
+}
 
-	return data
+export async function updateServicePort(
+	service: string,
+	port: string,
+): Promise<ServiceInfo> {
+	const name = normalizeServiceName(service)
+	const registered = await listRegisteredServices()
+	if (!registered.includes(name)) {
+		throw new Error(`Unknown service: ${service}`)
+	}
+	if (!/^\d+$/.test(port)) {
+		throw new Error(`Invalid port: ${port}`)
+	}
+
+	const unit = `${name}.service`
+	const unitPath = await resolveUnitPath(unit)
+	if (!unitPath) {
+		throw new Error(`Unit file not found for ${name}`)
+	}
+
+	const stat = await fs.lstat(unitPath)
+	if (!stat.isSymbolicLink()) {
+		throw new Error(`Unit file is not a symlink: ${unitPath}`)
+	}
+
+	const content = await fs.readFile(unitPath, 'utf8')
+	if (!PORT_ENV_RE.test(content)) {
+		throw new Error(`No Environment=PORT= line in ${unitPath}`)
+	}
+	const updated = content.replace(PORT_ENV_RE, `Environment=PORT=${port}`)
+	await fs.writeFile(unitPath, updated, 'utf8')
+
+	try {
+		await execFileAsync('systemctl', ['--user', 'daemon-reload'])
+	} catch {
+		// best-effort; file is already updated
+	}
+
+	const services = await getServiceData()
+	const result = services.find((s) => s.name === name)
+	if (!result) throw new Error(`Service not found after port update: ${name}`)
+	return result
+}
+
+export async function controlService(
+	service: string,
+	action: 'start' | 'stop' | 'enable' | 'disable',
+): Promise<ServiceInfo> {
+	const name = normalizeServiceName(service)
+	const registered = await listRegisteredServices()
+	if (!registered.includes(name)) {
+		throw new Error(`Unknown service: ${service}`)
+	}
+	const unit = `${name}.service`
+	await execFileAsync('systemctl', ['--user', action, unit])
+	const services = await getServiceData()
+	const updated = services.find((s) => s.name === name)
+	if (!updated) throw new Error(`Service not found after ${action}: ${name}`)
+	return updated
 }
 
 export async function launchServiceTerminal(
 	service: string,
 	action: 'status' | 'journal',
 ): Promise<{ terminal: string }> {
+	const unit = `${normalizeServiceName(service)}.service`
 	const cmd =
 		action === 'status'
-			? `systemctl --user status ${service}; echo; read -p 'Press Enter to close...'`
-			: `journalctl --user -f -u ${service}`
+			? `systemctl --user status ${unit}; echo; read -p 'Press Enter to close...'`
+			: `journalctl --user -f -u ${unit}`
 
 	const terminals = [
 		{ bin: 'kitty', args: ['bash', '-c', cmd] },

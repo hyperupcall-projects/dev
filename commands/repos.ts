@@ -2,9 +2,7 @@ import * as fs from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import * as path from 'node:path'
 import { styleText } from 'node:util'
-import * as os from 'node:os'
 import { execa } from 'execa'
-import untildify from 'untildify'
 import yn from 'yn'
 import * as clack from '@clack/prompts'
 
@@ -17,6 +15,7 @@ import type { Octokit } from 'octokit'
 import { getEcosystems } from '../devutils/index.ts'
 import type { CommandScriptOptions } from '#types'
 import process from 'node:process'
+import { getDevConfig } from '#utilities/dev-config.ts'
 
 type Config = {
 	organizationsDir: string
@@ -28,7 +27,7 @@ export async function run(
 	positionals: string[],
 ) {
 	const config = {
-		organizationsDir: untildify('~/.dev/.data/managed-repositories'),
+		organizationsDir: (await getDevConfig()).paths.managedRepositories,
 		repositoryGroups: [
 			{
 				name: 'bpkg',
@@ -103,13 +102,13 @@ export async function run(
 
 		// TODO
 		await fs.writeFile(
-			path.join(os.homedir(), '.dotfiles/.data/repositories.json'),
+			(await getDevConfig()).paths.repositoriesJson,
 			JSON.stringify(Repositories, null, '\t'),
 		)
 	} else if (positionals[0] === 'tui') {
 		const repositories = JSON.parse(
 			await fs.readFile(
-				path.join(os.homedir(), '.dotfiles/.data/repositories.json'),
+				(await getDevConfig()).paths.repositoriesJson,
 				'utf-8',
 			),
 		)
@@ -131,7 +130,7 @@ export async function run(
 		if (clack.isCancel(repository)) {
 			process.exit(1)
 		}
-		const dir = getRepositoryDestDirectory(repository)
+		const dir = await getRepositoryDestDirectory(repository)
 		if (!existsSync(dir)) {
 			const shouldClone = await clack.confirm({
 				message: 'Would you like to clone this repository?',
@@ -216,7 +215,7 @@ export async function run(
 				await execa({
 					stdout: 'inherit',
 					stderr: 'inherit',
-				})`code --user-data-dir ${path.join(os.homedir(), '.dotfiles/.data/vscode-datadirs', packname.replace(/^vscode-/, ''))} --extensions-dir ${path.join(os.homedir(), '.dotfiles/.data/vscode-extensions', packname.replace(/^vscode-/, ''))} --new-window ${dir}`
+				})`code --user-data-dir ${path.join((await getDevConfig()).paths.vscodeDataDirs, packname.replace(/^vscode-/, ''))} --extensions-dir ${path.join((await getDevConfig()).paths.vscodeExtensions, packname.replace(/^vscode-/, ''))} --new-window ${dir}`
 				break
 			}
 			case 'vscode-insiders':
@@ -448,13 +447,14 @@ export async function syncRepositories({
 	}
 }
 
-function getRepositoryDestDirectory(repository: string) {
+async function getRepositoryDestDirectory(repository: string) {
+	const paths = (await getDevConfig()).paths
 	switch (repository) {
 		case 'hyperupcall-projects/dev':
-			return path.join(os.homedir(), '.dev')
+			return paths.repoDev
 		case 'hyperupcall/dotfiles':
-			return path.join(os.homedir(), '.dotfiles')
+			return paths.repoDotfiles
 		default:
-			return path.join(os.homedir(), '/Documents/Code', repository)
+			return path.join(paths.codeDir, repository)
 	}
 }

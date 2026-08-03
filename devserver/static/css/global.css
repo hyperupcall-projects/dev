@@ -28,3 +28,22 @@ body {
 .hover-bold:hover {
 	font-weight: bold;
 }
+
+.pm-category > summary {
+	list-style: none;
+}
+
+.pm-category > summary::-webkit-details-marker {
+	display: none;
+}
+
+.pm-category > summary::before {
+	content: '▸';
+	display: inline-block;
+	width: 1rem;
+	color: #666;
+}
+
+.pm-category[open] > summary::before {
+	content: '▾';
+}

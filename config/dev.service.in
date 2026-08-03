@@ -1,0 +1,16 @@
+[Unit]
+Description=@@DESCRIPTION@@@
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=@@USER@@@
+WorkingDirectory=@@WORKING_DIRECTORY@@@
+ExecStart=@@EXEC_START@@@
+Environment=PORT=@@PORT@@@
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=default.target

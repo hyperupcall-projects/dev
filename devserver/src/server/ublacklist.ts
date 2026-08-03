@@ -1,9 +1,9 @@
 import { readFile } from 'node:fs/promises'
-import { homedir } from 'node:os'
 import { join } from 'node:path'
+import { getDevConfig } from '#utilities/dev-config.ts'
 
 export async function serveUblacklistFile(filename: string): Promise<Response> {
-	const filePath = join(homedir(), '.devhidden', filename)
+	const filePath = join((await getDevConfig()).paths.ublacklistDir, filename)
 	try {
 		const contents = await readFile(filePath, 'utf-8')
 		return new Response(contents, {

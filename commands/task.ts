@@ -18,6 +18,7 @@ import process from 'node:process'
 import walk from 'ignore-walk'
 import * as jsonc from 'jsonc-parser'
 import { parseJSON } from 'jsonc-eslint-parser'
+import { getDevConfig } from '#utilities/dev-config.ts'
 
 export async function run(
 	options: CommandScriptOptions,
@@ -366,14 +367,13 @@ async function createVSCodeDesktopApplication({ variantId, variantName, extensio
 	const dataDir = (process.env.XDG_DATA_HOME ?? '').startsWith('/')
 		? (process.env.XDG_DATA_HOME ?? '')
 		: path.join(os.homedir(), '.config')
+	const config = await getDevConfig()
 	const vscodeDataDir = overrides?.datadir ?? path.join(
-		os.homedir(),
-		'.dotfiles/.data/vscode-datadirs',
+		config.paths.vscodeDataDirs,
 		`hyperupcall-pack-${variantId}`,
 	)
 	const vscodeExtDir = overrides?.extdir ?? path.join(
-		os.homedir(),
-		'.dotfiles/.data/vscode-extensions',
+		config.paths.vscodeExtensions,
 		`hyperupcall-pack-${variantId}`,
 	)
 
@@ -410,8 +410,7 @@ Icon=${iconFile}`,
 	)
 	fs.copyFileSync(
 		path.join(
-			os.homedir(),
-			'.devhidden/ecosystem-icons/output/vscode-desktop',
+			config.paths.ecosystemIcons,
 			`${variantId}.png`,
 		),
 		iconFile,

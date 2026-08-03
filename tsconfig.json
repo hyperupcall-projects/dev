@@ -1,6 +1,5 @@
 {
-	// TODO: do not ignore devserver/src
-	"exclude": ["**/config/templates/**", "**/devserver/dist/**", "**/devserver/src/**", "**/devserver/src/routeTree.gen.ts"],
+	"exclude": ["**/config/templates/**", "**/devserver/dist/**"],
 	"compilerOptions": {
 		"skipLibCheck": true,
 		"strict": true,
