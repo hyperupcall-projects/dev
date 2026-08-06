@@ -26,9 +26,10 @@ function navigation(): Html {
 			</div>
 			<div id="navbarBasicExample" class="navbar-menu">
 				<div class="navbar-start">
+					<a class="navbar-item" href="/computer">🗃️ Computer</a>
 					<a class="navbar-item" href="/knowledge">🧠 Knowledge Manager</a>
-					<a class="navbar-item" href="/activity">📁 Activity Manager</a>
-					<a class="navbar-item" href="/projects">💻 Software Project Manager</a>
+					<a class="navbar-item" href="/activity">📁 Project Manager</a>
+					<a class="navbar-item" href="/projects">💻 SW Project Manager</a>
 					<a class="navbar-item" href="/services">⚙️ Service Manager</a>
 					<a class="navbar-item" href="/dictionary">📖 Dictionary Manager</a>
 					<div class="navbar-item has-dropdown is-hoverable" id="nav-apis">

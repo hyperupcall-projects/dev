@@ -131,7 +131,7 @@ export async function openKnowledgeFolder(options: {
 		const binary = await resolveCommand(VSCODE_CANDIDATES)
 		if (!binary) {
 			throw new Error(
-				'Could not find VS Code. Install it or add code/code-insiders to PATH.',
+				'Could not find VSCode. Install it or add code/code-insiders to PATH.',
 			)
 		}
 		spawnDetached(binary, [folder.path])

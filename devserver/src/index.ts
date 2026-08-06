@@ -8,6 +8,7 @@ import { getServiceData, launchServiceTerminal, controlService, updateServicePor
 import {
 	activityManagerPage,
 	blocklistsPage,
+	computerPage,
 	dictionaryPage,
 	knowledgeManagerPage,
 	projectManagerPage,
@@ -29,6 +30,14 @@ import {
 	type KnowledgeOpenerId,
 } from './server/knowledge-folders.ts'
 import { openProjects, IDE_IDS, type IdeId } from './server/open-projects.ts'
+import {
+	COMPUTING_FOLDER_IDS,
+	COMPUTING_FOLDER_OPENERS,
+	listComputingFolders,
+	openComputingFolder,
+	type ComputingFolderId,
+	type ComputingFolderOpener,
+} from './server/computing-folders.ts'
 import {
 	createSavedGroup,
 	deleteSavedGroup,
@@ -119,6 +128,41 @@ app.post('/api/dictionary/process-files', async (c) =>
 )
 
 app.get('/api/projects', async (c) => c.json(await getGardenCatalog()))
+
+app.get('/api/computing-folders', async (c) =>
+	c.json(await listComputingFolders()),
+)
+
+app.post('/api/computing-folders/open', async (c) => {
+	const body = (await c.req.json()) as {
+		folderId?: string
+		subdirectoryId?: string
+		opener?: string
+	}
+	if (!body.folderId || !COMPUTING_FOLDER_IDS.includes(body.folderId as ComputingFolderId)) {
+		return c.json({ error: 'Expected a valid computing folder id' }, 400)
+	}
+	if (!body.opener || !COMPUTING_FOLDER_OPENERS.includes(body.opener as ComputingFolderOpener)) {
+		return c.json(
+			{ error: `Expected opener to be one of: ${COMPUTING_FOLDER_OPENERS.join(', ')}` },
+			400,
+		)
+	}
+	try {
+		return c.json(
+			await openComputingFolder({
+				folderId: body.folderId as ComputingFolderId,
+				subdirectoryId: body.subdirectoryId,
+				opener: body.opener as ComputingFolderOpener,
+			}),
+		)
+	} catch (error) {
+		return c.json(
+			{ error: error instanceof Error ? error.message : String(error) },
+			400,
+		)
+	}
+})
 
 app.post('/api/projects/open', async (c) => {
 	const body = (await c.req.json()) as {
@@ -261,6 +305,7 @@ app.post('/api/knowledge/open', async (c) => {
 app.get('/', (c) => c.redirect('/services'))
 app.get('/services', (c) => servicesPage())
 app.get('/dictionary', (c) => dictionaryPage())
+app.get('/computer', (c) => computerPage())
 app.get('/activity', (c) => activityManagerPage())
 app.get('/projects', (c) => projectManagerPage())
 app.get('/knowledge', (c) => knowledgeManagerPage())

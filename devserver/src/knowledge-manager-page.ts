@@ -14,7 +14,7 @@ export async function knowledgeManagerPage(): Promise<Response> {
 					<h1 class="title mb-1">Knowledge Manager</h1>
 					<p class="subtitle is-6 mb-0">
 						Select a knowledge folder and open it in Obsidian, your file manager,
-						Zettlr, VS Code, or Zed
+						Zettlr, VSCode, or Zed
 					</p>
 				</div>
 
@@ -71,7 +71,7 @@ export async function knowledgeManagerPage(): Promise<Response> {
 											<option value="obsidian">Obsidian</option>
 											<option value="file-manager">File manager</option>
 											<option value="zettlr">Zettlr</option>
-											<option value="vscode">VS Code</option>
+											<option value="vscode">VSCode</option>
 											<option value="zed">Zed</option>
 										</select>
 									</div>
@@ -86,34 +86,6 @@ export async function knowledgeManagerPage(): Promise<Response> {
 								</div>
 							</div>
 						</div>
-					</div>
-
-					<div class="column content">
-						<h2>About</h2>
-						<p>
-							Knowledge is retrieved when doing work. To retrieve efficiently, the knowledge must be organized well. The rest of this section describes the organization of my knowledge.
-						</p>
-						<p>
-							The categores are below. Some of them can be "archived". Some of it is inspired from <a href="https://diataxis.fr">Diátaxis</a>.
-						</p>
-						<h3>Personal Knowledge</h3>
-						<p>
-							Knowledge that only applies to me and is not relevant to anyone else. PII like addresses and phone numbers, but also personal processes that I follow in some situations.
-						</p>
-						<ul>
-							<li>Personal & Life</li>
-							<li>Records</li>
-						</ul>
-						<h3>World Knowledge</h3>
-						<p>
-							Knowledge that would be useful to other people. Somewhat similar to the Linux FHS, separating by "type of knowledge" (even before "conceptual category") makes retrieval easier. This is because when retrieving, the user knows the type of knowledge they're looking for. And, similar notes that share the same subdirectory can share the same build system or organization pattern.
-						</p>
-						<ul>
-							<li><b>Catalogs</b> - Resources in an "awesome"-style list. Simply lists of links with minimal description.</li>
-							<li><b>Concepts</b> - Sort of a glossary reference. Sort of WIP.</li>
-							<li><b>Literature</b> - Notes when reading books, watching movies, etc. Maybe put "non-school course" stuff here?</li>
-							<li><b>Education</b> - School or course related organizations</li>
-						</ul>
 					</div>
 				</div>
 			</div>

@@ -10,11 +10,11 @@ export async function activityManagerPage(): Promise<Response> {
 	const root = await getActivityProjectsRoot()
 
 	return page({
-		title: 'Activity Manager',
+		title: 'Project Manager',
 		body: html`
 			<div class="p-4" id="activity-manager">
 				<div class="mb-4">
-					<h1 class="title mb-1">Activity Manager</h1>
+					<h1 class="title mb-1">Project Manager</h1>
 					<p class="subtitle is-6 mb-0">
 						Open activity folders from
 						<code>${root}</code>

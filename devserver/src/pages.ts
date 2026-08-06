@@ -302,6 +302,77 @@ export async function servicesPage(): Promise<Response> {
 	})
 }
 
+export async function computerPage(): Promise<Response> {
+	return page({
+		title: 'Computer',
+		body: html`
+			<div class="content p-4">
+				<h1>Computer</h1>
+				<p>
+					Information about how this computer is organized.
+				</p>
+				<h2>Volumes</h2>
+				<p>There are a few main volumes:</p>
+				<ul>
+					<li><b>Root</b> - <tt>/</tt></li>
+					<li><b>Extras</b> - Includes XDG user directories like <tt>Documents/</tt>.</li>
+					<li><b>Vault</b> - Includes everything else, including very large files.</li>
+				</ul>
+				<h2>Home Folder</h2>
+				<p>
+					Has the usual stuff, including:
+				</p>
+				<ul>
+					<li><b><tt>.dotfiles</tt></b> - Configuration files.</li>
+					<li><b><tt>.dev</tt></b> - Programs to help me manage the computer.</li>
+					<li><b><tt>.devhidden</tt></b> - Like <tt>.dev</tt>, but not version controlled.</li>
+					<li><b><tt>.devtest</tt></b> - Testing ground.</li>
+				</ul>
+
+				<h2>Documents Folder</h2>
+				<p>For each one, there may be an "archive"</p>
+				<ul>
+					<li><b>Knowledge</b> - Knowledge and information that I want to write down.</li>
+					<li><b>Projects</b> - "Regular" projects and computing projects.</li>
+					<li><b>Content</b> - Content like books, papers, specifications, movies, TV shows</li>
+				</ul>
+
+				<h3>Knowledge</h3>
+				<ul>
+					<li><b>Personal Knowledge</b> - Only applies to me.
+						<ul>
+							<li>Personal & Life</li>
+							<li>Records</li>
+						</ul>
+					</li>
+					<li><b>World Knowledge</b> - About the world, useful to everyone.
+						<ul>
+							<li><b>Catalogs</b> - Resources in an "awesome"-style list. Simply lists of links with minimal description.</li>
+							<li><b>Concepts</b> - Sort of a glossary reference. Sort of WIP.</li>
+							<li><b>Literature</b> - Notes when reading books, watching movies, etc. Maybe put "non-school course" stuff here?</li>
+							<li><b>Education</b> - School or course related organizations</li>
+						</ul>
+					</li>
+				</ul>
+
+
+
+
+				<h2>Other Notes</h2>
+				<p>
+					Color codes:
+				</p>
+				<ul>
+					<li><b>Purple</b> - Knowledge</li>
+					<li><b>Orange</b> - Content and media from other people. Nothing I created, usually downloaded from the internet.</li>
+					<li><b>Green</b> - Archived stuff.</li>
+					<li><b>Brown</b> - For the <tt>Other</tt> folder so it stands out.</li>
+				</ul>
+			</div>
+		`,
+	})
+}
+
 export async function dictionaryPage(): Promise<Response> {
 	const data = await getDictionaryWatcherPageData()
 	const cspellPath = (await getDevConfig()).paths.dictionaryCspellDisplay

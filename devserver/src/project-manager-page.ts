@@ -3,13 +3,15 @@ import {
 	PINNED_CATEGORY_ID,
 } from './server/garden-projects.ts'
 import { listSavedGroups } from './server/project-groups.ts'
+import { listComputingFolders } from './server/computing-folders.ts'
 import { html, raw } from './html.ts'
 import { page } from './layout.ts'
 
 export async function projectManagerPage(): Promise<Response> {
-	const [catalog, groups] = await Promise.all([
+	const [catalog, groups, computingFolders] = await Promise.all([
 		getGardenCatalog(),
 		listSavedGroups(),
+		listComputingFolders(),
 	])
 
 	const pinned =
@@ -24,6 +26,7 @@ export async function projectManagerPage(): Promise<Response> {
 		categories: gardenCategories,
 		warnings: catalog.warnings,
 		groups,
+		computingFolders,
 	}
 	// Prevent </script> in paths/names from breaking the inline script tag.
 	const initialDataJson = JSON.stringify(initialData).replaceAll(
@@ -32,9 +35,14 @@ export async function projectManagerPage(): Promise<Response> {
 	)
 
 	return page({
-		title: 'Software Project Manager',
+		title: 'SW Project Manager',
 		body: html`
-			<div class="p-4" id="project-manager">
+			<div
+				class="p-4"
+				id="project-manager"
+				style="height: calc(100vh - 3.25rem); display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; overflow: hidden;"
+			>
+				<div id="pm-header">
 				<div
 					class="is-flex is-justify-content-space-between is-align-items-flex-end is-flex-wrap-wrap mb-3"
 					style="gap: 0.75rem;"
@@ -48,6 +56,7 @@ export async function projectManagerPage(): Promise<Response> {
 					<div
 						class="is-flex is-align-items-flex-end is-flex-wrap-wrap"
 						style="gap: 0.5rem;"
+						id="pm-program-controls"
 					>
 						<div class="field mb-0">
 							<label class="label is-small" for="pm-search">Search</label>
@@ -114,9 +123,22 @@ export async function projectManagerPage(): Promise<Response> {
 							</div>
 						`
 					: ''}
+				</div>
 
-				<div class="columns">
-					<div class="column is-one-quarter">
+				<div
+					id="pm-workspace"
+					class="columns"
+					style="display: grid; grid-template-columns: minmax(15rem, 25%) minmax(0, 1fr); gap: 1.5rem; min-height: 0; overflow: hidden; margin: 0;"
+				>
+					<div
+						class="column"
+						id="pm-sidebar"
+						style="min-width: 0; min-height: 0; overflow-y: auto; overflow-x: hidden;"
+					>
+						<div class="mb-4">
+							<p class="help mb-2">Computing folders in <code>~/Documents/Computing</code>.</p>
+							<ul id="pm-master" class="menu-list"></ul>
+						</div>
 						<div class="mb-2">
 							<h2 class="title is-5 mb-1">Pinned</h2>
 							<p class="help mb-2">
@@ -143,11 +165,25 @@ export async function projectManagerPage(): Promise<Response> {
 							No saved groups yet.
 						</p>
 					</div>
-					<div class="column">
-						<div id="pm-catalog"></div>
-						<p id="pm-empty" class="has-text-grey is-hidden">
-							No projects match your search.
-						</p>
+				<div
+					class="column"
+					id="pm-main"
+					style="min-width: 0; min-height: 0; width: auto; overflow: hidden; display: grid; grid-template-rows: minmax(0, 1fr);"
+				>
+					<div
+						id="pm-master-detail"
+						class="is-hidden"
+						style="min-height: 0; overflow-y: auto; overflow-x: hidden;"
+					></div>
+					<div
+						id="pm-program-list"
+						style="height: 100%; min-height: 0; overflow-y: auto; overflow-x: hidden; padding-right: 0.75rem;"
+					>
+							<div id="pm-catalog"></div>
+							<p id="pm-empty" class="has-text-grey is-hidden">
+								No projects match your search.
+							</p>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -157,6 +193,7 @@ export async function projectManagerPage(): Promise<Response> {
 	(function () {
 		var DATA = ${initialDataJson}
 		var selected = new Set()
+		var activeMasterId = 'programs'
 		var IDE_KEY = 'project-manager-ide'
 
 		var searchEl = document.getElementById('pm-search')
@@ -165,6 +202,10 @@ export async function projectManagerPage(): Promise<Response> {
 		var clearBtn = document.getElementById('pm-clear')
 		var saveBtn = document.getElementById('pm-save-group')
 		var countEl = document.getElementById('pm-selection-count')
+		var programControlsEl = document.getElementById('pm-program-controls')
+		var masterEl = document.getElementById('pm-master')
+		var masterDetailEl = document.getElementById('pm-master-detail')
+		var programListEl = document.getElementById('pm-program-list')
 		var catalogEl = document.getElementById('pm-catalog')
 		var emptyEl = document.getElementById('pm-empty')
 		var pinnedEl = document.getElementById('pm-pinned')
@@ -181,6 +222,12 @@ export async function projectManagerPage(): Promise<Response> {
 		function hideStatus() {
 			statusEl.classList.add('is-hidden')
 			statusEl.textContent = ''
+		}
+
+		function setPageScrollLock(locked) {
+			var overflow = locked ? 'hidden' : 'auto'
+			document.documentElement.style.setProperty('overflow', overflow, 'important')
+			document.body.style.setProperty('overflow', overflow, 'important')
 		}
 
 		function escapeHtml(value) {
@@ -227,6 +274,123 @@ export async function projectManagerPage(): Promise<Response> {
 				selectedCount > 0 && selectedCount < visible.length
 		}
 
+		function findComputingFolder(id) {
+			return (DATA.computingFolders || []).find(function (folder) {
+				return folder.id === id
+			})
+		}
+
+		function renderMasterFolders() {
+			masterEl.innerHTML = (DATA.computingFolders || [])
+				.map(function (folder) {
+					return (
+						'<li>' +
+						'<button type="button" class="button is-fullwidth has-text-left js-master-folder mb-1' +
+						(activeMasterId === folder.id ? ' is-link' : ' is-white') +
+						'" aria-current="' +
+						(activeMasterId === folder.id ? 'page' : 'false') +
+						'" data-master-id="' +
+						escapeHtml(folder.id) +
+						'" style="justify-content: flex-start;">' +
+						escapeHtml(folder.name) +
+						(folder.exists
+							? ''
+							: '<span class="tag is-warning is-light is-size-7 ml-2">missing</span>') +
+						'</button>' +
+						'</li>'
+					)
+				})
+				.join('')
+		}
+
+		function renderMasterDetail(folder) {
+			var subdirectories = folder.subdirectories || []
+			var html =
+				'<div class="is-flex is-justify-content-space-between is-align-items-flex-start is-flex-wrap-wrap mb-4" style="gap: 0.75rem;">' +
+				'<div>' +
+				'<h2 class="title is-4 mb-1">' +
+				escapeHtml(folder.name) +
+				'</h2>' +
+				'<p class="help mb-0"><code>' +
+				escapeHtml(folder.path) +
+				'</code></p>' +
+				'</div>' +
+				'<button type="button" class="button is-link is-light js-open-computing" data-folder-id="' +
+				escapeHtml(folder.id) +
+				'" data-opener="file-manager">Open in file explorer</button>' +
+				'</div>'
+
+			if (!folder.exists) {
+				masterDetailEl.innerHTML =
+					html +
+					'<div class="notification is-warning is-light">This folder does not exist yet.</div>'
+				return
+			}
+
+			html += '<h3 class="title is-5 mb-2">Subdirectories</h3>'
+			if (subdirectories.length === 0) {
+				html += '<p class="has-text-grey">No subdirectories found.</p>'
+			} else {
+				html += '<div>'
+				subdirectories.forEach(function (subdirectory) {
+					html +=
+						'<div class="box p-3 mb-2">' +
+						'<div class="is-flex is-justify-content-space-between is-align-items-center is-flex-wrap-wrap" style="gap: 0.5rem;">' +
+						'<div><strong>' +
+						escapeHtml(subdirectory.name) +
+						'</strong><br><code class="is-size-7 has-text-grey">' +
+						escapeHtml(subdirectory.path) +
+						'</code></div>' +
+						'<div class="buttons are-small mb-0">' +
+						['vscode', 'zed', 'kate', 'clion']
+							.map(function (opener) {
+								return '<button type="button" class="button js-open-computing" data-folder-id="' +
+									escapeHtml(folder.id) +
+									'" data-subdirectory-id="' +
+									escapeHtml(subdirectory.id) +
+									'" data-opener="' +
+									opener +
+									'">' +
+									(opener === 'vscode' ? 'VSCode' : opener === 'clion' ? 'CLion' : opener[0].toUpperCase() + opener.slice(1)) +
+									'</button>'
+							})
+							.join('') +
+						'</div></div></div>'
+				})
+				html += '</div>'
+			}
+			masterDetailEl.innerHTML = html
+		}
+
+		function selectMaster(folderId) {
+			var folder = findComputingFolder(folderId)
+			if (!folder) return
+			activeMasterId = folderId
+			masterEl.querySelectorAll('.js-master-folder').forEach(function (button) {
+				var isSelected = button.getAttribute('data-master-id') === folderId
+				button.classList.toggle('is-link', isSelected)
+				button.classList.toggle('is-white', !isSelected)
+				button.setAttribute('aria-current', isSelected ? 'page' : 'false')
+			})
+			if (folderId === 'programs') {
+				setPageScrollLock(true)
+				programControlsEl.classList.remove('is-hidden')
+				masterDetailEl.classList.add('is-hidden')
+				programListEl.classList.remove('is-hidden')
+				catalogEl.classList.remove('is-hidden')
+				emptyEl.classList.remove('is-hidden')
+				renderCatalog()
+				return
+			}
+			setPageScrollLock(true)
+			programControlsEl.classList.add('is-hidden')
+			masterDetailEl.classList.remove('is-hidden')
+			programListEl.classList.add('is-hidden')
+			catalogEl.classList.add('is-hidden')
+			emptyEl.classList.add('is-hidden')
+			renderMasterDetail(folder)
+		}
+
 		function renderPinned() {
 			pinnedEl.innerHTML = (DATA.pinned || [])
 				.map(function (project) {
@@ -271,7 +435,7 @@ export async function projectManagerPage(): Promise<Response> {
 				var indeterminate = selectedCount > 0 && selectedCount < visible.length
 
 				html +=
-					'<details class="pm-category mb-3" data-category-id="' +
+					'<details class="pm-category pb-3" data-category-id="' +
 					escapeHtml(category.id) +
 					'" open>' +
 					'<summary class="is-flex is-align-items-center" style="gap: 0.5rem; cursor: pointer; list-style: none;">' +
@@ -293,7 +457,7 @@ export async function projectManagerPage(): Promise<Response> {
 
 				visible.forEach(function (project) {
 					html +=
-						'<li class="mb-1">' +
+						'<li class="pb-1">' +
 						'<label class="checkbox is-flex is-align-items-center" style="gap: 0.5rem;">' +
 						'<input type="checkbox" class="js-project-check" data-project-id="' +
 						escapeHtml(project.id) +
@@ -388,7 +552,41 @@ export async function projectManagerPage(): Promise<Response> {
 		}
 
 		searchEl.addEventListener('input', function () {
-			renderCatalog()
+			if (activeMasterId === 'programs') renderCatalog()
+		})
+
+		masterEl.addEventListener('click', function (event) {
+			var target = event.target
+			if (!(target instanceof Element)) return
+			var button = target.closest('.js-master-folder')
+			if (!button) return
+			var folderId = button.getAttribute('data-master-id')
+			if (folderId) selectMaster(folderId)
+		})
+
+		masterDetailEl.addEventListener('click', async function (event) {
+			var target = event.target
+			if (!(target instanceof Element)) return
+			var button = target.closest('.js-open-computing')
+			if (!button) return
+			hideStatus()
+			button.classList.add('is-loading')
+			try {
+				var result = await api('/api/computing-folders/open', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						folderId: button.getAttribute('data-folder-id'),
+						subdirectoryId: button.getAttribute('data-subdirectory-id') || undefined,
+						opener: button.getAttribute('data-opener'),
+					}),
+				})
+				showStatus('success', 'Opened ' + result.opened)
+			} catch (err) {
+				showStatus('danger', err && err.message ? err.message : String(err))
+			} finally {
+				button.classList.remove('is-loading')
+			}
 		})
 
 		var savedIde = null
@@ -589,8 +787,9 @@ export async function projectManagerPage(): Promise<Response> {
 		})
 
 		updateSelectionUi()
+		renderMasterFolders()
 		renderPinned()
-		renderCatalog()
+		selectMaster('programs')
 		renderGroups()
 	})()
 </script>
