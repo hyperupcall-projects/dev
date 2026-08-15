@@ -1,19 +1,18 @@
-import { html, raw } from './html.ts'
-import { page } from './layout.ts'
+import { html, raw } from 'hono/html'
 import {
 	getBlocklistsDir,
 	listBlocklistTxtFiles,
-} from './server/blocklists.ts'
+} from '../server/blocklists.ts'
 
-export async function blocklistsPage(): Promise<Response> {
+export async function blocklistsView() {
 	const [dir, files] = await Promise.all([
 		getBlocklistsDir(),
 		listBlocklistTxtFiles(),
 	])
 
-	return page({
+	return {
 		title: 'Blocklists',
-		body: html`
+		content: html`
 			<div class="p-4" id="blocklists-page">
 				<div class="mb-4">
 					<h1 class="title mb-1">Blocklists</h1>
@@ -76,7 +75,7 @@ export async function blocklistsPage(): Promise<Response> {
 									${files.map(
 										(name) => html`
 											<li>
-												<a href=${`/${name}`} target="_blank" rel="noopener">
+												<a href="${`/${name}`}" target="_blank" rel="noopener">
 													/${name}
 												</a>
 											</li>
@@ -371,5 +370,5 @@ export async function blocklistsPage(): Promise<Response> {
 })()
 </script>
 `),
-	})
+	}
 }

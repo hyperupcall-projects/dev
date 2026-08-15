@@ -1,20 +1,18 @@
-import { html, raw } from './html.ts'
-import { page } from './layout.ts'
+import { html, raw } from 'hono/html'
 import {
 	getActivityProjectsRoot,
 	listActivityProjects,
-} from './server/activity-projects.ts'
+} from '../server/activity-projects.ts'
 
-export async function activityManagerPage(): Promise<Response> {
+export async function activityManagerPanel() {
 	const projects = await listActivityProjects()
 	const root = await getActivityProjectsRoot()
 
-	return page({
-		title: 'Project Manager',
-		body: html`
-			<div class="p-4" id="activity-manager">
+	return {
+		content: html`
+			<div id="activity-manager">
 				<div class="mb-4">
-					<h1 class="title mb-1">Project Manager</h1>
+					<h2 class="title is-4 mb-1">Project Manager</h2>
 					<p class="subtitle is-6 mb-0">
 						Open activity folders from
 						<code>${root}</code>
@@ -39,7 +37,7 @@ export async function activityManagerPage(): Promise<Response> {
 											<button
 												type="button"
 												class="button is-link is-light js-open-activity"
-												data-path=${project.path}
+												data-path="${project.path}"
 											>
 												${project.name}
 											</button>
@@ -112,5 +110,5 @@ export async function activityManagerPage(): Promise<Response> {
 })()
 </script>
 `),
-	})
+	}
 }

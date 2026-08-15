@@ -1,8 +1,8 @@
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
+import { fileURLToPath } from 'node:url'
 import util, { styleText } from 'node:util'
 import { execa } from 'execa'
-import { createRequire } from 'node:module'
 
 import { Octokit } from 'octokit'
 import detectIndent from 'detect-indent'
@@ -14,8 +14,6 @@ import jsonc from 'jsonc-parser'
 
 import type { Issue } from '#types'
 import process from 'node:process'
-
-const require = createRequire(import.meta.url)
 
 dotenv.config({ path: path.join(import.meta.dirname, '../.env') })
 
@@ -252,9 +250,9 @@ export async function fileExists(filepath: string): Promise<boolean> {
 export function pkgRoot(packageName?: string) {
 	if (!packageName) {
 		return path.dirname(import.meta.dirname)
-	} else {
-		return path.dirname(require.resolve(packageName))
 	}
+
+	return path.dirname(fileURLToPath(import.meta.resolve(packageName)))
 }
 
 export async function writeTrees(trees: Record<string, string>[]) {

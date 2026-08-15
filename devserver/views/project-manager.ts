@@ -1,13 +1,12 @@
 import {
 	getGardenCatalog,
 	PINNED_CATEGORY_ID,
-} from './server/garden-projects.ts'
-import { listSavedGroups } from './server/project-groups.ts'
-import { listComputingFolders } from './server/computing-folders.ts'
-import { html, raw } from './html.ts'
-import { page } from './layout.ts'
+} from '../server/garden-projects.ts'
+import { listSavedGroups } from '../server/project-groups.ts'
+import { listComputingFolders } from '../server/computing-folders.ts'
+import { html, raw } from 'hono/html'
 
-export async function projectManagerPage(): Promise<Response> {
+export async function projectManagerView() {
 	const [catalog, groups, computingFolders] = await Promise.all([
 		getGardenCatalog(),
 		listSavedGroups(),
@@ -34,9 +33,9 @@ export async function projectManagerPage(): Promise<Response> {
 		'<\\/',
 	)
 
-	return page({
+	return {
 		title: 'SW Project Manager',
-		body: html`
+		content: html`
 			<div
 				class="p-4"
 				id="project-manager"
@@ -794,5 +793,5 @@ export async function projectManagerPage(): Promise<Response> {
 	})()
 </script>
 `),
-	})
+	}
 }

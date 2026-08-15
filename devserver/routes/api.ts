@@ -1,68 +1,68 @@
-import { serve } from '@hono/node-server'
-import { serveStatic } from '@hono/node-server/serve-static'
 import { Hono } from 'hono'
-import { readFile } from 'node:fs/promises'
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { getServiceData, launchServiceTerminal, controlService, updateServicePort } from '#utilities/util.ts'
+import { cors } from 'hono/cors'
 import {
-	activityManagerPage,
-	blocklistsPage,
-	computerPage,
-	dictionaryPage,
-	knowledgeManagerPage,
-	projectManagerPage,
-	servicesPage,
-} from './pages.ts'
-import { processDictionaryFiles } from './server/dictionary-watcher.ts'
+	getServiceData,
+	launchServiceTerminal,
+	controlService,
+	updateServicePort,
+} from '#utilities/util.ts'
+import { processDictionaryFiles } from '../server/dictionary-watcher.ts'
 import {
 	listActivityProjects,
 	openActivityProject,
-} from './server/activity-projects.ts'
-import {
-	compileBlocklists,
-	serveBlocklistFile,
-} from './server/blocklists.ts'
-import { getGardenCatalog } from './server/garden-projects.ts'
+} from '../server/activity-projects.ts'
+import { compileBlocklists } from '../server/blocklists.ts'
+import { getGardenCatalog } from '../server/garden-projects.ts'
 import {
 	openKnowledgeFolder,
 	KNOWLEDGE_OPENER_IDS,
 	type KnowledgeOpenerId,
-} from './server/knowledge-folders.ts'
-import { openProjects, IDE_IDS, type IdeId } from './server/open-projects.ts'
+} from '../server/knowledge-folders.ts'
+import {
+	FILE_EDITOR_IDS,
+	openFile,
+	type FileEditorId,
+} from '../server/open-files.ts'
+import { openProjects, IDE_IDS, type IdeId } from '../server/open-projects.ts'
 import {
 	COMPUTING_FOLDER_IDS,
 	COMPUTING_FOLDER_OPENERS,
-	listComputingFolders,
 	openComputingFolder,
+	listComputingFolders,
 	type ComputingFolderId,
 	type ComputingFolderOpener,
-} from './server/computing-folders.ts'
+} from '../server/computing-folders.ts'
 import {
 	createSavedGroup,
 	deleteSavedGroup,
 	listSavedGroups,
 	renameSavedGroup,
-} from './server/project-groups.ts'
+} from '../server/project-groups.ts'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const repoRoot = path.resolve(__dirname, '../..')
-
-const app = new Hono()
-
-app.use(async (c, next) => {
-	const pathname = new URL(c.req.url).pathname
-	const match = pathname.match(/^\/([A-Za-z0-9._-]+\.txt)$/)
-	if (!match) {
-		await next()
-		return
+function isLocalhostOrigin(origin: string): boolean {
+	try {
+		const hostname = new URL(origin).hostname
+		return hostname === 'localhost' || hostname === '127.0.0.1'
+	} catch {
+		return false
 	}
-	return serveBlocklistFile(match[1]!)
-})
+}
 
-app.get('/api/services', async (c) => c.json(await getServiceData()))
+export const api = new Hono()
 
-app.post('/api/services/launch-terminal', async (c) => {
+api.use(
+	'*',
+	cors({
+		origin: (origin) =>
+			origin && isLocalhostOrigin(origin) ? origin : '',
+		allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+		allowHeaders: ['Content-Type'],
+	}),
+)
+
+api.get('/api/services', async (c) => c.json(await getServiceData()))
+
+api.post('/api/services/launch-terminal', async (c) => {
 	const body = (await c.req.json()) as {
 		service?: string
 		action?: 'status' | 'journal'
@@ -80,7 +80,7 @@ app.post('/api/services/launch-terminal', async (c) => {
 	}
 })
 
-app.post('/api/services/control', async (c) => {
+api.post('/api/services/control', async (c) => {
 	const body = (await c.req.json()) as {
 		service?: string
 		action?: 'start' | 'stop' | 'restart' | 'enable' | 'disable'
@@ -105,7 +105,7 @@ app.post('/api/services/control', async (c) => {
 	}
 })
 
-app.post('/api/services/port', async (c) => {
+api.post('/api/services/port', async (c) => {
 	const body = (await c.req.json()) as {
 		service?: string
 		port?: string | number
@@ -123,17 +123,17 @@ app.post('/api/services/port', async (c) => {
 	}
 })
 
-app.post('/api/dictionary/process-files', async (c) =>
+api.post('/api/dictionary/process-files', async (c) =>
 	c.json(await processDictionaryFiles()),
 )
 
-app.get('/api/projects', async (c) => c.json(await getGardenCatalog()))
+api.get('/api/projects', async (c) => c.json(await getGardenCatalog()))
 
-app.get('/api/computing-folders', async (c) =>
+api.get('/api/computing-folders', async (c) =>
 	c.json(await listComputingFolders()),
 )
 
-app.post('/api/computing-folders/open', async (c) => {
+api.post('/api/computing-folders/open', async (c) => {
 	const body = (await c.req.json()) as {
 		folderId?: string
 		subdirectoryId?: string
@@ -164,7 +164,7 @@ app.post('/api/computing-folders/open', async (c) => {
 	}
 })
 
-app.post('/api/projects/open', async (c) => {
+api.post('/api/projects/open', async (c) => {
 	const body = (await c.req.json()) as {
 		ide?: string
 		projectIds?: string[]
@@ -193,9 +193,9 @@ app.post('/api/projects/open', async (c) => {
 	}
 })
 
-app.get('/api/project-groups', async (c) => c.json(await listSavedGroups()))
+api.get('/api/project-groups', async (c) => c.json(await listSavedGroups()))
 
-app.post('/api/project-groups', async (c) => {
+api.post('/api/project-groups', async (c) => {
 	const body = (await c.req.json()) as {
 		name?: string
 		projectIds?: string[]
@@ -213,7 +213,7 @@ app.post('/api/project-groups', async (c) => {
 	}
 })
 
-app.patch('/api/project-groups/:id', async (c) => {
+api.patch('/api/project-groups/:id', async (c) => {
 	const id = c.req.param('id')
 	const body = (await c.req.json()) as { name?: string }
 	if (typeof body.name !== 'string') {
@@ -228,7 +228,7 @@ app.patch('/api/project-groups/:id', async (c) => {
 	}
 })
 
-app.delete('/api/project-groups/:id', async (c) => {
+api.delete('/api/project-groups/:id', async (c) => {
 	const id = c.req.param('id')
 	try {
 		await deleteSavedGroup(id)
@@ -240,9 +240,9 @@ app.delete('/api/project-groups/:id', async (c) => {
 	}
 })
 
-app.get('/api/activity', async (c) => c.json(await listActivityProjects()))
+api.get('/api/activity', async (c) => c.json(await listActivityProjects()))
 
-app.post('/api/activity/open', async (c) => {
+api.post('/api/activity/open', async (c) => {
 	const body = (await c.req.json()) as { path?: string }
 	if (typeof body.path !== 'string' || !body.path) {
 		return c.json({ error: 'Expected { path }' }, 400)
@@ -257,7 +257,7 @@ app.post('/api/activity/open', async (c) => {
 	}
 })
 
-app.post('/api/blocklists/compile', async (c) => {
+api.post('/api/blocklists/compile', async (c) => {
 	try {
 		return c.json(await compileBlocklists())
 	} catch (error) {
@@ -268,7 +268,40 @@ app.post('/api/blocklists/compile', async (c) => {
 	}
 })
 
-app.post('/api/knowledge/open', async (c) => {
+api.post('/api/files/open', async (c) => {
+	const body = (await c.req.json()) as {
+		path?: string
+		editor?: string
+		line?: number
+		column?: number
+	}
+	if (!body.editor || !FILE_EDITOR_IDS.includes(body.editor as FileEditorId)) {
+		return c.json(
+			{ error: `Expected editor to be one of: ${FILE_EDITOR_IDS.join(', ')}` },
+			400,
+		)
+	}
+	if (typeof body.path !== 'string' || !body.path) {
+		return c.json({ error: 'Expected { path, editor }' }, 400)
+	}
+	try {
+		return c.json(
+			await openFile({
+				path: body.path,
+				editor: body.editor as FileEditorId,
+				line: body.line,
+				column: body.column,
+			}),
+		)
+	} catch (error) {
+		return c.json(
+			{ error: error instanceof Error ? error.message : String(error) },
+			400,
+		)
+	}
+})
+
+api.post('/api/knowledge/open', async (c) => {
 	const body = (await c.req.json()) as {
 		folderId?: string
 		opener?: string
@@ -301,33 +334,3 @@ app.post('/api/knowledge/open', async (c) => {
 		)
 	}
 })
-
-app.get('/', (c) => c.redirect('/services'))
-app.get('/services', (c) => servicesPage())
-app.get('/dictionary', (c) => dictionaryPage())
-app.get('/computer', (c) => computerPage())
-app.get('/activity', (c) => activityManagerPage())
-app.get('/projects', (c) => projectManagerPage())
-app.get('/knowledge', (c) => knowledgeManagerPage())
-app.get('/apis/blocklists', (c) => blocklistsPage())
-
-app.get('/vendor/bulma.min.css', async () => {
-	const contents = await readFile(
-		path.join(repoRoot, 'node_modules/bulma/css/bulma.min.css'),
-	)
-	return new Response(contents, {
-		headers: { 'Content-Type': 'text/css; charset=utf-8' },
-	})
-})
-
-app.use('/css/*', serveStatic({ root: './static' }))
-app.get('/favicon.ico', serveStatic({ root: './static' }))
-app.get('/favicon.svg', serveStatic({ root: './static' }))
-
-const port = Number(process.env.PORT) || 3000
-
-serve({ fetch: app.fetch, port }, (info) => {
-	console.log(`Listening on http://localhost:${info.port}`)
-})
-
-export default app

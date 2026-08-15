@@ -14,8 +14,8 @@
     "typecheck": "tsc -p .",
     "test": "node ./test/test.ts",
     "cli": "node --enable-source-maps ./bin/dev.ts",
-    "dev": "cd devserver && node --watch --enable-source-maps ./src/index.ts",
-    "start": "cd devserver && node --enable-source-maps ./src/index.ts"
+    "dev": "cd devserver && node --watch --enable-source-maps ./index.ts",
+    "start": "cd devserver && node --enable-source-maps ./index.ts"
   },
   "dependencies": {
     "@clack/prompts": "^1.1.0",
@@ -40,7 +40,6 @@
     "globby": "^16.2.0",
     "handlebars": "^4.7.9",
     "hono": "^4.12.32",
-    "htm": "^3.1.1",
     "ignore-walk": "^8.0.0",
     "jsonc-parser": "^3.3.1",
     "kysely": "^0.28.16",

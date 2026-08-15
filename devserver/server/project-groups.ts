@@ -1,10 +1,8 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { randomUUID } from 'node:crypto'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const dataDir = path.resolve(__dirname, '../../data')
+const dataDir = path.resolve(import.meta.dirname, '../data')
 const groupsFile = path.join(dataDir, 'saved-groups.json')
 
 export type SavedGroup = {

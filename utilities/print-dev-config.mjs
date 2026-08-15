@@ -7,7 +7,7 @@
 import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
-import { pathToFileURL, fileURLToPath } from 'node:url'
+import { pathToFileURL } from 'node:url'
 
 /** @returns {string} */
 function getConfigPath() {
@@ -62,7 +62,7 @@ function getByPath(obj, dotted) {
 
 const key = process.argv[2]
 if (!key) {
-	console.error(`Usage: ${path.basename(fileURLToPath(import.meta.url))} <dotted.key>`)
+	console.error(`Usage: ${path.basename(import.meta.filename)} <dotted.key>`)
 	process.exit(2)
 }
 

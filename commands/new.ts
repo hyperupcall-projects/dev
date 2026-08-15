@@ -10,8 +10,6 @@ import * as clack from '@clack/prompts'
 import type { CommandNewOptions } from '#types'
 import { existsSync } from 'node:fs'
 
-const _dirname = import.meta.dirname
-
 export async function run(options: CommandNewOptions, positionals: string[]) {
 	if (!positionals[0]) {
 		const inputValue = await clack.text({
@@ -113,9 +111,6 @@ type Context = Readonly<{
 }>
 
 export async function createProject(ctx: Context) {
-	if (!_dirname)
-		throw new TypeError('Variable "import.meta.dirname" is not truthy')
-
 	const outputDir = path.resolve(process.cwd(), ctx.dir)
 
 	if (!(await fileExists(outputDir))) {
@@ -130,7 +125,7 @@ export async function createProject(ctx: Context) {
 	}
 
 	const templateDir = path.join(
-		_dirname,
+		import.meta.dirname,
 		'../config/templates',
 		ctx.ecosystem,
 		`${ctx.ecosystem}-${ctx.templateName}`,
