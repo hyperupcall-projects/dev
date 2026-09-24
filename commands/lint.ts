@@ -162,6 +162,9 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 			case 'woof-plugin':
 				await collect(`400-ecosystem/woof-plugin/*`)
 				break
+			case 'webext':
+				await collect(`400-ecosystem/webext/*`)
+				break
 		}
 	}
 

@@ -1,7 +1,6 @@
 import { Hono } from 'hono'
 import { blocklistsView } from '../views/blocklists.ts'
 import { dictionaryView } from '../views/dictionary.ts'
-import { directoriesView } from '../views/directories.ts'
 import { openDirectoryView } from '../views/open-directory.ts'
 import { openFileView } from '../views/open-file.ts'
 import { projectManagerView } from '../views/project-manager.ts'
@@ -22,13 +21,6 @@ pages.get('/dictionary', async (c) => {
 	return c.render(content, { title, scripts })
 })
 
-pages.get('/directories', async (c) => {
-	const { title, content, scripts } = await directoriesView()
-	return c.render(content, { title, scripts })
-})
-
-pages.get('/knowledge', (c) => c.redirect('/directories'))
-pages.get('/activity', (c) => c.redirect('/directories'))
 
 pages.get('/projects', async (c) => {
 	const { title, content, scripts } = await projectManagerView()

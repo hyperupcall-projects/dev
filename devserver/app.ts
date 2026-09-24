@@ -36,7 +36,7 @@ app.get('/vendor/bulma.min.css', async () => {
 })
 
 app.use('/css/*', serveStatic({ root: './static' }))
-app.get('/favicon.ico', serveStatic({ root: './static' }))
+app.get('/favicon.png', serveStatic({ root: './static' }))
 app.get('/favicon.svg', serveStatic({ root: './static' }))
 
 export default app

@@ -24,7 +24,7 @@ export function workspacesView() {
 
 				<div class="content">
 					<p>
-						<a href="/projects">Software Project Manager</a>
+						<a href="/projects">SW Projects</a>
 						calls
 						<code>POST /api/projects/open</code>
 						with a list of garden or pinned project ids. One id opens that

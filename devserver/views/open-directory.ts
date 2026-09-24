@@ -44,9 +44,6 @@ export async function openDirectoryView() {
 
 					<h2 class="title is-5">Knowledge folders</h2>
 					<p>
-						Used by
-						<a href="/directories">Directories</a>
-						(Knowledge Manager).
 						<code>POST /api/knowledge/open</code>
 						opens one configured knowledge folder.
 					</p>
@@ -113,7 +110,7 @@ Content-Type: application/json
 					<h2 class="title is-5 mt-5">Computing folders</h2>
 					<p>
 						Used by
-						<a href="/projects">Software Project Manager</a>.
+						<a href="/projects">SW Projects</a>.
 						<code>POST /api/computing-folders/open</code>
 						opens a folder under
 						<code>~/Documents/Computing</code>, or one of its
@@ -188,9 +185,6 @@ Content-Type: application/json
 
 					<h2 class="title is-5 mt-5">Activity folders</h2>
 					<p>
-						Used by
-						<a href="/directories">Directories</a>
-						(Project Manager).
 						<code>POST /api/activity/open</code>
 						opens a folder under the activity-projects root in the file
 						manager only (not an editor).

@@ -82,6 +82,25 @@ export async function getEcosystems(rootDir: string): Promise<string[]> {
 		ecosystems.push('rust')
 	}
 
+	if (await fileExists('manifest.json')) {
+		try {
+			const content: { manifest_version?: unknown } = JSON.parse(
+				await fs.readFile('manifest.json', 'utf-8'),
+			)
+			if (
+				content &&
+				typeof content === 'object' &&
+				'manifest_version' in content
+			) {
+				ecosystems.push('webext')
+			}
+		} catch (err) {
+			if (!(err instanceof SyntaxError)) {
+				throw err
+			}
+		}
+	}
+
 	// TODO: Could be empty
 	return ecosystems
 }

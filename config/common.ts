@@ -8,16 +8,21 @@ import { Octokit } from 'octokit'
 import detectIndent from 'detect-indent'
 import dedent from 'dedent'
 import * as diff from 'diff'
-import dotenv from 'dotenv'
 import { globby } from 'globby'
 import jsonc from 'jsonc-parser'
 
 import type { Issue } from '#types'
-import process from 'node:process'
+import { getDevConfig } from '#utilities/dev-config.ts'
 
-dotenv.config({ path: path.join(import.meta.dirname, '../.env') })
+async function getGitHubToken(): Promise<string | undefined> {
+	const config = await getDevConfig().catch(() => undefined)
+	if (config?.githubTokenFile) {
+		return (await fs.readFile(config.githubTokenFile, 'utf-8')).trim()
+	}
+	return undefined
+}
 
-export const octokit = new Octokit({ auth: process.env.GITHUB_AUTH_TOKEN })
+export const octokit = new Octokit({ auth: await getGitHubToken() })
 
 export const skipHyperupcallFunding = ['ecc-computing-club']
 

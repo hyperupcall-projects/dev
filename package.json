@@ -12,10 +12,10 @@
     "format": "hyperupcall-scripts-nodejs format",
     "lint": "hyperupcall-scripts-nodejs lint",
     "typecheck": "tsc -p .",
-    "test": "node ./test/test.ts",
-    "cli": "node --enable-source-maps ./bin/dev.ts",
-    "dev": "cd devserver && node --watch --enable-source-maps ./index.ts",
-    "start": "cd devserver && node --enable-source-maps ./index.ts"
+    "test": "~/.dotfiles/.data/binexec/node ./test/test.ts",
+    "cli": "~/.dotfiles/.data/binexec/node --enable-source-maps ./bin/dev.ts",
+    "dev": "cd devserver && ~/.dotfiles/.data/binexec/node --watch --enable-source-maps ./index.ts",
+    "start": "cd devserver && ~/.dotfiles/.data/binexec/node --enable-source-maps ./index.ts"
   },
   "dependencies": {
     "@clack/prompts": "^1.8.1",

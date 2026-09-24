@@ -47,7 +47,7 @@ export async function projectManagerView() {
 					style="gap: 0.75rem;"
 				>
 					<div>
-						<h1 class="title mb-1">Software Projects</h1>
+						<h1 class="title mb-1">SW Projects</h1>
 						<p class="subtitle is-6 mb-0">
 							Browse garden projects, select a set, and open them in an IDE
 						</p>

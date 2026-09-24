@@ -11,6 +11,8 @@ export type KnowledgeFolderConfig = {
 }
 
 export type DevConfig = {
+	/** Path to a file containing the GitHub token. Takes precedence over `.env`. */
+	githubTokenFile?: string
 	paths: {
 		activityProjectsRoot: string
 		gardenYaml: string
@@ -74,6 +76,9 @@ function assertDevConfig(value: unknown, configPath: string): DevConfig {
 		throw new Error(`Invalid dev config (expected object): ${configPath}`)
 	}
 	const cfg = value as Partial<DevConfig>
+	if (cfg.githubTokenFile !== undefined && typeof cfg.githubTokenFile !== 'string') {
+		throw new Error(`Invalid dev config (githubTokenFile must be a string): ${configPath}`)
+	}
 	if (!cfg.paths || typeof cfg.paths !== 'object') {
 		throw new Error(`Invalid dev config (missing paths): ${configPath}`)
 	}

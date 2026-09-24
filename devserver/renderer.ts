@@ -1,6 +1,9 @@
 import { html, raw } from 'hono/html'
 import type { MiddlewareHandler } from 'hono'
 
+// Bump this when the favicon changes to bust the browser's sticky favicon cache.
+const faviconVersion = '1'
+
 declare module 'hono' {
 	interface ContextRenderer {
 		(
@@ -36,7 +39,6 @@ function navigation() {
 			</div>
 			<div id="navbarBasicExample" class="navbar-menu">
 				<div class="navbar-start">
-					<a class="navbar-item" href="/directories">📁 Directories</a>
 					<a class="navbar-item" href="/projects">💻 SW Projects</a>
 					<a class="navbar-item" href="/services">⚙️ Service Manager</a>
 					<a class="navbar-item" href="/dictionary">📖 Dictionary Manager</a>
@@ -90,8 +92,8 @@ export const renderer: MiddlewareHandler = async (c, next) => {
 					<meta charset="utf-8" />
 					<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 					<title>${head.title}</title>
-					<link rel="icon" href="/favicon.ico" sizes="any" />
-					<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+					<link rel="icon" href="/favicon.png?v=${faviconVersion}" />
+					<link rel="icon" href="/favicon.svg?v=${faviconVersion}" type="image/svg+xml" />
 					<link rel="stylesheet" href="/vendor/bulma.min.css" />
 					<link rel="stylesheet" href="/css/global.css" />
 				</head>
