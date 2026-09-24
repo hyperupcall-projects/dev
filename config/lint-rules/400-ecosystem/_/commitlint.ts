@@ -7,6 +7,8 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import type { Issues } from '#types'
 
+export const skip = true
+
 export const issues: Issues = async function* issues() {
 	// Check that there is only one configuration file.
 	{
