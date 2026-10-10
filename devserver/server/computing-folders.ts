@@ -8,7 +8,6 @@ import { getDevConfig } from '#utilities/dev-config.ts'
 const execFileAsync = promisify(execFile)
 
 export const COMPUTING_FOLDER_IDS = [
-	'college',
 	'competitive-programming',
 	'data-science',
 	'database',
@@ -44,7 +43,6 @@ export type ComputingFolder = {
 }
 
 const FOLDER_NAMES: Record<ComputingFolderId, string> = {
-	college: 'College',
 	'competitive-programming': 'Competitive Programming',
 	'data-science': 'Data Science',
 	database: 'Database',

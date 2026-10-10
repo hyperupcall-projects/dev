@@ -37,7 +37,7 @@ function navigation() {
 			<div id="navbarBasicExample" class="navbar-menu">
 				<div class="navbar-start">
 					<a class="navbar-item" href="/directories">📁 Directories</a>
-					<a class="navbar-item" href="/projects">💻 SW Project Manager</a>
+					<a class="navbar-item" href="/projects">💻 SW Projects</a>
 					<a class="navbar-item" href="/services">⚙️ Service Manager</a>
 					<a class="navbar-item" href="/dictionary">📖 Dictionary Manager</a>
 					<div class="navbar-item has-dropdown is-hoverable" id="nav-docs">
