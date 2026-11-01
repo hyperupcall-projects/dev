@@ -13,7 +13,8 @@ import { globby } from 'globby'
 import ansiEscapes from 'ansi-escapes'
 import * as jsonc from 'jsonc-parser'
 import { parseJSON } from 'jsonc-eslint-parser'
-import { getEcosystems } from '../devutils/index.ts'
+import { detectEcosystem, lintEcosystem } from '#utilities/ecosystems.ts'
+import { detectFiletypes } from '#utilities/filetype.ts'
 
 import type { CommandFixOptions, Config, Issue, Project } from '#types'
 import _ from 'lodash'
@@ -66,7 +67,7 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 
 		const settingsText = await fs.readFile('.vscode/settings.json', 'utf-8')
 		const settingsJson = jsonc.parse(settingsText)
-		const ecosystem = (await getEcosystems(process.cwd()))[0]
+		const ecosystem = (await detectEcosystem({ rootDir: process.cwd() }))[0]
 		if (settingsJson['window.title']) {
 			const output = settingsText.replace(
 				/"window\.title"[ \t]*:[ \t]*".*?"/m,
@@ -126,45 +127,11 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 
 	// Collect rule files that match the ecosystem.
 	await collect(`400-ecosystem/_/*`)
-	const ecosystems = await getEcosystems(process.cwd()) // TODO
-	for (const ecosystem of ecosystems) {
-		switch (ecosystem) {
-			case 'nodejs':
-				await collect(`400-ecosystem/nodejs/*`)
-				break
-			case 'vscode-extension':
-				await collect(`400-ecosystem/vscode-extension/*`)
-				break
-			case 'deno':
-				await collect(`400-ecosystem/deno/*`)
-				break
-			case 'c':
-				await collect(`400-ecosystem/c/*`)
-				break
-			case 'cpp':
-				await collect(`400-ecosystem/cpp/*`)
-				break
-			case 'bash':
-				await collect(`400-ecosystem/bash/*`)
-				break
-			case 'python':
-				await collect(`400-ecosystem/python/*`)
-				break
-			case 'rust':
-					await collect(`400-ecosystem/rust/*`)
-					break
-			case 'zed-extension':
-				await collect(`400-ecosystem/zed-extension/*`)
-				break
-			case 'java':
-				await collect(`400-ecosystem/java/*`)
-				break
-			case 'woof-plugin':
-				await collect(`400-ecosystem/woof-plugin/*`)
-				break
-			case 'webext':
-				await collect(`400-ecosystem/webext/*`)
-				break
+	const ecosystemIds = await detectEcosystem({ rootDir: process.cwd() }) // TODO
+	const filetypeIds = await detectFiletypes({ rootDir: process.cwd() }) // TODO
+	for (const ecosystemId of ecosystemIds) {
+		for (const pattern of await lintEcosystem(ecosystemId)) {
+			await collect(pattern)
 		}
 	}
 
@@ -215,7 +182,10 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 			)}\n`
 		}
 		str += `${styleText(['blue', 'bold'], 'Ecosystems:')} ${new Intl.ListFormat().format(
-			ecosystems,
+			ecosystemIds,
+		)}\n`
+		str += `${styleText(['blue', 'bold'], 'Filetypes:')}  ${new Intl.ListFormat().format(
+			filetypeIds,
 		)}\n`
 
 		process.stdout.write(str)

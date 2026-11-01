@@ -1,17 +1,20 @@
-import * as fs from 'node:fs/promises'
 import process from 'node:process'
 import * as clack from '@clack/prompts'
 import { execa } from 'execa'
 import semver from 'semver'
 
-import { getEcosystems } from '../devutils/index.ts'
+import {
+	detectEcosystem,
+	incrementVersionEcosystem,
+} from '#utilities/ecosystems.ts'
 import type { CommandVersionOptions } from '#types'
 
 export async function run(
 	options: CommandVersionOptions,
 	positionals: string[],
 ) {
-	const ecosystems = await getEcosystems(process.cwd())
+	const rootDir = process.cwd()
+	const ecosystemIds = await detectEcosystem({ rootDir })
 
 	const { stdout: statusOutput } = await execa('git', [
 		'status',
@@ -24,16 +27,42 @@ export async function run(
 		process.exit(1)
 	}
 
-	if (ecosystems.includes('nodejs')) {
-		await handleNodeJsEcosystem()
-	} else if (ecosystems.includes('c')) {
-		await handleCEcosystem()
-	} else {
+	try {
 		const latestTag = await getLatestTag()
 		const currentVersion = latestTag.replace(/^v/, '')
+		if (!semver.valid(currentVersion)) {
+			console.error(
+				`Latest tag "${latestTag}" is not a valid semantic version`,
+			)
+			process.exit(1)
+		}
+
 		console.log(`\nCurrent version: ${latestTag}`)
 		const finalVersion = await askForNewVersion(currentVersion)
+
+		const modifiedFiles = new Set<string>()
+		for (const ecosystemId of ecosystemIds) {
+			for (const modifiedFile of await incrementVersionEcosystem(
+				ecosystemId,
+				rootDir,
+				finalVersion,
+			)) {
+				modifiedFiles.add(modifiedFile)
+			}
+		}
+
+		if (modifiedFiles.size > 0) {
+			await execa('git', ['add', ...modifiedFiles])
+		}
+
 		await createVersionCommitAndTag(`v${finalVersion}`)
+	} catch (err) {
+		if (err.exitCode === 128) {
+			console.error('Not a git repository or no git tags found')
+		} else {
+			console.error('Error:', err.message)
+		}
+		process.exit(1)
 	}
 }
 
@@ -73,47 +102,6 @@ async function getLatestTag() {
 	})
 
 	return tags[0]
-}
-
-async function handleNodeJsEcosystem() {
-	const latestTag = await getLatestTag()
-	const currentVersion = latestTag.replace(/^v/, '')
-	console.log(`\nCurrent version: ${latestTag}`)
-	const finalVersion = await askForNewVersion(currentVersion)
-	const packageJsonText = await fs.readFile('./package.json', 'utf-8')
-	const finalText = packageJsonText.replace(
-		/"version"\s*:\s*"[^"]*"/,
-		`"version": "${finalVersion}"`,
-	)
-	await fs.writeFile('./package.json', finalText)
-	await execa`git add package.json`
-
-	await createVersionCommitAndTag(`v${finalVersion}`)
-}
-
-async function handleCEcosystem() {
-	try {
-		const latestTag = await getLatestTag()
-		const currentVersion = latestTag.replace(/^v/, '')
-
-		if (!semver.valid(currentVersion)) {
-			console.error(
-				`Latest tag "${latestTag}" is not a valid semantic version`,
-			)
-			process.exit(1)
-		}
-
-		console.log(`\nCurrent version: ${latestTag}`)
-		const finalVersion = await askForNewVersion(currentVersion)
-		await createVersionCommitAndTag(`v${finalVersion}`)
-	} catch (err) {
-		if (err.exitCode === 128) {
-			console.error('Not a git repository or no git tags found')
-		} else {
-			console.error('Error:', err.message)
-		}
-		process.exit(1)
-	}
 }
 
 async function askForNewVersion(currentVersion: string) {

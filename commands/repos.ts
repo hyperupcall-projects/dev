@@ -12,7 +12,7 @@ import {
 	collectGitHubRepositories2,
 } from '#utilities/repositories.ts'
 import type { Octokit } from 'octokit'
-import { getEcosystems } from '../devutils/index.ts'
+import { detectEcosystem, getConfigEcosystem } from '#utilities/ecosystems.ts'
 import type { CommandScriptOptions } from '#types'
 import process from 'node:process'
 import { getDevConfig } from '#utilities/dev-config.ts'
@@ -182,26 +182,11 @@ export async function run(
 				break
 			case 'vscode-ecosystem': {
 				let packname = ''
-				const ecosystems = await getEcosystems(dir)
-				let stop = false
-				for (const ecosystem of ecosystems) {
-					switch (ecosystem) {
-						case 'nodejs':
-						case 'deno':
-							packname = 'vscode-hyperupcall-pack-web'
-							stop = true
-							break
-						case 'c':
-							packname = 'vscode-hyperupcall-pack-cpp'
-							stop = true
-							break
-						case 'cpp':
-							packname = 'vscode-hyperupcall-pack-cpp'
-							stop = true
-							break
-					}
-
-					if (stop) {
+				const ecosystemIds = await detectEcosystem({ rootDir: dir })
+				for (const ecosystemId of ecosystemIds) {
+					const vscodePack = getConfigEcosystem(ecosystemId).vscodePackId
+					if (vscodePack) {
+						packname = vscodePack
 						break
 					}
 				}

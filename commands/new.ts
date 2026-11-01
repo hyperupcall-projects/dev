@@ -2,13 +2,18 @@ import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import process from 'node:process'
 
-import { execa } from 'execa'
 import Handlebars from 'handlebars'
 import { fileExists } from '#common'
 import * as clack from '@clack/prompts'
 
 import type { CommandNewOptions } from '#types'
 import { existsSync } from 'node:fs'
+import {
+	ecosystems,
+	getConfigEcosystem,
+	type EcosystemDefinition,
+	type EcosystemId,
+} from '#utilities/ecosystems.ts'
 
 export async function run(options: CommandNewOptions, positionals: string[]) {
 	if (!positionals[0]) {
@@ -40,26 +45,34 @@ export async function run(options: CommandNewOptions, positionals: string[]) {
 	if (!options.ecosystem) {
 		const ecosystemChoice = await clack.select({
 			message: 'Choose an ecosystem',
-			options: [
-				{ label: 'Deno', value: 'deno' },
-				{ label: 'NodeJS', value: 'nodejs' },
-				{ label: 'Rust', value: 'rust' },
-				{ label: 'Go', value: 'go' },
-				{ label: 'C++', value: 'cpp' },
-				{ label: 'Java', value: 'java' },
-			],
+			options: (
+				Object.entries(ecosystems) as [
+					EcosystemId,
+					EcosystemDefinition,
+				][]
+			)
+				.filter(([, definition]) => definition.templates)
+				.map(([id, definition]) => ({
+					label: definition.label,
+					value: id,
+				})),
 		})
 
 		if (clack.isCancel(ecosystemChoice)) {
 			process.exit(1)
 		}
 
-		options.ecosystem = ecosystemChoice as string
+		options.ecosystem = ecosystemChoice
 	}
 
 	if (!options.templateName) {
-		const templateData = getTemplateData()
-		const parameters = templateData[options.ecosystem]?.templates
+		if (!(options.ecosystem in ecosystems)) {
+			throw new Error(`Ecosystem "${options.ecosystem}" not supported`)
+		}
+
+		const parameters = getConfigEcosystem(
+			options.ecosystem as EcosystemId,
+		).templates
 		if (!parameters) {
 			throw new Error(`Ecosystem "${options.ecosystem}" not supported`)
 		}
@@ -76,7 +89,7 @@ export async function run(options: CommandNewOptions, positionals: string[]) {
 			process.exit(1)
 		}
 
-		options.templateName = value as string
+		options.templateName = value
 	}
 
 	if (!options.projectName) {
@@ -171,89 +184,4 @@ export async function createProject(ctx: Context) {
 	}
 
 	console.info(`Bootstrapped "${ctx.templateName}"`)
-}
-
-function getTemplateData(): Record<
-	string,
-	{
-		templates: Record<string, { name: string }>
-		onRun?: (ctx: unknown) => Promise<void>
-	}
-> {
-	return {
-		nodejs: {
-			templates: {
-				'hello-world': {
-					name: 'Hello World',
-				},
-				cli: {
-					name: 'CLI',
-				},
-				'web-server-express': {
-					name: 'Web Server (Express)',
-				},
-			},
-			async onRun(ctx) {
-				await execa('npm', ['run', 'start'], {
-					stdio: 'inherit',
-				})
-			},
-		},
-		deno: {
-			templates: {
-				webframework: {
-					name: 'Web Framework',
-				},
-			},
-		},
-		rust: {
-			templates: {
-				'hello-world': {
-					name: 'Hello World',
-				},
-				cli: {
-					name: 'CLI',
-				},
-				gui: {
-					name: 'GUI',
-				},
-			},
-			async onRun(ctx) {
-				await execa('cargo', ['run'], {
-					stdio: 'inherit',
-				})
-			},
-		},
-		go: {
-			templates: {
-				'hello-world': {
-					name: 'Hello World',
-				},
-				cli: {
-					name: 'CLI',
-				},
-				'web-server': {
-					name: 'Web Server',
-				},
-			},
-			async onRun(ctx) {
-				await execa('go', ['mod', 'init', `github.com/${ctx.name}`], {
-					stdio: 'inherit',
-				})
-			},
-		},
-		cpp: {
-			templates: {
-				cmake: {
-					name: 'cpp-cmake',
-				},
-				'hello-world': {
-					name: 'Hello World',
-				},
-				playground: {
-					name: 'Playground',
-				},
-			},
-		},
-	}
 }

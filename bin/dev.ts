@@ -10,6 +10,7 @@ import { run as runChangelog } from '../commands/changelog.ts'
 import { run as runTask } from '../commands/task.ts'
 import { execa } from 'execa'
 import process from 'node:process'
+import { detectEcosystem } from '#utilities/ecosystems.ts'
 
 const version = '0.4.0' // TODO
 
@@ -144,6 +145,22 @@ cli.register(
 
 		async execute() {
 			await runVersion({}, this.positionals)
+		}
+	},
+)
+cli.register(
+	class GetEcosystemsCommand extends Command {
+		static override paths = [['call', 'get-ecosystems']]
+
+		directory = Option.String({ required: false })
+
+		async execute() {
+			const ecosystemIds = await detectEcosystem({
+				rootDir: this.directory ?? process.cwd(),
+			})
+			for (const ecosystemId of ecosystemIds) {
+				this.context.stdout.write(`${ecosystemId}\n`)
+			}
 		}
 	},
 )
