@@ -67,7 +67,7 @@
     "yn": "^5.1.0"
   },
   "devDependencies": {
-    "@hyperupcall/scripts-nodejs": "0.10.0",
+    "@hyperupcall/scripts-nodejs": "^0.12.0",
     "@octokit/types": "^18.0.0",
     "@rsbuild/core": "^2.3.0",
     "@types/better-sqlite3": "^9.6.0",

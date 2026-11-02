@@ -271,7 +271,7 @@ export async function writeTrees(trees: Record<string, string>[]) {
 
 export async function getNpmLatestVersion(packages: string[]) {
 	const latestVersionsObjects = await Promise.all(
-		packages.map((packageName) => execa('npm', ['view', '--json', packageName])),
+		packages.map((packageName) => execa('npm', ['view', '--json', '--force', packageName])),
 	)
 	const latestVersions = latestVersionsObjects.map((result) => {
 		if (result.exitCode !== 0) {
