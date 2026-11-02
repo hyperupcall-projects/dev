@@ -50,7 +50,7 @@
 		"octokit": "^5.0.5",
 		"remark": "^15.0.1",
 		"remark-parse": "^11.0.0",
-		"rollup": "^4.66.0",
+		"rollup": "^4.67.3",
 		"semver": "^7.8.5",
 		"shebang-command": "^2.0.0",
 		"smol-toml": "^1.9.1",
@@ -62,7 +62,7 @@
 		"untildify": "^6.0.0",
 		"valibot": "^1.5.0",
 		"vfile-reporter": "^8.1.1",
-		"ws": "^8.22.0",
+		"ws": "^8.22.1",
 		"yaml": "^2.9.1",
 		"yn": "^5.1.0"
 	},
