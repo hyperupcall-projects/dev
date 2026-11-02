@@ -39,25 +39,25 @@ export type CommandStartServerOptions = {
 export type Config = { rules?: Record<string, 'off'> }
 export type Project =
 	| {
-		type: 'only-directory'
-		rootDir: string
-		name: string
-	}
+			type: 'only-directory'
+			rootDir: string
+			name: string
+	  }
 	| {
-		type: 'under-version-control'
-		rootDir: string
-		name: string
-		branchName: string
-	}
+			type: 'under-version-control'
+			rootDir: string
+			name: string
+			branchName: string
+	  }
 	| {
-		type: 'with-remote-url'
-		rootDir: string
-		name: string
-		branchName: string
-		remoteName: string
-		remoteUrl: string
-		owner: string
-	}
+			type: 'with-remote-url'
+			rootDir: string
+			name: string
+			branchName: string
+			remoteName: string
+			remoteUrl: string
+			owner: string
+	  }
 
 export type Issues = (arg0: {
 	project: Project

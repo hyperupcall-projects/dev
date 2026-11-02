@@ -1,7 +1,4 @@
-import {
-	filesMustHaveContent,
-	filesMustHaveName,
-} from '#common'
+import { filesMustHaveContent, filesMustHaveName } from '#common'
 import type { Issues } from '#types'
 
 export const issues: Issues = async function* issues() {

@@ -168,16 +168,14 @@ export async function* filesMustHaveShape(
 
 export async function* packageJsonMustNotHaveDependencies(substr: string) {
 	const packageJson = JSON.parse(await fs.readFile('package.json', 'utf-8'))
-	for (
-		const dependencyKey of [
-			'dependencies',
-			'devDependencies',
-			'peerDependencies',
-			'peerDependenciesMeta',
-			'bundleDependencies',
-			'optionalDependencies',
-		]
-	) {
+	for (const dependencyKey of [
+		'dependencies',
+		'devDependencies',
+		'peerDependencies',
+		'peerDependenciesMeta',
+		'bundleDependencies',
+		'optionalDependencies',
+	]) {
 		for (const dependencyName in packageJson[dependencyKey] ?? {}) {
 			if (dependencyName.includes(substr)) {
 				yield {
@@ -271,7 +269,9 @@ export async function writeTrees(trees: Record<string, string>[]) {
 
 export async function getNpmLatestVersion(packages: string[]) {
 	const latestVersionsObjects = await Promise.all(
-		packages.map((packageName) => execa('npm', ['view', '--json', '--force', packageName])),
+		packages.map((packageName) =>
+			execa('npm', ['view', '--json', '--force', packageName]),
+		),
 	)
 	const latestVersions = latestVersionsObjects.map((result) => {
 		if (result.exitCode !== 0) {

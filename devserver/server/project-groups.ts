@@ -65,10 +65,7 @@ export async function createSavedGroup(
 	return group
 }
 
-export async function renameSavedGroup(
-	id: string,
-	name: string,
-): Promise<SavedGroup> {
+export async function renameSavedGroup(id: string, name: string): Promise<SavedGroup> {
 	const trimmed = name.trim()
 	if (!trimmed) throw new Error('Group name is required')
 
@@ -76,12 +73,7 @@ export async function renameSavedGroup(
 	const group = groups.find((g) => g.id === id)
 	if (!group) throw new Error(`Group not found: ${id}`)
 
-	if (
-		groups.some(
-			(g) =>
-				g.id !== id && g.name.toLowerCase() === trimmed.toLowerCase(),
-		)
-	) {
+	if (groups.some((g) => g.id !== id && g.name.toLowerCase() === trimmed.toLowerCase())) {
 		throw new Error(`A group named "${trimmed}" already exists`)
 	}
 

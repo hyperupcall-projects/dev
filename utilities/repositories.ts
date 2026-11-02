@@ -131,9 +131,12 @@ export async function getRepositoryGroups(): Promise<RepoGroupsT> {
 		{
 			groupName: 'JSON Schema',
 			groupId: 'json-schema',
-			repos: matchAndTake(['SchemaStore/*', 'hyperupcall-projects/jsonschema-extractor'], {
-				not: ['SchemaStore/json-validator'],
-			}),
+			repos: matchAndTake(
+				['SchemaStore/*', 'hyperupcall-projects/jsonschema-extractor'],
+				{
+					not: ['SchemaStore/json-validator'],
+				},
+			),
 		},
 		{
 			groupName: 'Maintainer',
@@ -195,7 +198,10 @@ export async function getRepositoryGroups(): Promise<RepoGroupsT> {
 		{
 			groupName: 'VSCode Extensions',
 			groupId: 'vscode-extensions',
-			repos: matchAndTake(['hyperupcall-projects/vscode-*', 'hyperupcall-projects/vscode-*']),
+			repos: matchAndTake([
+				'hyperupcall-projects/vscode-*',
+				'hyperupcall-projects/vscode-*',
+			]),
 		},
 		{
 			groupName: 'Other',
@@ -273,14 +279,12 @@ export async function collectGitHubRepositories(): Promise<
 	// Collect repositories from organizations.
 	{
 		const joinedOrganizations = []
-		for await (
-			const { data: memberships } of octokit.paginate.iterator(
-				octokit.rest.orgs.listMembershipsForAuthenticatedUser,
-				{
-					per_page: 100,
-				},
-			)
-		) {
+		for await (const { data: memberships } of octokit.paginate.iterator(
+			octokit.rest.orgs.listMembershipsForAuthenticatedUser,
+			{
+				per_page: 100,
+			},
+		)) {
 			for (const membership of memberships) {
 				// If user has joined the organization.
 				if (membership.state !== 'active') {
@@ -338,15 +342,13 @@ export async function collectGitHubRepositories(): Promise<
 	{
 		const currentGitHubUser = (await octokit.rest.users.getAuthenticated()).data.login
 		const repos = []
-		for await (
-			const { data: repositories } of octokit.paginate.iterator(
-				octokit.rest.repos.listForAuthenticatedUser,
-				{
-					affiliation: 'owner',
-					per_page: 100,
-				},
-			)
-		) {
+		for await (const { data: repositories } of octokit.paginate.iterator(
+			octokit.rest.repos.listForAuthenticatedUser,
+			{
+				affiliation: 'owner',
+				per_page: 100,
+			},
+		)) {
 			for (const repository of repositories) {
 				if (
 					Ctx.ignoredRepos.some((pattern) => minimatch(repository.full_name, pattern))
@@ -365,31 +367,25 @@ export async function collectGitHubRepositories(): Promise<
 	return repositories
 }
 
-export async function collectGitHubRepositories2(
-	options: {
-		fromCurrentlyAuthenticatedUser: true
-		users: string[]
-		organizations: string[]
-		ignored: string[]
-	},
-): Promise<
-	Record<string, GitHubRepository[]>
-> {
+export async function collectGitHubRepositories2(options: {
+	fromCurrentlyAuthenticatedUser: true
+	users: string[]
+	organizations: string[]
+	ignored: string[]
+}): Promise<Record<string, GitHubRepository[]>> {
 	const repositories: Record<string, GitHubRepository[]> = {}
 
 	// Collect public & private repositories from currently signed-in user.
 	if (options.fromCurrentlyAuthenticatedUser) {
 		const currentUser = (await octokit.rest.users.getAuthenticated()).data.login
 		const repos: GitHubRepository[] = []
-		for await (
-			const { data: repositories } of octokit.paginate.iterator(
-				octokit.rest.repos.listForAuthenticatedUser,
-				{
-					affiliation: 'owner',
-					per_page: 100,
-				},
-			)
-		) {
+		for await (const { data: repositories } of octokit.paginate.iterator(
+			octokit.rest.repos.listForAuthenticatedUser,
+			{
+				affiliation: 'owner',
+				per_page: 100,
+			},
+		)) {
 			for (const repository of repositories) {
 				repos.push(repository)
 			}
@@ -401,14 +397,12 @@ export async function collectGitHubRepositories2(
 	// Collect public & private repositories from the organizations of the currently signed-in user.
 	if (options.fromCurrentlyAuthenticatedUser) {
 		const joinedOrganizations = []
-		for await (
-			const { data: memberships } of octokit.paginate.iterator(
-				octokit.rest.orgs.listMembershipsForAuthenticatedUser,
-				{
-					per_page: 100,
-				},
-			)
-		) {
+		for await (const { data: memberships } of octokit.paginate.iterator(
+			octokit.rest.orgs.listMembershipsForAuthenticatedUser,
+			{
+				per_page: 100,
+			},
+		)) {
 			for (const membership of memberships) {
 				// If user has joined the organization.
 				if (membership.state !== 'active') {
@@ -443,16 +437,14 @@ export async function collectGitHubRepositories2(
 	{
 		for (const user of options.users) {
 			const repos: GitHubRepository[] = []
-			for await (
-				const { data: repositories } of octokit.paginate.iterator(
-					octokit.rest.repos.listForUser,
-					{
-						username: user,
-						affiliation: 'owner',
-						per_page: 100,
-					},
-				)
-			) {
+			for await (const { data: repositories } of octokit.paginate.iterator(
+				octokit.rest.repos.listForUser,
+				{
+					username: user,
+					affiliation: 'owner',
+					per_page: 100,
+				},
+			)) {
 				for (const repository of repositories) {
 					repos.push(repository)
 				}
@@ -466,16 +458,14 @@ export async function collectGitHubRepositories2(
 	{
 		for (const organization of options.organizations) {
 			const repos: GitHubRepository[] = []
-			for await (
-				const { data: repositories } of octokit.paginate.iterator(
-					octokit.rest.repos.listForOrg,
-					{
-						org: organization,
-						affiliation: 'owner',
-						per_page: 100,
-					},
-				)
-			) {
+			for await (const { data: repositories } of octokit.paginate.iterator(
+				octokit.rest.repos.listForOrg,
+				{
+					org: organization,
+					affiliation: 'owner',
+					per_page: 100,
+				},
+			)) {
 				for (const repository of repositories) {
 					repos.push(repository)
 				}

@@ -166,13 +166,7 @@ export async function getGardenCatalog(): Promise<GardenCatalog> {
 			graftCache.set(graftKey, null)
 			return null
 		}
-		const loaded = await loadGraftTrees(
-			gardenDir,
-			graftKey,
-			graft,
-			variables,
-			warnings,
-		)
+		const loaded = await loadGraftTrees(gardenDir, graftKey, graft, variables, warnings)
 		graftCache.set(graftKey, loaded)
 		return loaded
 	}

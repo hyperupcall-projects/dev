@@ -1,7 +1,4 @@
-import {
-	getGardenCatalog,
-	PINNED_CATEGORY_ID,
-} from '../server/garden-projects.ts'
+import { getGardenCatalog, PINNED_CATEGORY_ID } from '../server/garden-projects.ts'
 import { listSavedGroups } from '../server/project-groups.ts'
 import { listComputingFolders } from '../server/computing-folders.ts'
 import { html, raw } from 'hono/html'
@@ -14,11 +11,8 @@ export async function projectManagerView() {
 	])
 
 	const pinned =
-		catalog.categories.find((c) => c.id === PINNED_CATEGORY_ID)?.projects ??
-		[]
-	const gardenCategories = catalog.categories.filter(
-		(c) => c.id !== PINNED_CATEGORY_ID,
-	)
+		catalog.categories.find((c) => c.id === PINNED_CATEGORY_ID)?.projects ?? []
+	const gardenCategories = catalog.categories.filter((c) => c.id !== PINNED_CATEGORY_ID)
 
 	const initialData = {
 		pinned,
@@ -28,10 +22,7 @@ export async function projectManagerView() {
 		computingFolders,
 	}
 	// Prevent </script> in paths/names from breaking the inline script tag.
-	const initialDataJson = JSON.stringify(initialData).replaceAll(
-		'</',
-		'<\\/',
-	)
+	const initialDataJson = JSON.stringify(initialData).replaceAll('</', '<\\/')
 
 	return {
 		title: 'SW Projects',
@@ -42,86 +33,80 @@ export async function projectManagerView() {
 				style="height: calc(100vh - 3.25rem); display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; overflow: hidden;"
 			>
 				<div id="pm-header">
-				<div
-					class="is-flex is-justify-content-space-between is-align-items-flex-end is-flex-wrap-wrap mb-3"
-					style="gap: 0.75rem;"
-				>
-					<div>
-						<h1 class="title mb-1">SW Projects</h1>
-						<p class="subtitle is-6 mb-0">
-							Browse garden projects, select a set, and open them in an IDE
-						</p>
-					</div>
 					<div
-						class="is-flex is-align-items-flex-end is-flex-wrap-wrap"
-						style="gap: 0.5rem;"
-						id="pm-program-controls"
+						class="is-flex is-justify-content-space-between is-align-items-flex-end is-flex-wrap-wrap mb-3"
+						style="gap: 0.75rem;"
 					>
-						<div class="field mb-0">
-							<label class="label is-small" for="pm-search">Search</label>
-							<div class="control">
-								<input
-									id="pm-search"
-									class="input"
-									type="search"
-									placeholder="Filter projects…"
-									autocomplete="off"
-									style="min-width: 16rem;"
-								/>
-							</div>
+						<div>
+							<h1 class="title mb-1">SW Projects</h1>
+							<p class="subtitle is-6 mb-0">
+								Browse garden projects, select a set, and open them in an IDE
+							</p>
 						</div>
-						<div class="field mb-0">
-							<label class="label is-small" for="pm-ide">IDE</label>
-							<div class="control">
-								<div class="select">
-									<select id="pm-ide">
-										<option value="cursor">Cursor</option>
-										<option value="vscode">VSCode</option>
-										<option value="zed">Zed</option>
-										<option value="kate">Kate</option>
-										<option value="clion">CLion</option>
-									</select>
+						<div
+							class="is-flex is-align-items-flex-end is-flex-wrap-wrap"
+							style="gap: 0.5rem;"
+							id="pm-program-controls"
+						>
+							<div class="field mb-0">
+								<label class="label is-small" for="pm-search">Search</label>
+								<div class="control">
+									<input
+										id="pm-search"
+										class="input"
+										type="search"
+										placeholder="Filter projects…"
+										autocomplete="off"
+										style="min-width: 16rem;"
+									/>
 								</div>
 							</div>
-						</div>
-						<div class="field mb-0">
-							<label class="label is-small" style="visibility: hidden;">Open</label>
-							<div class="control buttons mb-0">
-								<button
-									type="button"
-									class="button is-primary"
-									id="pm-open"
-									disabled
-								>
-									Open
-								</button>
-								<button
-									type="button"
-									class="button is-light"
-									id="pm-clear"
-									disabled
-								>
-									Clear
-								</button>
+							<div class="field mb-0">
+								<label class="label is-small" for="pm-ide">IDE</label>
+								<div class="control">
+									<div class="select">
+										<select id="pm-ide">
+											<option value="cursor">Cursor</option>
+											<option value="vscode">VSCode</option>
+											<option value="zed">Zed</option>
+											<option value="kate">Kate</option>
+											<option value="clion">CLion</option>
+										</select>
+									</div>
+								</div>
 							</div>
+							<div class="field mb-0">
+								<label class="label is-small" style="visibility: hidden;">Open</label>
+								<div class="control buttons mb-0">
+									<button type="button" class="button is-primary" id="pm-open" disabled>
+										Open
+									</button>
+									<button type="button" class="button is-light" id="pm-clear" disabled>
+										Clear
+									</button>
+								</div>
+							</div>
+							<p class="help mb-0" id="pm-selection-count" style="align-self: center;">
+								0 selected
+							</p>
 						</div>
-						<p class="help mb-0" id="pm-selection-count" style="align-self: center;">
-							0 selected
-						</p>
 					</div>
-				</div>
 
-				<div id="pm-status" class="notification is-hidden mb-3 py-2 px-3"></div>
-				${catalog.warnings.length > 0
-					? html`
-							<div class="notification is-warning is-light mb-3 py-2 px-3">
-								<p class="mb-1"><strong>Warnings while loading garden config:</strong></p>
-								<ul class="mb-0">
-									${catalog.warnings.map((w) => html`<li>${w}</li>`)}
-								</ul>
-							</div>
-						`
-					: ''}
+					<div id="pm-status" class="notification is-hidden mb-3 py-2 px-3"></div>
+					${
+						catalog.warnings.length > 0
+							? html`
+									<div class="notification is-warning is-light mb-3 py-2 px-3">
+										<p class="mb-1">
+											<strong>Warnings while loading garden config:</strong>
+										</p>
+										<ul class="mb-0">
+											${catalog.warnings.map((w) => html`<li>${w}</li>`)}
+										</ul>
+									</div>
+								`
+							: ''
+					}
 				</div>
 
 				<div
@@ -135,22 +120,26 @@ export async function projectManagerView() {
 						style="min-width: 0; min-height: 0; overflow-y: auto; overflow-x: hidden;"
 					>
 						<div class="mb-4">
-							<p class="help mb-2">Computing folders in <code>~/Documents/Computing</code>.</p>
+							<p class="help mb-2">
+								Computing folders in <code>~/Documents/Computing</code>.
+							</p>
 							<ul id="pm-master" class="menu-list"></ul>
 						</div>
 						<div class="mb-2">
 							<h2 class="title is-5 mb-1">Pinned</h2>
-							<p class="help mb-2">
-								Local folders you can select and open.
-							</p>
-							<ul id="pm-pinned" class="mb-4" style="list-style: none; padding-left: 0;"></ul>
+							<p class="help mb-2">Local folders you can select and open.</p>
+							<ul
+								id="pm-pinned"
+								class="mb-4"
+								style="list-style: none; padding-left: 0;"
+							></ul>
 						</div>
-						<div class="mb-2 is-flex is-justify-content-space-between is-align-items-center">
+						<div
+							class="mb-2 is-flex is-justify-content-space-between is-align-items-center"
+						>
 							<h2 class="title is-5 mb-0">Saved groups</h2>
 						</div>
-						<p class="help mb-2">
-							Select projects, then save them as a reusable group.
-						</p>
+						<p class="help mb-2">Select projects, then save them as a reusable group.</p>
 						<button
 							type="button"
 							class="button is-small is-link is-light mb-3"
@@ -164,20 +153,20 @@ export async function projectManagerView() {
 							No saved groups yet.
 						</p>
 					</div>
-				<div
-					class="column"
-					id="pm-main"
-					style="min-width: 0; min-height: 0; width: auto; overflow: hidden; display: grid; grid-template-rows: minmax(0, 1fr);"
-				>
 					<div
-						id="pm-master-detail"
-						class="is-hidden"
-						style="min-height: 0; overflow-y: auto; overflow-x: hidden;"
-					></div>
-					<div
-						id="pm-program-list"
-						style="height: 100%; min-height: 0; overflow-y: auto; overflow-x: hidden; padding-right: 0.75rem;"
+						class="column"
+						id="pm-main"
+						style="min-width: 0; min-height: 0; width: auto; overflow: hidden; display: grid; grid-template-rows: minmax(0, 1fr);"
 					>
+						<div
+							id="pm-master-detail"
+							class="is-hidden"
+							style="min-height: 0; overflow-y: auto; overflow-x: hidden;"
+						></div>
+						<div
+							id="pm-program-list"
+							style="height: 100%; min-height: 0; overflow-y: auto; overflow-x: hidden; padding-right: 0.75rem;"
+						>
 							<div id="pm-catalog"></div>
 							<p id="pm-empty" class="has-text-grey is-hidden">
 								No projects match your search.

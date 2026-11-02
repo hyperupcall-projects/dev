@@ -2,11 +2,9 @@ import { html } from 'hono/html'
 import { FILE_EDITOR_IDS } from '../server/open-files.ts'
 
 function codeList(values: readonly string[]) {
-	return values.map((value) => html`<code>${value}</code>`).reduce(
-		(acc, item, index) =>
-			index === 0 ? item : html`${acc}, ${item}`,
-		html``,
-	)
+	return values
+		.map((value) => html`<code>${value}</code>`)
+		.reduce((acc, item, index) => (index === 0 ? item : html`${acc}, ${item}`), html``)
 }
 
 export function openFileView() {
@@ -17,16 +15,16 @@ export function openFileView() {
 				<div class="mb-4">
 					<h1 class="title mb-1">Open file</h1>
 					<p class="subtitle is-6 mb-0">
-						Open a specific file, optionally at a line and column, in
-						VSCode, Zed, Sublime Text, or Kate
+						Open a specific file, optionally at a line and column, in VSCode, Zed, Sublime
+						Text, or Kate
 					</p>
 				</div>
 
 				<div class="content">
 					<p>
 						<code>POST /api/files/open</code>
-						takes a filesystem path (not a catalog id). It reuses an
-						already-open editor window so it can follow
+						takes a filesystem path (not a catalog id). It reuses an already-open editor
+						window so it can follow
 						<a href="/docs/open-directory">Open directory</a>
 						or
 						<a href="/docs/workspaces">Workspaces</a>.
@@ -39,17 +37,11 @@ export function openFileView() {
 					<h2 class="title is-5">Request</h2>
 					<ul>
 						<li>
-							<code>path</code> (required) — absolute path, or
-							<code>~</code> / <code>~/…</code>. Relative paths are
-							rejected.
+							<code>path</code> (required) — absolute path, or <code>~</code> /
+							<code>~/…</code>. Relative paths are rejected.
 						</li>
-						<li>
-							<code>editor</code> (required) — one of
-							${codeList(FILE_EDITOR_IDS)}
-						</li>
-						<li>
-							<code>line</code> (optional) — 1-based line number
-						</li>
+						<li><code>editor</code> (required) — one of ${codeList(FILE_EDITOR_IDS)}</li>
+						<li><code>line</code> (optional) — 1-based line number</li>
 						<li>
 							<code>column</code> (optional) — 1-based column; requires
 							<code>line</code>
@@ -72,8 +64,7 @@ Content-Type: application/json
 	"column": 8
 }</code></pre>
 					<p>
-						<code>line</code> and <code>column</code> are
-						<code>null</code> when omitted.
+						<code>line</code> and <code>column</code> are <code>null</code> when omitted.
 					</p>
 
 					<h2 class="title is-5 mt-5">How each editor is launched</h2>
@@ -102,25 +93,22 @@ Content-Type: application/json
 						API routes allow CORS from
 						<code>http://localhost:*</code> and
 						<code>http://127.0.0.1:*</code>
-						(including port 6006). Same-origin pages on this server do not
-						need CORS. The 6006 app can
+						(including port 6006). Same-origin pages on this server do not need CORS. The
+						6006 app can
 						<code>fetch('http://localhost:3000/…')</code>
 						with JSON bodies; no cookies are used.
 					</p>
 					<p>
-						Directory and workspace endpoints stay catalog-id based
-						(<code>ide</code> / <code>opener</code> /
-						<code>projectIds</code> /
-						<code>folderId</code>). This file endpoint is path-based and
-						uses <code>editor</code>. Those field names are not the same;
-						do not rename them when composing calls.
+						Directory and workspace endpoints stay catalog-id based (<code>ide</code> /
+						<code>opener</code> / <code>projectIds</code> / <code>folderId</code>). This
+						file endpoint is path-based and uses <code>editor</code>. Those field names
+						are not the same; do not rename them when composing calls.
 					</p>
 					<p>
 						Discover directory ids with
 						<code>GET /api/projects</code> and
 						<code>GET /api/computing-folders</code>
-						if the caller does not already store them. File open does not
-						need an id.
+						if the caller does not already store them. File open does not need an id.
 					</p>
 
 					<h3 class="title is-6 mt-4">Open a project, then a file</h3>
@@ -163,19 +151,16 @@ await fetch('http://localhost:3000/api/files/open', {
 					<h2 class="title is-5 mt-5">Errors</h2>
 					<ul>
 						<li>
-							<code>400</code> if
-							<code>editor</code> is not one of
+							<code>400</code> if <code>editor</code> is not one of
 							${codeList(FILE_EDITOR_IDS)}
 						</li>
 						<li>
-							<code>400</code> if
-							<code>path</code> is missing, relative, not a file, or
+							<code>400</code> if <code>path</code> is missing, relative, not a file, or
 							does not exist
 						</li>
 						<li>
-							<code>400</code> if
-							<code>line</code> / <code>column</code> is not an integer
-							≥ 1, or <code>column</code> is set without
+							<code>400</code> if <code>line</code> / <code>column</code> is not an
+							integer ≥ 1, or <code>column</code> is set without
 							<code>line</code>
 						</li>
 						<li>

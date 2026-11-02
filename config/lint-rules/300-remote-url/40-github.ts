@@ -24,12 +24,14 @@ export const issues: Issues = async function* issues({ project }) {
 				`But, found ${yamlFiles} file with ".yml" extension`,
 			],
 			fix: () =>
-				Promise.all(yamlFiles.map((file) =>
-					fs.rename(
-						path.join(workflowsDir, file),
-						path.join(workflowsDir, file).replace(/\.yml$/, '.yaml'),
-					)
-				)),
+				Promise.all(
+					yamlFiles.map((file) =>
+						fs.rename(
+							path.join(workflowsDir, file),
+							path.join(workflowsDir, file).replace(/\.yml$/, '.yaml'),
+						),
+					),
+				),
 		}
 	}
 }

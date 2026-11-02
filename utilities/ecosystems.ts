@@ -218,9 +218,7 @@ export const ecosystems = {
 					await fs.readFile(filepath, 'utf-8'),
 				)
 				return (
-					content !== null &&
-					typeof content === 'object' &&
-					'manifest_version' in content
+					content !== null && typeof content === 'object' && 'manifest_version' in content
 				)
 			} catch (err) {
 				if (err instanceof SyntaxError) {
@@ -262,9 +260,7 @@ export const ecosystems = {
 
 export type EcosystemId = keyof typeof ecosystems
 
-export async function detectEcosystem(
-	context: DetectionContext,
-): Promise<EcosystemId[]> {
+export async function detectEcosystem(context: DetectionContext): Promise<EcosystemId[]> {
 	const detected: EcosystemId[] = []
 
 	for (const [id, definition] of Object.entries(ecosystems) as [
@@ -349,10 +345,7 @@ async function updateJsonVersion(
 	}
 
 	const text = await fs.readFile(filepath, 'utf-8')
-	const output = text.replace(
-		/"version"\s*:\s*"[^"]*"/,
-		`"version": "${version}"`,
-	)
+	const output = text.replace(/"version"\s*:\s*"[^"]*"/, `"version": "${version}"`)
 	if (output === text) {
 		return []
 	}
@@ -385,34 +378,20 @@ async function updateTomlVersion(
 	return [relative]
 }
 
-async function updateDenoVersion(
-	rootDir: string,
-	version: string,
-): Promise<string[]> {
+async function updateDenoVersion(rootDir: string, version: string): Promise<string[]> {
 	const modified: string[] = []
-	for (const relative of [
-		'deno.json',
-		'deno.jsonc',
-		'process.json',
-		'process.jsonc',
-	]) {
+	for (const relative of ['deno.json', 'deno.jsonc', 'process.json', 'process.jsonc']) {
 		modified.push(...(await updateJsonVersion(rootDir, relative, version)))
 	}
 
 	return modified
 }
 
-async function updateBashVersion(
-	rootDir: string,
-	version: string,
-): Promise<string[]> {
+async function updateBashVersion(rootDir: string, version: string): Promise<string[]> {
 	return await updateTomlVersion(rootDir, 'basalt.toml', 'package', version)
 }
 
-async function updateRustVersion(
-	rootDir: string,
-	version: string,
-): Promise<string[]> {
+async function updateRustVersion(rootDir: string, version: string): Promise<string[]> {
 	return await updateTomlVersion(rootDir, 'Cargo.toml', 'package', version)
 }
 
@@ -423,10 +402,7 @@ async function updateZedExtensionVersion(
 	return await updateTomlVersion(rootDir, 'extension.toml', null, version)
 }
 
-async function updateWebextVersion(
-	rootDir: string,
-	version: string,
-): Promise<string[]> {
+async function updateWebextVersion(rootDir: string, version: string): Promise<string[]> {
 	return await updateJsonVersion(rootDir, 'manifest.json', version)
 }
 
@@ -450,10 +426,7 @@ async function updateWoofPluginVersion(
 	return [relative]
 }
 
-async function updateGoVersion(
-	rootDir: string,
-	version: string,
-): Promise<string[]> {
+async function updateGoVersion(rootDir: string, version: string): Promise<string[]> {
 	// Go module versions come from Git tags. If the project keeps an explicit
 	// VERSION file, keep that in sync as well.
 	const relative = 'VERSION'
@@ -474,10 +447,7 @@ async function updateGoVersion(
 
 // Handles pyproject.toml, setup.cfg, and setup.py so a later split into
 // `python-pyproject` / `python-pip` can reuse the same updater.
-async function updatePythonVersion(
-	rootDir: string,
-	version: string,
-): Promise<string[]> {
+async function updatePythonVersion(rootDir: string, version: string): Promise<string[]> {
 	const pyproject = 'pyproject.toml'
 	const pyprojectPath = path.join(rootDir, pyproject)
 	if (await fileExists(pyprojectPath)) {
@@ -508,10 +478,7 @@ async function updatePythonVersion(
 	const setupPyPath = path.join(rootDir, setupPy)
 	if (await fileExists(setupPyPath)) {
 		const text = await fs.readFile(setupPyPath, 'utf-8')
-		const output = text.replace(
-			/(\bversion\s*=\s*)(['"])([^'"]*)\2/,
-			`$1$2${version}$2`,
-		)
+		const output = text.replace(/(\bversion\s*=\s*)(['"])([^'"]*)\2/, `$1$2${version}$2`)
 		if (output !== text) {
 			await fs.writeFile(setupPyPath, output)
 			return [setupPy]
@@ -523,10 +490,7 @@ async function updatePythonVersion(
 
 // Probes CMake, autoconf, Meson, and Make instead of assuming one build
 // system, so `c-cmake` / `c-autoconf` / `c-meson` / `c-make` can reuse it.
-async function updateCVersion(
-	rootDir: string,
-	version: string,
-): Promise<string[]> {
+async function updateCVersion(rootDir: string, version: string): Promise<string[]> {
 	const candidates: [string, (text: string) => string][] = [
 		['CMakeLists.txt', (text) => replaceCmakeVersion(text, version)],
 		['configure.ac', (text) => replaceAutoconfVersion(text, version)],
@@ -556,20 +520,16 @@ async function updateCVersion(
 
 // Handles both Gradle and Maven so a later `java-gradle` / `java-maven` split
 // can reuse the same updater.
-async function updateJavaVersion(
-	rootDir: string,
-	version: string,
-): Promise<string[]> {
+async function updateJavaVersion(rootDir: string, version: string): Promise<string[]> {
 	const modified: string[] = []
 
 	const gradleProperties = 'gradle.properties'
 	const gradlePropertiesPath = path.join(rootDir, gradleProperties)
 	if (await fileExists(gradlePropertiesPath)) {
 		const text = await fs.readFile(gradlePropertiesPath, 'utf-8')
-		const match =
-			/^([ \t]*version[ \t]*=[ \t]*)([^\s#;]+)([ \t]*(?:[#;].*)?)$/m.exec(
-				text,
-			)
+		const match = /^([ \t]*version[ \t]*=[ \t]*)([^\s#;]+)([ \t]*(?:[#;].*)?)$/m.exec(
+			text,
+		)
 		if (match && isLiteralVersion(match[2]!)) {
 			const output =
 				text.slice(0, match.index) +
@@ -587,15 +547,11 @@ async function updateJavaVersion(
 		}
 
 		const text = await fs.readFile(filepath, 'utf-8')
-		let match =
-			/^([ \t]*version[ \t]*=[ \t]*)(['"])([^'"]*)\2([ \t]*(?:\/\/.*)?)$/m.exec(
-				text,
-			)
+		let match = /^([ \t]*version[ \t]*=[ \t]*)(['"])([^'"]*)\2([ \t]*(?:\/\/.*)?)$/m.exec(
+			text,
+		)
 		if (!match) {
-			match =
-				/^([ \t]*version[ \t]+)(['"])([^'"]*)\2([ \t]*(?:\/\/.*)?)$/m.exec(
-					text,
-				)
+			match = /^([ \t]*version[ \t]+)(['"])([^'"]*)\2([ \t]*(?:\/\/.*)?)$/m.exec(text)
 		}
 
 		if (match && isLiteralVersion(match[3]!)) {
@@ -656,11 +612,7 @@ function replaceTomlValue(
 	return text
 }
 
-function replaceTomlTopLevelValue(
-	text: string,
-	key: string,
-	value: string,
-): string {
+function replaceTomlTopLevelValue(text: string, key: string, value: string): string {
 	const newline = text.includes('\r\n') ? '\r\n' : '\n'
 	const lines = text.split(/\r?\n/)
 
@@ -716,11 +668,7 @@ function replaceIniValue(
 	return text
 }
 
-function replaceIniTopLevelValue(
-	text: string,
-	key: string,
-	value: string,
-): string {
+function replaceIniTopLevelValue(text: string, key: string, value: string): string {
 	const newline = text.includes('\r\n') ? '\r\n' : '\n'
 	const lines = text.split(/\r?\n/)
 
@@ -760,8 +708,7 @@ function replaceCmakeVersion(text: string, version: string): string {
 				)
 			}
 
-			const variable =
-				/^\$\{([A-Za-z_][A-Za-z0-9_]*)\}$/.exec(current)?.[1]
+			const variable = /^\$\{([A-Za-z_][A-Za-z0-9_]*)\}$/.exec(current)?.[1]
 			if (variable) {
 				const setMatch = new RegExp(
 					`(\\bset\\s*\\(\\s*${escapeRegExp(variable)}\\s+)(["']?)([^"'\\s)]+)\\2`,
@@ -811,13 +758,8 @@ function replaceAutoconfVersion(text: string, version: string): string {
 		}
 
 		const leading = raw.length - raw.trimStart().length
-		const valueStart =
-			argsStart + bracketed.index + bracketed[1]!.length + leading
-		return (
-			text.slice(0, valueStart) +
-			version +
-			text.slice(valueStart + current.length)
-		)
+		const valueStart = argsStart + bracketed.index + bracketed[1]!.length + leading
+		return text.slice(0, valueStart) + version + text.slice(valueStart + current.length)
 	}
 
 	const quoted = /^([\s\S]*?,\s*)(['"])([^'"]*)\2/.exec(args)
@@ -830,13 +772,8 @@ function replaceAutoconfVersion(text: string, version: string): string {
 		return text
 	}
 
-	const valueStart =
-		argsStart + quoted.index + quoted[1]!.length + 1
-	return (
-		text.slice(0, valueStart) +
-		version +
-		text.slice(valueStart + current.length)
-	)
+	const valueStart = argsStart + quoted.index + quoted[1]!.length + 1
+	return text.slice(0, valueStart) + version + text.slice(valueStart + current.length)
 }
 
 function replaceMesonVersion(text: string, version: string): string {
@@ -899,8 +836,7 @@ function replacePomVersion(text: string, version: string): string {
 	if (/^\$\{[^}]+\}$/.test(current)) {
 		const property = current.slice(2, -1)
 		if (property === 'revision') {
-			const revision =
-				/<revision>([ \t]*)([^<]*?)([ \t]*)<\/revision>/.exec(text)
+			const revision = /<revision>([ \t]*)([^<]*?)([ \t]*)<\/revision>/.exec(text)
 			if (revision) {
 				return (
 					text.slice(0, revision.index) +

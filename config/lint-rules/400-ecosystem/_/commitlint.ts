@@ -1,8 +1,4 @@
-import {
-	filesMustHaveContent,
-	filesMustHaveName,
-	pkgRoot,
-} from '#common'
+import { filesMustHaveContent, filesMustHaveName, pkgRoot } from '#common'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import type { Issues } from '#types'
@@ -14,7 +10,7 @@ export const issues: Issues = async function* issues() {
 	{
 		// https://commitlint.js.org/reference/configuration.html#config-via-file
 		yield* filesMustHaveName({
-			'.commitlintrc.yaml': ['.commitlintrc.yml']
+			'.commitlintrc.yaml': ['.commitlintrc.yml'],
 		})
 		yield* filesMustHaveContent('commitlint', {
 			'.commitlintrc': null,
@@ -36,7 +32,8 @@ export const issues: Issues = async function* issues() {
 
 	yield* filesMustHaveContent('commitlint', {
 		'.commitlintrc.yaml': await fs.readFile(
-			path.join(pkgRoot(), 'config/.commitlintrc.yaml'), 'utf-8',
+			path.join(pkgRoot(), 'config/.commitlintrc.yaml'),
+			'utf-8',
 		),
 	})
 }

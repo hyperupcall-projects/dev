@@ -1,14 +1,8 @@
 import { html, raw } from 'hono/html'
-import {
-	getBlocklistsDir,
-	listBlocklistTxtFiles,
-} from '../server/blocklists.ts'
+import { getBlocklistsDir, listBlocklistTxtFiles } from '../server/blocklists.ts'
 
 export async function blocklistsView() {
-	const [dir, files] = await Promise.all([
-		getBlocklistsDir(),
-		listBlocklistTxtFiles(),
-	])
+	const [dir, files] = await Promise.all([getBlocklistsDir(), listBlocklistTxtFiles()])
 
 	return {
 		title: 'Blocklists',
@@ -24,8 +18,8 @@ export async function blocklistsView() {
 				<div class="content mb-5">
 					<h2 class="title is-5">Documentation</h2>
 					<p>
-						This API serves every <code>.txt</code> file from the blocklists
-						directory on disk:
+						This API serves every <code>.txt</code> file from the blocklists directory on
+						disk:
 					</p>
 					<p>
 						<code>${dir}</code>
@@ -41,48 +35,47 @@ export async function blocklistsView() {
 
 					<h3 class="title is-6 mt-4">uBlacklist vs uBlock Origin</h3>
 					<p>
-						<strong>uBlacklist</strong> and
-						<strong>uBlock Origin</strong> are different tools with different
-						list formats. Do not mix their files:
+						<strong>uBlacklist</strong> and <strong>uBlock Origin</strong> are different
+						tools with different list formats. Do not mix their files:
 					</p>
 					<ul>
 						<li>
-							<strong>uBlacklist</strong> — a browser extension that hides
-							search-engine results by URL/site pattern. Files named like
-							<code>ublacklist*.txt</code> use uBlacklist’s match syntax
-							(often <code>*://*.example.com/*</code> style rules).
+							<strong>uBlacklist</strong> — a browser extension that hides search-engine
+							results by URL/site pattern. Files named like
+							<code>ublacklist*.txt</code> use uBlacklist’s match syntax (often
+							<code>*://*.example.com/*</code> style rules).
 						</li>
 						<li>
-							<strong>uBlock Origin</strong> — an ad/content blocker that uses
-							Adblock Plus–style filter lists. Files named like
-							<code>ublockorigin*.txt</code> use that filter syntax
-							(comments typically start with <code>!</code>).
+							<strong>uBlock Origin</strong> — an ad/content blocker that uses Adblock
+							Plus–style filter lists. Files named like <code>ublockorigin*.txt</code> use
+							that filter syntax (comments typically start with <code>!</code>).
 						</li>
 					</ul>
 					<p>
-						The compile script downloads several upstream sources, tags each
-						chunk by target app, and writes separate compiled outputs for each
-						format.
+						The compile script downloads several upstream sources, tags each chunk by
+						target app, and writes separate compiled outputs for each format.
 					</p>
 				</div>
 
 				<div class="mb-5">
 					<h2 class="title is-5 mb-2">Served files</h2>
-					${files.length === 0
-						? html`<p class="has-text-grey">No <code>.txt</code> files found.</p>`
-						: html`
-								<ul>
-									${files.map(
-										(name) => html`
-											<li>
-												<a href="${`/${name}`}" target="_blank" rel="noopener">
-													/${name}
-												</a>
-											</li>
-										`,
-									)}
-								</ul>
-							`}
+					${
+						files.length === 0
+							? html`<p class="has-text-grey">No <code>.txt</code> files found.</p>`
+							: html`
+									<ul>
+										${files.map(
+											(name) => html`
+												<li>
+													<a href="${`/${name}`}" target="_blank" rel="noopener">
+														/${name}
+													</a>
+												</li>
+											`,
+										)}
+									</ul>
+								`
+					}
 				</div>
 
 				<div class="mb-3">

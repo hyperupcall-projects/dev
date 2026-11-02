@@ -82,7 +82,11 @@ if (raw === undefined) {
 const config = expand(raw)
 const value = getByPath(config, key)
 
-if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+if (
+	typeof value === 'string' ||
+	typeof value === 'number' ||
+	typeof value === 'boolean'
+) {
 	process.stdout.write(String(value))
 } else {
 	process.stdout.write(JSON.stringify(value))

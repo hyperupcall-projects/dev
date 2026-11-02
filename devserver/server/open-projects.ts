@@ -5,20 +5,11 @@ import path from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { promisify } from 'node:util'
 import { getDevConfig } from '#utilities/dev-config.ts'
-import {
-	resolveProjectsByIds,
-	type GardenProject,
-} from './garden-projects.ts'
+import { resolveProjectsByIds, type GardenProject } from './garden-projects.ts'
 
 const execFileAsync = promisify(execFile)
 
-export const IDE_IDS = [
-	'zed',
-	'vscode',
-	'cursor',
-	'kate',
-	'clion',
-] as const
+export const IDE_IDS = ['zed', 'vscode', 'cursor', 'kate', 'clion'] as const
 
 export type IdeId = (typeof IDE_IDS)[number]
 
@@ -63,9 +54,7 @@ async function resolveIdeBinary(ide: IdeId): Promise<string> {
 	}
 	const binary = await resolveCommand(map[ide])
 	if (!binary) {
-		throw new Error(
-			`Could not find the ${ide} executable. Install it or add it to PATH.`,
-		)
+		throw new Error(`Could not find the ${ide} executable. Install it or add it to PATH.`)
 	}
 	return binary
 }
@@ -79,9 +68,7 @@ function spawnDetached(bin: string, args: string[]): void {
 	proc.unref()
 }
 
-async function createSymlinkWorkspace(
-	projects: GardenProject[],
-): Promise<string> {
+async function createSymlinkWorkspace(projects: GardenProject[]): Promise<string> {
 	const dir = path.join(os.tmpdir(), `dev-project-manager-${randomUUID()}`)
 	await mkdir(dir, { recursive: true })
 
@@ -103,9 +90,7 @@ async function createSymlinkWorkspace(
 	return dir
 }
 
-async function createCodeWorkspace(
-	projects: GardenProject[],
-): Promise<string> {
+async function createCodeWorkspace(projects: GardenProject[]): Promise<string> {
 	const dir = path.join(os.tmpdir(), `dev-project-manager-${randomUUID()}`)
 	await mkdir(dir, { recursive: true })
 	const workspacePath = path.join(dir, 'workspace.code-workspace')
@@ -115,11 +100,7 @@ async function createCodeWorkspace(
 			path: p.path,
 		})),
 	}
-	await writeFile(
-		workspacePath,
-		JSON.stringify(workspace, null, '\t') + '\n',
-		'utf8',
-	)
+	await writeFile(workspacePath, JSON.stringify(workspace, null, '\t') + '\n', 'utf8')
 	return workspacePath
 }
 

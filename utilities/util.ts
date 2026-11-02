@@ -16,7 +16,13 @@ const USER_UNIT_DIRS = [
 	path.join(os.homedir(), '.config', 'systemd', 'user'),
 	path.join(os.homedir(), '.local', 'share', 'systemd', 'user'),
 ]
-const WANTS_DIR = path.join(os.homedir(), '.config', 'systemd', 'user', 'default.target.wants')
+const WANTS_DIR = path.join(
+	os.homedir(),
+	'.config',
+	'systemd',
+	'user',
+	'default.target.wants',
+)
 
 export type ServiceInfo = {
 	name: string
@@ -138,11 +144,7 @@ async function resolveSymlinkStatus(
 	unit: string,
 ): Promise<{ status: ServiceInfo['symlinkStatus']; target: string | null }> {
 	try {
-		const { stdout } = await execFileAsync('systemctl', [
-			'--user',
-			'is-enabled',
-			unit,
-		])
+		const { stdout } = await execFileAsync('systemctl', ['--user', 'is-enabled', unit])
 		const state = stdout.trim()
 		if (state === 'enabled') {
 			const wantsLink = path.join(WANTS_DIR, unit)
@@ -380,8 +382,7 @@ export function mergeJSONWithComments(
 		return false
 	}
 
-	const existingJson =
-		ast.type === 'JSONObjectExpression' ? jsonASTToValue(ast) : {}
+	const existingJson = ast.type === 'JSONObjectExpression' ? jsonASTToValue(ast) : {}
 
 	function deepMerge(
 		newObj: Record<string, any>,
@@ -467,9 +468,7 @@ export function mergeJSONWithComments(
 	return output
 }
 
-export function overrideFile() {
-
-}
+export function overrideFile() {}
 
 function jsonASTToValue(node: any): any {
 	if (!node) return undefined
@@ -493,11 +492,7 @@ function jsonASTToValue(node: any): any {
 			return node.value
 
 		case 'JSONIdentifier':
-			return node.name === 'true'
-				? true
-				: node.name === 'false'
-					? false
-					: null
+			return node.name === 'true' ? true : node.name === 'false' ? false : null
 
 		default:
 			return undefined

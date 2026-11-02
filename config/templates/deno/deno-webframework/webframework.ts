@@ -48,14 +48,8 @@ export function startServer(args: string[]) {
 
 	const app = createApp()
 	app.get('/lib.ts', (req, res) => serveJs(req, res, './devserver') as any)
-	app.get(
-		'/components/*path',
-		(req, res) => serveJs(req, res, './devserver') as any,
-	)
-	app.get(
-		'/pages/*path',
-		(req, res) => serveJs(req, res, './devserver') as any,
-	)
+	app.get('/components/*path', (req, res) => serveJs(req, res, './devserver') as any)
+	app.get('/pages/*path', (req, res) => serveJs(req, res, './devserver') as any)
 	app.post('/pages/*page', async (req, res) => {
 		type Params = { page: string[] }
 		const pageId = (req.params as Params).page.join('/')
@@ -67,10 +61,7 @@ export function startServer(args: string[]) {
 			res.send(result)
 		} catch (err) {
 			console.error(err)
-			if (
-				err instanceof Error &&
-				(err as NodeJS.ErrnoException).code === 'ENOENT'
-			) {
+			if (err instanceof Error && (err as NodeJS.ErrnoException).code === 'ENOENT') {
 				res.setHeader('Content-Type', 'application/json')
 				res.send('{}\n')
 			} else {

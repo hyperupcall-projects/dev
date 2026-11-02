@@ -42,9 +42,7 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 	try {
 		config = _.merge(
 			config,
-			toml.parse(
-				await fs.readFile(path.join(project.rootDir, 'dev.toml'), 'utf-8'),
-			),
+			toml.parse(await fs.readFile(path.join(project.rootDir, 'dev.toml'), 'utf-8')),
 		) as Config
 	} catch (err) {
 		if ((err as NodeJS.ErrnoException)?.code !== 'ENOENT') {
@@ -57,13 +55,10 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 		const configDir = (process.env.XDG_CONFIG_HOME ?? '').startsWith('/')
 			? (process.env.XDG_CONFIG_HOME ?? '')
 			: path.join(os.homedir(), '.config')
-		const userSettingsJsonFile = path.join(
-			configDir,
-			'Code/User/settings.json',
-		)
-		const defaultTitle = jsonc.parse(
-			await fs.readFile(userSettingsJsonFile, 'utf-8'),
-		)['window.title']
+		const userSettingsJsonFile = path.join(configDir, 'Code/User/settings.json')
+		const defaultTitle = jsonc.parse(await fs.readFile(userSettingsJsonFile, 'utf-8'))[
+			'window.title'
+		]
 
 		const settingsText = await fs.readFile('.vscode/settings.json', 'utf-8')
 		const settingsJson = jsonc.parse(settingsText)
@@ -111,10 +106,7 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 	{
 		await collect(`100-directory/*`)
 
-		if (
-			project.type === 'under-version-control' ||
-			project.type === 'with-remote-url'
-		) {
+		if (project.type === 'under-version-control' || project.type === 'with-remote-url') {
 			if (await fileExists('.git')) {
 				await collect(`200-version-control/*`)
 			}
@@ -147,18 +139,13 @@ export async function run(options: CommandFixOptions, positionals: string[]) {
 	for (let i = ruleFiles.length - 1; i >= 0; i -= 1) {
 		const highPriorityFilename = ruleFiles[i].match(/.*\/[0-9]*(.*?)\./)?.[1]
 		if (!highPriorityFilename) {
-			throw new TypeError(
-				`Expected variable "highPriorityFilename" to not be falsy`,
-			)
+			throw new TypeError(`Expected variable "highPriorityFilename" to not be falsy`)
 		}
 
 		for (let j = 0; j < i; j += 1) {
-			const lowPriorityFilename =
-				ruleFiles[j].match(/.*\/[0-9]*(.*?)\./)?.[1]
+			const lowPriorityFilename = ruleFiles[j].match(/.*\/[0-9]*(.*?)\./)?.[1]
 			if (!lowPriorityFilename) {
-				throw new TypeError(
-					`Expected variable "lowPriorityFilename" to not be falsy`,
-				)
+				throw new TypeError(`Expected variable "lowPriorityFilename" to not be falsy`)
 			}
 
 			if (highPriorityFilename == lowPriorityFilename) {
@@ -239,9 +226,7 @@ async function fixFromFile(
 			}
 
 			if (issue.strict && !options.strict) {
-				console.info(
-					`[${styleText('yellow', 'SKIP')}] ${fixId}/${issue.id}`,
-				)
+				console.info(`[${styleText('yellow', 'SKIP')}] ${fixId}/${issue.id}`)
 				continue
 			}
 
@@ -249,9 +234,7 @@ async function fixFromFile(
 				if (`${fixId}/${issue.id}` in (config.rules ?? {})) {
 					const rule = (config.rules ?? {})[`${fixId}/${issue.id}`]
 					if (rule === 'off') {
-						console.info(
-							`[${styleText('yellow', 'SKIP')}] ${fixId}/${issue.id}`,
-						)
+						console.info(`[${styleText('yellow', 'SKIP')}] ${fixId}/${issue.id}`)
 						continue
 					}
 				}
@@ -322,18 +305,11 @@ async function getProject(): Promise<Project> {
 		}
 	}
 
-	const { stdout: branchName } = await execa('git', [
-		'branch',
-		'--show-current',
-	])
+	const { stdout: branchName } = await execa('git', ['branch', '--show-current'])
 	const { stdout: remoteName } = await (async () => {
 		try {
 			if (branchName) {
-				return await execa('git', [
-					'config',
-					'--get',
-					`branch.${branchName}.remote`,
-				])
+				return await execa('git', ['config', '--get', `branch.${branchName}.remote`])
 			} else {
 				// If HEAD does not point to a branch, it is in a detached state.
 				// This can occur with '@actions/checkout'. In such cases, we read
@@ -362,11 +338,7 @@ async function getProject(): Promise<Project> {
 			branchName,
 		}
 	}
-	const { stdout: remoteUrl } = await execa('git', [
-		'remote',
-		'get-url',
-		remoteName,
-	])
+	const { stdout: remoteUrl } = await execa('git', ['remote', 'get-url', remoteName])
 	const match = remoteUrl.match(/[:/](?<owner>.*?)\/(?<name>.*)$/u)
 	if (!match?.groups) {
 		printWithTips(
@@ -400,9 +372,7 @@ async function mergeVSCodeESLintSettings(settingsPath: string) {
 	const ast = parseJSON(settingsText)
 
 	const vscodeConfigPath = path.join(pkgRoot(), 'config/vscode-config.jsonc')
-	const settingsToAdd = jsonc.parse(
-		await fs.readFile(vscodeConfigPath, 'utf-8'),
-	)
+	const settingsToAdd = jsonc.parse(await fs.readFile(vscodeConfigPath, 'utf-8'))
 
 	const output = mergeJSONWithComments(settingsText, ast, settingsToAdd)
 	await fs.writeFile(settingsPath, output)
@@ -413,9 +383,7 @@ async function mergeZedESLintSettings(settingsPath: string) {
 	const ast = parseJSON(settingsText)
 
 	const zedConfigPath = path.join(pkgRoot(), 'config/zed-config.jsonc')
-	const settingsToMerge = jsonc.parse(
-		await fs.readFile(zedConfigPath, 'utf-8'),
-	)
+	const settingsToMerge = jsonc.parse(await fs.readFile(zedConfigPath, 'utf-8'))
 
 	const output = mergeJSONWithComments(settingsText, ast, settingsToMerge)
 	await fs.writeFile(settingsPath, output)

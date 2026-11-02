@@ -86,24 +86,27 @@ const sharedClientScript = raw(`
 
 export const renderer: MiddlewareHandler = async (c, next) => {
 	c.setRenderer((content, head) =>
-		c.html(html`<!DOCTYPE html>
-			<html lang="en">
-				<head>
-					<meta charset="utf-8" />
-					<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-					<title>${head.title}</title>
-					<link rel="icon" href="/favicon.png?v=${faviconVersion}" />
-					<link rel="icon" href="/favicon.svg?v=${faviconVersion}" type="image/svg+xml" />
-					<link rel="stylesheet" href="/vendor/bulma.min.css" />
-					<link rel="stylesheet" href="/css/global.css" />
-				</head>
-				<body>
-					${navigation()}
-					${content}
-					${sharedClientScript}
-					${head.scripts ?? ''}
-				</body>
-			</html>`),
+		c.html(
+			html`<!DOCTYPE html>
+				<html lang="en">
+					<head>
+						<meta charset="utf-8" />
+						<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+						<title>${head.title}</title>
+						<link rel="icon" href="/favicon.png?v=${faviconVersion}" />
+						<link
+							rel="icon"
+							href="/favicon.svg?v=${faviconVersion}"
+							type="image/svg+xml"
+						/>
+						<link rel="stylesheet" href="/vendor/bulma.min.css" />
+						<link rel="stylesheet" href="/css/global.css" />
+					</head>
+					<body>
+						${navigation()} ${content} ${sharedClientScript} ${head.scripts ?? ''}
+					</body>
+				</html>`,
+		),
 	)
 	await next()
 }

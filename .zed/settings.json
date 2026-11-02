@@ -1,12 +1,65 @@
 {
 	"file_scan_exclusions": ["**/.git", "**/.data"],
 	"lsp": {
-		"ruff": {
-			"initialization_options": {
-				"settings": {
-					"lint": {
-						"enable": true
+		"eslint": {
+			"settings": {
+				"rulesCustomizations": [
+					{
+						"rule": "style/*",
+						"severity": "off",
+						"fixable": true
 					},
+					{
+						"rule": "format/*",
+						"severity": "off",
+						"fixable": true
+					},
+					{
+						"rule": "*-indent",
+						"severity": "off",
+						"fixable": true
+					},
+					{
+						"rule": "*-spacing",
+						"severity": "off",
+						"fixable": true
+					},
+					{
+						"rule": "*-spaces",
+						"severity": "off",
+						"fixable": true
+					},
+					{
+						"rule": "*-order",
+						"severity": "off",
+						"fixable": true
+					},
+					{
+						"rule": "*-dangle",
+						"severity": "off",
+						"fixable": true
+					},
+					{
+						"rule": "*-newline",
+						"severity": "off",
+						"fixable": true
+					},
+					{
+						"rule": "*quotes",
+						"severity": "off",
+						"fixable": true
+					},
+					{
+						"rule": "*semi",
+						"severity": "off",
+						"fixable": true
+					}
+				]
+			}
+		},
+		"yaml-language-server": {
+			"settings": {
+				"yaml": {
 					"format": {
 						"enable": true
 					}
@@ -15,62 +68,23 @@
 		}
 	},
 	"languages": {
-		"JavaScript": {
-			"format_on_save": "on"
-		},
-		"TypeScript": {
-			"format_on_save": "on"
-		},
-		"JSON": {
-			"format_on_save": "on"
-		},
-		"TOML": {
-			"format_on_save": "on"
-		},
-		"YAML": {
-			"format_on_save": "on"
-		},
 		"HTML": {
-			"format_on_save": "on"
-		},
-		"CSS": {
-			"format_on_save": "on"
+			"language_servers": ["...", "eslint"]
 		},
 		"Markdown": {
-			"format_on_save": "on"
+			"language_servers": ["...", "eslint"]
 		},
-		"Markdown-Inline": {
-			"format_on_save": "on"
+		"JSON": {
+			"language_servers": ["...", "eslint"]
 		},
-		"Python": {
-			"format_on_save": "on"
+		"JSONC": {
+			"language_servers": ["...", "eslint"]
 		},
-		"Go": {
-			"format_on_save": "on"
+		"YAML": {
+			"language_servers": ["...", "eslint"]
 		},
-		"Java": {
-			"format_on_save": "on"
-		},
-		"Kotlin": {
-			"format_on_save": "on"
-		},
-		"Perl": {
-			"format_on_save": "on"
-		},
-		"Rust": {
-			"format_on_save": "on"
-		},
-		"LaTeX": {
-			"format_on_save": "on"
-		},
-		"C": {
-			"format_on_save": "on"
-		},
-		"C++": {
-			"format_on_save": "on"
-		},
-		"Shell Script": {
-			"format_on_save": "on"
+		"CSS": {
+			"language_servers": ["...", "eslint"]
 		}
 	},
 	"format_on_save": "on",
@@ -78,5 +92,5 @@
 		{
 			"code_action": "source.fixAll.eslint"
 		}
-	],
+	]
 }

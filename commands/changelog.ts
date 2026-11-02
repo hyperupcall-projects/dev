@@ -6,10 +6,7 @@ import { execa } from 'execa'
 import { fileExists, octokit } from '#common'
 import type { CommandScriptOptions } from '#types'
 
-export async function run(
-	options: CommandScriptOptions,
-	positionals: string[],
-) {
+export async function run(options: CommandScriptOptions, positionals: string[]) {
 	const sub = positionals[0]
 	if (sub !== 'pull') {
 		console.error(`Unknown changelog subcommand: ${sub}`)
@@ -21,20 +18,15 @@ export async function run(
 		process.exit(1)
 	}
 
-	const { stdout: branchName } = await execa('git', [
-		'branch',
-		'--show-current',
-	]).catch(() => ({
-		stdout: '',
-	}))
+	const { stdout: branchName } = await execa('git', ['branch', '--show-current']).catch(
+		() => ({
+			stdout: '',
+		}),
+	)
 	const remoteNameResult = await (async () => {
 		try {
 			if (branchName) {
-				return await execa('git', [
-					'config',
-					'--get',
-					`branch.${branchName}.remote`,
-				])
+				return await execa('git', ['config', '--get', `branch.${branchName}.remote`])
 			} else {
 				return await execa('git', [
 					'config',
@@ -70,9 +62,7 @@ export async function run(
 
 	const match = remoteUrl.match(/[:/](?<owner>.*?)\/(?<name>.*?)(?:\.git)?$/u)
 	if (!match?.groups) {
-		console.error(
-			`Could not parse GitHub owner and repo from remote URL: ${remoteUrl}`,
-		)
+		console.error(`Could not parse GitHub owner and repo from remote URL: ${remoteUrl}`)
 		process.exit(1)
 	}
 
@@ -109,8 +99,7 @@ export async function run(
 			const r = releases[i]
 			const currentTag = r.tag_name ?? r.name ?? ''
 			const releaseUrl =
-				r.html_url ??
-				`https://github.com/${owner}/${repo}/releases/tag/${currentTag}`
+				r.html_url ?? `https://github.com/${owner}/${repo}/releases/tag/${currentTag}`
 
 			out += `## [${currentTag}](${releaseUrl})\n\n`
 

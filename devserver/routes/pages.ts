@@ -21,7 +21,6 @@ pages.get('/dictionary', async (c) => {
 	return c.render(content, { title, scripts })
 })
 
-
 pages.get('/projects', async (c) => {
 	const { title, content, scripts } = await projectManagerView()
 	return c.render(content, { title, scripts })

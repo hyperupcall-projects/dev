@@ -29,7 +29,11 @@ export const issues: Issues = async function* issues() {
 		}
 	}
 
-	if (!/^[ \t]*set[ \t]*\([ \t]*CMAKE_EXPORT_COMPILE_COMMANDS[ \t]+ON[ \t]*\)/im.test(content)) {
+	if (
+		!/^[ \t]*set[ \t]*\([ \t]*CMAKE_EXPORT_COMPILE_COMMANDS[ \t]+ON[ \t]*\)/im.test(
+			content,
+		)
+	) {
 		yield {
 			message: [
 				`Expected file "${CmakeListsText}" to include set(CMAKE_EXPORT_COMPILE_COMMANDS ON)`,
@@ -38,7 +42,9 @@ export const issues: Issues = async function* issues() {
 		}
 	}
 
-	if (!/^[ \t]*set[ \t]*\([ \t]*CMAKE_COLOR_DIAGNOSTICS[ \t]+ON[ \t]*\)/im.test(content)) {
+	if (
+		!/^[ \t]*set[ \t]*\([ \t]*CMAKE_COLOR_DIAGNOSTICS[ \t]+ON[ \t]*\)/im.test(content)
+	) {
 		yield {
 			message: [
 				`Expected file "${CmakeListsText}" to include set(CMAKE_COLOR_DIAGNOSTICS ON)`,

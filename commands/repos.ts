@@ -22,10 +22,7 @@ type Config = {
 	ignored: string[]
 }
 
-export async function run(
-	options: CommandScriptOptions,
-	positionals: string[],
-) {
+export async function run(options: CommandScriptOptions, positionals: string[]) {
 	const config = {
 		organizationsDir: (await getDevConfig()).paths.managedRepositories,
 		repositoryGroups: [
@@ -107,10 +104,7 @@ export async function run(
 		)
 	} else if (positionals[0] === 'tui') {
 		const repositories = JSON.parse(
-			await fs.readFile(
-				(await getDevConfig()).paths.repositoriesJson,
-				'utf-8',
-			),
+			await fs.readFile((await getDevConfig()).paths.repositoriesJson, 'utf-8'),
 		)
 		const allRepoNames: string[] = []
 		for (const orgName in repositories) {
@@ -232,10 +226,7 @@ export async function run(
 
 				{
 					let str = '\n\n\n'
-					str +=
-						styleText(['magenta', 'bold'], repoPath) +
-						styleText('reset', '') +
-						'\n'
+					str += styleText(['magenta', 'bold'], repoPath) + styleText('reset', '') + '\n'
 					str += '='.repeat(process.stdout.columns) + '\n'
 					process.stdout.write(str)
 				}
@@ -291,8 +282,7 @@ export async function syncRepositories({
 		})) {
 			if (
 				orgStat.isDirectory() &&
-				(await fs.readdir(path.join(orgStat.parentPath, orgStat.name)))
-					.length === 0
+				(await fs.readdir(path.join(orgStat.parentPath, orgStat.name))).length === 0
 			) {
 				console.error(`❌ Expected a non-empty directory: ${orgStat.name}`)
 			}
@@ -311,9 +301,7 @@ export async function syncRepositories({
 				},
 			)) {
 				if (!repoEntry.isDirectory()) {
-					console.error(
-						`❌ Expected a directory: ${orgEntry.name}${repoEntry.name}`,
-					)
+					console.error(`❌ Expected a directory: ${orgEntry.name}${repoEntry.name}`)
 				}
 
 				function isValidRepository(ownerName: string, repoName: string) {
@@ -343,25 +331,17 @@ export async function syncRepositories({
 		for (const orgName in Repositories) {
 			const repos = Repositories[orgName]
 			for (const repo of repos) {
-				const repoDir = path.join(
-					config.organizationsDir,
-					orgName,
-					repo.name,
-				)
+				const repoDir = path.join(config.organizationsDir, orgName, repo.name)
 
 				if (!existsSync(repoDir)) {
 					console.info(`❌ Not cloned: ${orgName}/${repo.name}`)
 					const input = await prompt('Clone? (y/n): ')
 					if (yn(input)) {
-						await execa(
-							'git',
-							['clone', `gh:${orgName}/${repo.name}`, repoDir],
-							{
-								stdin: 'inherit',
-								stdout: 'inherit',
-								stderr: 'inherit',
-							},
-						)
+						await execa('git', ['clone', `gh:${orgName}/${repo.name}`, repoDir], {
+							stdin: 'inherit',
+							stdout: 'inherit',
+							stderr: 'inherit',
+						})
 					}
 				}
 			}
@@ -373,11 +353,7 @@ export async function syncRepositories({
 		for (const orgName in Repositories) {
 			const repos = Repositories[orgName]
 			for (const repo of repos) {
-				const repoDir = path.join(
-					config.organizationsDir,
-					orgName,
-					repo.name,
-				)
+				const repoDir = path.join(config.organizationsDir, orgName, repo.name)
 				console.info(`Checking if ${orgName}/${repo.name} needs updates`)
 
 				async function uptoDate(repoDir: string) {
@@ -420,13 +396,9 @@ export async function syncRepositories({
 		for (const orgEntry of await fs.readdir(config.organizationsDir, {
 			withFileTypes: true,
 		})) {
-			const children = await fs.readdir(
-				path.join(orgEntry.parentPath, orgEntry.name),
-			)
+			const children = await fs.readdir(path.join(orgEntry.parentPath, orgEntry.name))
 			if (children.length === 0) {
-				console.info(
-					`❌ Organization directory should not be empty ${orgEntry.name}`,
-				)
+				console.info(`❌ Organization directory should not be empty ${orgEntry.name}`)
 			}
 		}
 	}

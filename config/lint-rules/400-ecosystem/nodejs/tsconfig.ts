@@ -5,7 +5,12 @@ import type { Issues } from '#types'
 import dedent from 'dedent'
 import * as diff from 'diff'
 
-import { filesMustHaveContent, filesMustHaveShape, getNpmLatestVersion, pkgRoot } from '#common'
+import {
+	filesMustHaveContent,
+	filesMustHaveShape,
+	getNpmLatestVersion,
+	pkgRoot,
+} from '#common'
 import detectIndent from 'detect-indent'
 import { styleText } from 'node:util'
 
@@ -26,19 +31,15 @@ export const issues: Issues = async function* issues({ project }) {
 			continue
 		}
 		config.compilerOptions.jsx
-		for (
-			const property of [
-				'jsx',
-				'module',
-				'moduleResolution',
-				'newLine',
-				'target',
-				'importsNotUsedAsValues',
-			] as const
-		) {
-			if (
-				typeof config.compilerOptions[property] === 'string'
-			) {
+		for (const property of [
+			'jsx',
+			'module',
+			'moduleResolution',
+			'newLine',
+			'target',
+			'importsNotUsedAsValues',
+		] as const) {
+			if (typeof config.compilerOptions[property] === 'string') {
 				config.compilerOptions[property] = config.compilerOptions[property].toLowerCase()
 			}
 		}
@@ -50,9 +51,16 @@ export const issues: Issues = async function* issues({ project }) {
 		const oldStr = JSON.stringify(originalConfig, null, detectIndent(configText).indent)
 		const newStr = JSON.stringify(config, null, detectIndent(configText).indent)
 		if (oldStr !== newStr) {
-			const rawPatch = diff.createPatch(configFile, oldStr, newStr, undefined, undefined, {
-				context: 4,
-			})
+			const rawPatch = diff.createPatch(
+				configFile,
+				oldStr,
+				newStr,
+				undefined,
+				undefined,
+				{
+					context: 4,
+				},
+			)
 			const patch = rawPatch
 				.replace(/^.*?\n.*?=\n/, '')
 				.replaceAll(/\n\+(?!\+)/g, '\n' + styleText('green', '+'))
@@ -65,11 +73,7 @@ export const issues: Issues = async function* issues({ project }) {
 					${patch}
 					${'='.repeat(80)}
 					`,
-				fix: () =>
-					fs.writeFile(
-						configFile,
-						newStr,
-					),
+				fix: () => fs.writeFile(configFile, newStr),
 			}
 		}
 	}

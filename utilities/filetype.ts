@@ -146,11 +146,7 @@ export async function detectFiletypes({
 				EXTENSION_TO_FILEID[path.extname(basename).slice(1)] ??
 				MIME_TO_FILEID[mimeTypes.lookup(basename) || ''] ??
 				MIME_TO_FILEID[(await fileTypeFromFile(filepath))?.mime ?? ''] ??
-				(sample.length === 0
-					? 'empty'
-					: sample.includes(0)
-						? 'binary'
-						: 'plaintext'),
+				(sample.length === 0 ? 'empty' : sample.includes(0) ? 'binary' : 'plaintext'),
 		)
 	}
 

@@ -39,10 +39,7 @@ export const issues: Issues = async function* issues({ project }) {
 		if (files.length === 0) {
 			yield {
 				id: 'must-exist',
-				message: [
-					'Expected to find a single readme file',
-					'But, found no readme files',
-				],
+				message: ['Expected to find a single readme file', 'But, found no readme files'],
 				fix: () => fs.writeFile('README.md', `# ${project.name}\n`),
 			}
 		} else if (files.length === 1) {
@@ -77,7 +74,7 @@ export const issues: Issues = async function* issues({ project }) {
 		if (err.code === 'ENOENT') return ''
 		throw err
 	})
-	content = content.replace(/^[ \t]*<!--.*?-->[ \t]*\n/s, '');
+	content = content.replace(/^[ \t]*<!--.*?-->[ \t]*\n/s, '')
 	const firstLine = content.slice(0, content.indexOf('\n'))
 	if (!firstLine.match('^# ')) {
 		yield {
@@ -89,9 +86,11 @@ export const issues: Issues = async function* issues({ project }) {
 		}
 	}
 	if (
-		!firstLine.toLowerCase().replaceAll(' ', '-').slice(2).match(
-			`^(@[a-zA-Z0-9-_]+/)?${project.name}`,
-		)
+		!firstLine
+			.toLowerCase()
+			.replaceAll(' ', '-')
+			.slice(2)
+			.match(`^(@[a-zA-Z0-9-_]+/)?${project.name}`)
 	) {
 		yield {
 			id: 'must-have-title-that-includes-project-name',

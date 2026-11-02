@@ -22,7 +22,7 @@ export const issues: Issues = async function* issues() {
 		}
 	}
 
-	if (!await fileExists('pnpm-workspace.yaml')) {
+	if (!(await fileExists('pnpm-workspace.yaml'))) {
 		yield* filesMustHaveContent('pnpm-workspace', {
 			'pnpm-workspace.yaml': `publicHoistPattern:\n  - 'prettier'\n`,
 		})

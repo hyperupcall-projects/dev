@@ -34,9 +34,7 @@ export const issues: Issues = async function* issues({ project }) {
 		}
 	}
 	if (!data.description) {
-		throw new TypeError(
-			`Expected variable "data.description" to not be falsy`,
-		)
+		throw new TypeError(`Expected variable "data.description" to not be falsy`)
 	}
 
 	if (!data.description.endsWith('.') && !data.description.endsWith('!')) {
@@ -184,10 +182,7 @@ export const issues: Issues = async function* issues({ project }) {
 
 		if (data.has_wiki) {
 			// TODO
-			if (
-				!project.owner.match(/^[\w-]+/) ||
-				!project.name.match(/^[\w-]+/)
-			) {
+			if (!project.owner.match(/^[\w-]+/) || !project.name.match(/^[\w-]+/)) {
 				throw new Error(
 					`The "owner" or "name" of the GitHub repository contains invalid characters`,
 				)
@@ -209,10 +204,7 @@ export const issues: Issues = async function* issues({ project }) {
 				// If we get a valid response, then the wiki repository exists (and has content). Therefore,
 				// we should not automatically disable the wiki tab and let the user decide what to do.
 			} catch (err) {
-				if (
-					!err.killed &&
-					err.stderr.includes('fatal: could not read Username')
-				) {
+				if (!err.killed && err.stderr.includes('fatal: could not read Username')) {
 					// We attempt to access the wiki repository. As per security best practices, GitHub will
 					// ask for authentication, if either the wiki repository either does not exist, or is private.
 					// At this point, we can safely assume that both the wiki and the repository are not private.

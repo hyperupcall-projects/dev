@@ -23,11 +23,7 @@ export const issues: Issues = async function* issues() {
 			yield {
 				message: [`Expected to find a ".lefthook.yaml" file`],
 				fix: () =>
-					fs.writeFile(
-						'.lefthook.yaml',
-						`assert_lefthook_installed: true\n`,
-						'utf-8',
-					),
+					fs.writeFile('.lefthook.yaml', `assert_lefthook_installed: true\n`, 'utf-8'),
 			}
 		}
 	}
@@ -45,9 +41,7 @@ export const issues: Issues = async function* issues() {
 	type LefthookConfig = { assert_lefthook_installed: boolean }
 	// Check that specific values are set.
 	{
-		const lefthookConfig = yaml.parse(
-			await fs.readFile('.lefthook.yaml', 'utf-8'),
-		)
+		const lefthookConfig = yaml.parse(await fs.readFile('.lefthook.yaml', 'utf-8'))
 		if (typeof lefthookConfig !== 'object' || lefthookConfig === null) {
 			yield {
 				message: [`Expected ".lefthook.yaml" to contain an object`],
@@ -55,9 +49,7 @@ export const issues: Issues = async function* issues() {
 		}
 		if (lefthookConfig.assert_lefthook_installed != true) {
 			yield {
-				message: [
-					`Expected to find property "assert_lefthook_installed" set to "true"`,
-				],
+				message: [`Expected to find property "assert_lefthook_installed" set to "true"`],
 			}
 		}
 	}

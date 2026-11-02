@@ -22,18 +22,16 @@ export const issues: Issues = async function* issues({ project }) {
 	for (const string of badStrings) {
 		if (content.includes(string)) {
 			yield {
-				message: [
-					`Expected to find no line that contains "${string}"`,
-				],
+				message: [`Expected to find no line that contains "${string}"`],
 				fix: async () => {
-					const newLines = content.split('\n').filter(line => !line.includes(string))
+					const newLines = content.split('\n').filter((line) => !line.includes(string))
 					await fs.writeFile(configFile, newLines.join('\n'), 'utf-8')
 				},
 			}
 		}
 	}
 
-	if (await fileExists('bake') && !content.includes('bake linguist-generated')) {
+	if ((await fileExists('bake')) && !content.includes('bake linguist-generated')) {
 		yield {
 			message: [
 				`Expected to find a line that contains "bake linguist-generated"`,

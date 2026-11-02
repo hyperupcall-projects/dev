@@ -29,9 +29,7 @@ export async function dictionaryView() {
 							</p>
 						</li>
 						<li>
-							<p>
-								<b>Obsidian:</b> <code>?</code>
-							</p>
+							<p><b>Obsidian:</b> <code>?</code></p>
 						</li>
 					</ul>
 				</div>

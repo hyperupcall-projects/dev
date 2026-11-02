@@ -29,9 +29,13 @@ export async function servicesView() {
 										<code>${service.name}</code>
 									</td>
 									<td style="vertical-align: middle;">
-										${service.unitPath
-											? html`<code style="word-break: break-all;">${service.unitPath}</code>`
-											: html`<span class="has-text-grey">missing</span>`}
+										${
+											service.unitPath
+												? html`<code style="word-break: break-all;"
+														>${service.unitPath}</code
+													>`
+												: html`<span class="has-text-grey">missing</span>`
+										}
 									</td>
 									<td style="vertical-align: middle;">
 										<span
@@ -49,20 +53,22 @@ export async function servicesView() {
 										</span>
 									</td>
 									<td style="vertical-align: middle;">
-										${service.port
-											? service.unitIsSymlink
-												? html`<button
-														type="button"
-														class="button is-ghost is-small p-0 js-edit-port"
-														data-service="${service.name}"
-														data-port="${service.port}"
-														title="Edit port"
-														style="height: auto; text-decoration: underline; vertical-align: baseline;"
-													>
-														<code>${service.port}</code>
-													</button>`
-												: html`<code>${service.port}</code>`
-											: html`<span class="has-text-grey">—</span>`}
+										${
+											service.port
+												? service.unitIsSymlink
+													? html`<button
+															type="button"
+															class="button is-ghost is-small p-0 js-edit-port"
+															data-service="${service.name}"
+															data-port="${service.port}"
+															title="Edit port"
+															style="height: auto; text-decoration: underline; vertical-align: baseline;"
+														>
+															<code>${service.port}</code>
+														</button>`
+													: html`<code>${service.port}</code>`
+												: html`<span class="has-text-grey">—</span>`
+										}
 									</td>
 									<td style="vertical-align: middle;">
 										<span

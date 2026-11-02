@@ -85,15 +85,12 @@ async function renderPage(pagepath: string, options: { layout: string }) {
 	])
 
 	if (PageResult.status === 'rejected') {
-		return new Response(
-			`Failed to find page: "${pagepath}"\n${PageResult.reason}\n`,
-			{
-				status: 404,
-				headers: {
-					'Content-Type': 'text/plain',
-				},
+		return new Response(`Failed to find page: "${pagepath}"\n${PageResult.reason}\n`, {
+			status: 404,
+			headers: {
+				'Content-Type': 'text/plain',
 			},
-		)
+		})
 	}
 	if (typeof PageResult.value?.Page !== 'function') {
 		return new Response(`No "Page" function found in file: "${pagepath}"`, {
@@ -104,9 +101,7 @@ async function renderPage(pagepath: string, options: { layout: string }) {
 		})
 	}
 
-	const imports = JSON.parse(
-		await fs.readFile('./deno.jsonc', 'utf-8'),
-	).imports
+	const imports = JSON.parse(await fs.readFile('./deno.jsonc', 'utf-8')).imports
 	for (const id in imports) {
 		if (imports[id].startsWith('./')) {
 			imports[id] = imports[id].slice(1)

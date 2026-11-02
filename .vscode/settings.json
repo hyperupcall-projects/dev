@@ -1,10 +1,10 @@
 {
-	"window.title": "${folderName} ${separator}${activeRepositoryBranchName}${separator}${remoteName} (nodejs)",
+	"window.title": "undefined (nodejs)",
 	"files.exclude": {
 		"**/.git": true,
 		"**/.data": true,
 		"config/templates": true,
-		"devserver/static/vendor": true,
+		"devserver/static/vendor": true
 	},
 	"prettier.enable": false,
 	"editor.formatOnSave": false,
@@ -190,5 +190,5 @@
 	"[fish]": {
 		"editor.formatOnSave": false
 	},
-	"cSpell.enabled": false,
+	"cSpell.enabled": false
 }

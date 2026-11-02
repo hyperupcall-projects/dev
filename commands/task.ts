@@ -20,10 +20,7 @@ import * as jsonc from 'jsonc-parser'
 import { parseJSON } from 'jsonc-eslint-parser'
 import { getDevConfig } from '#utilities/dev-config.ts'
 
-export async function run(
-	options: CommandScriptOptions,
-	positionals: string[],
-) {
+export async function run(options: CommandScriptOptions, positionals: string[]) {
 	const task = positionals[0]
 
 	const helpText = `script <taskName>
@@ -180,10 +177,7 @@ export async function symlinkHiddenDirs(positionals: string[]) {
 		config.organizationsDir,
 		async function run({ orgDir, orgEntry, repoDir, repoEntry }) {
 			const oldHiddenDir = path.join(repoDir, '.hidden')
-			const newHiddenDir = path.join(
-				config.hiddenDirsRepositoryDir,
-				repoEntry.name,
-			)
+			const newHiddenDir = path.join(config.hiddenDirsRepositoryDir, repoEntry.name)
 			const newHiddenDirPretty = path.join(
 				path.basename(path.dirname(newHiddenDir)),
 				path.basename(newHiddenDir),
@@ -215,9 +209,7 @@ export async function symlinkHiddenDirs(positionals: string[]) {
 				!oldHiddenDirStat.isSymbolicLink() &&
 				!oldHiddenDirStat.isDirectory()
 			) {
-				console.error(
-					`Error: Hidden directory must be a directory: ${oldHiddenDir}`,
-				)
+				console.error(`Error: Hidden directory must be a directory: ${oldHiddenDir}`)
 				process.exit(1)
 			}
 
@@ -226,9 +218,7 @@ export async function symlinkHiddenDirs(positionals: string[]) {
 				!newHiddenDirStat.isSymbolicLink() &&
 				!newHiddenDirStat.isDirectory()
 			) {
-				console.error(
-					`Error: Hidden directory must be a directory: ${newHiddenDir}`,
-				)
+				console.error(`Error: Hidden directory must be a directory: ${newHiddenDir}`)
 				process.exit(1)
 			}
 
@@ -272,9 +262,7 @@ async function validateHyperupcallArchives(positionals: string[]) {
 			console.info(`Checking ${repository.name}`)
 
 			if (!repository.archived) {
-				console.error(
-					`Error: Repository is not archived: ${repository.name}`,
-				)
+				console.error(`Error: Repository is not archived: ${repository.name}`)
 				process.exit(1)
 			}
 		}
@@ -299,16 +287,14 @@ async function createVSCodeLaunchers(positionals: string[]) {
 
 		await createVSCodeDesktopApplication({
 			variantId: dirname.split('-').at(-1),
-			variantName: (packageJson.displayName ?? '')
-				.split(':')[1]
-				.trimStart(),
+			variantName: (packageJson.displayName ?? '').split(':')[1].trimStart(),
 			extensions: [
 				'edwinkofler.vscode-hyperupcall-pack-base',
 				'edwinkofler.vscode-hyperupcall-pack-bundled-themes',
-				"edwinkofler.vscode-hyperupcall-pack-icons",
+				'edwinkofler.vscode-hyperupcall-pack-icons',
 				'edwinkofler.vscode-hyperupcall-pack-markdown',
 				`edwinkofler.${packageJson.name}`,
-			]
+			],
 		})
 	}
 
@@ -318,13 +304,13 @@ async function createVSCodeLaunchers(positionals: string[]) {
 		extensions: [
 			'edwinkofler.vscode-hyperupcall-pack-base',
 			'edwinkofler.vscode-hyperupcall-pack-bundled-themes',
-			"edwinkofler.vscode-hyperupcall-pack-icons",
+			'edwinkofler.vscode-hyperupcall-pack-icons',
 			'edwinkofler.vscode-hyperupcall-pack-markdown',
 			'edwinkofler.vscode-hyperupcall-pack-unix',
 			'edwinkofler.vscode-hyperupcall-pack-python',
 			'edwinkofler.vscode-hyperupcall-pack-rust',
-			'edwinkofler.vscode-hyperupcall-pack-web'
-		]
+			'edwinkofler.vscode-hyperupcall-pack-web',
+		],
 	})
 
 	const configDir = (process.env.XDG_CONFIG_HOME ?? '').startsWith('/')
@@ -336,12 +322,12 @@ async function createVSCodeLaunchers(positionals: string[]) {
 		variantName: 'vscode',
 		overrides: {
 			datadir: path.join(configDir, 'Code'),
-			extdir: path.join(os.homedir(), '.vscode/extensions')
+			extdir: path.join(os.homedir(), '.vscode/extensions'),
 		},
 		extensions: [
 			'edwinkofler.vscode-hyperupcall-pack-base',
 			'edwinkofler.vscode-hyperupcall-pack-bundled-themes',
-			"edwinkofler.vscode-hyperupcall-pack-icons",
+			'edwinkofler.vscode-hyperupcall-pack-icons',
 			'edwinkofler.vscode-hyperupcall-pack-markdown',
 			'edwinkofler.vscode-hyperupcall-pack-unix',
 			'edwinkofler.vscode-hyperupcall-pack-python',
@@ -349,18 +335,26 @@ async function createVSCodeLaunchers(positionals: string[]) {
 			'edwinkofler.vscode-hyperupcall-pack-web',
 			'edwinkofler.vscode-hyperupcall-pack-cpp',
 			'edwinkofler.vscode-hyperupcall-pack-go',
-		]
+		],
 	})
 
 	console.info(`Be sure to open "Window Rules" application and hit apply.`)
-
 }
 
-async function createVSCodeDesktopApplication({ variantId, variantName, extensions, overrides }: {
-	variantId: string, variantName: string, extensions: string[], overrides?: {
-		datadir: string,
+async function createVSCodeDesktopApplication({
+	variantId,
+	variantName,
+	extensions,
+	overrides,
+}: {
+	variantId: string
+	variantName: string
+	extensions: string[]
+	overrides?: {
+		datadir: string
 		extdir: string
-} }) {
+	}
+}) {
 	const configDir = (process.env.XDG_CONFIG_HOME ?? '').startsWith('/')
 		? (process.env.XDG_CONFIG_HOME ?? '')
 		: path.join(os.homedir(), '.config')
@@ -368,14 +362,12 @@ async function createVSCodeDesktopApplication({ variantId, variantName, extensio
 		? (process.env.XDG_DATA_HOME ?? '')
 		: path.join(os.homedir(), '.config')
 	const config = await getDevConfig()
-	const vscodeDataDir = overrides?.datadir ?? path.join(
-		config.paths.vscodeDataDirs,
-		`hyperupcall-pack-${variantId}`,
-	)
-	const vscodeExtDir = overrides?.extdir ?? path.join(
-		config.paths.vscodeExtensions,
-		`hyperupcall-pack-${variantId}`,
-	)
+	const vscodeDataDir =
+		overrides?.datadir ??
+		path.join(config.paths.vscodeDataDirs, `hyperupcall-pack-${variantId}`)
+	const vscodeExtDir =
+		overrides?.extdir ??
+		path.join(config.paths.vscodeExtensions, `hyperupcall-pack-${variantId}`)
 
 	const desktopFile = path.join(
 		dataDir,
@@ -408,21 +400,11 @@ Exec=code --user-data-dir ${vscodeDataDir} --extensions-dir ${vscodeExtDir} --ne
 Icon=${iconFile}`,
 		'utf-8',
 	)
-	fs.copyFileSync(
-		path.join(
-			config.paths.ecosystemIcons,
-			`${variantId}.png`,
-		),
-		iconFile,
-	)
+	fs.copyFileSync(path.join(config.paths.ecosystemIcons, `${variantId}.png`), iconFile)
 	fs.chmodSync(desktopFile, 0o755)
 	console.info(`${styleText('blue', variantName + ':')} Created desktop entry`)
 
-	for (const filename of [
-		'keybindings.json',
-		'settings.json',
-		'snippets',
-	]) {
+	for (const filename of ['keybindings.json', 'settings.json', 'snippets']) {
 		const source = path.join(configDir, 'Code/User', filename)
 		const target = path.join(vscodeDataDir, 'User', filename)
 		let targetStat = null
@@ -441,8 +423,9 @@ Icon=${iconFile}`,
 			fs.symlinkSync(source, target)
 		}
 	}
-	console.info(`${styleText('blue', variantName + ':')} Symlinked keybindings, settings, and snippets`)
-
+	console.info(
+		`${styleText('blue', variantName + ':')} Symlinked keybindings, settings, and snippets`,
+	)
 
 	console.info(`${styleText('blue', variantName + ':')} Installing...`)
 	spawnSync(
@@ -453,15 +436,19 @@ Icon=${iconFile}`,
 			'--extensions-dir',
 			vscodeExtDir,
 			'--force',
-			...extensions.flatMap(ext => ['--install-extension', ext]),
+			...extensions.flatMap((ext) => ['--install-extension', ext]),
 		],
 		{ stdio: 'inherit' },
 	)
 	console.info(`${styleText('blue', variantName + ':')} Installed extensions`)
 
 	{
-		const extensionListUrl = 'https://raw.githubusercontent.com/hyperupcall-projects/vscode-hyperupcall-packs/refs/heads/main/extension-list.json'
-		const extensionList: { dirname: string; packageJson: PackageJson & { extensionPack?: string[] } }[] = await (await fetch(extensionListUrl)).json()
+		const extensionListUrl =
+			'https://raw.githubusercontent.com/hyperupcall-projects/vscode-hyperupcall-packs/refs/heads/main/extension-list.json'
+		const extensionList: {
+			dirname: string
+			packageJson: PackageJson & { extensionPack?: string[] }
+		}[] = await (await fetch(extensionListUrl)).json()
 
 		const extensionPackMap = new Map<string, string[]>()
 		for (const { packageJson } of extensionList) {
@@ -470,14 +457,20 @@ Icon=${iconFile}`,
 			}
 		}
 
-		const getAllDependencies = (extensionId: string, visited = new Set<string>()): Set<string> => {
+		const getAllDependencies = (
+			extensionId: string,
+			visited = new Set<string>(),
+		): Set<string> => {
 			if (visited.has(extensionId)) {
 				return visited
 			}
 			visited.add(extensionId)
 
 			const packageName = extensionId.split('.')[1]
-			const subdeps = extensionPackMap.get(packageName) || extensionPackMap.get(`vscode-hyperupcall-${packageName}`) || []
+			const subdeps =
+				extensionPackMap.get(packageName) ||
+				extensionPackMap.get(`vscode-hyperupcall-${packageName}`) ||
+				[]
 
 			for (const subdep of subdeps) {
 				getAllDependencies(subdep, visited)
@@ -516,7 +509,7 @@ Icon=${iconFile}`,
 		if (unnecessaryExtensions.length > 0) {
 			for (const ext of unnecessaryExtensions) {
 				console.warn(
-					`${styleText('blue', variantName + ':' )} ${styleText('yellow', `Uninstalling ${ext.id}`)}`,
+					`${styleText('blue', variantName + ':')} ${styleText('yellow', `Uninstalling ${ext.id}`)}`,
 				)
 				spawnSync(
 					'code',
@@ -532,14 +525,13 @@ Icon=${iconFile}`,
 				)
 			}
 		}
-		console.info(`${styleText('blue', variantName + ':' )} Pruned ${unnecessaryExtensions.length} extensions(s)`)
+		console.info(
+			`${styleText('blue', variantName + ':')} Pruned ${unnecessaryExtensions.length} extensions(s)`,
+		)
 	}
 
 	{
-		await writeRule(
-			'Description',
-			'Generated rules for ecosystem ' + variantName,
-		)
+		await writeRule('Description', 'Generated rules for ecosystem ' + variantName)
 		await writeRule('desktopfile', desktopFile)
 		await writeRule('desktopfilerule', '2')
 		await writeRule('title', `(${variantId})`)
@@ -602,9 +594,7 @@ async function toggleTools(positionals: string[]) {
 		const output = mergeJSONWithComments(
 			settingsText,
 			ast,
-			jsonc.parse(
-				fs.readFileSync(toolFile, 'utf-8'),
-			)
+			jsonc.parse(fs.readFileSync(toolFile, 'utf-8')),
 		)
 		fs.writeFileSync(settingsPath, output)
 	}
@@ -629,9 +619,7 @@ async function toggleTools(positionals: string[]) {
 		const output = mergeJSONWithComments(
 			settingsText,
 			ast,
-			jsonc.parse(
-				fs.readFileSync(toolFile, 'utf-8'),
-			)
+			jsonc.parse(fs.readFileSync(toolFile, 'utf-8')),
 		)
 		fs.writeFileSync(settingsPath, output)
 	}

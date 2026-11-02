@@ -1,8 +1,4 @@
-import {
-	filesMustHaveContent,
-	filesMustHaveName,
-	pkgRoot,
-} from '#common'
+import { filesMustHaveContent, filesMustHaveName, pkgRoot } from '#common'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import type { Issues } from '#types'
@@ -20,13 +16,11 @@ export const issues: Issues = async function* issues() {
 			'.cz.json': null,
 			'cz.json': null,
 			'.cz.yaml': null,
-			'cz.yaml': null
+			'cz.yaml': null,
 		})
 	}
 
 	yield* filesMustHaveContent('commitizen', {
-		'.cz.toml': await fs.readFile(
-			path.join(pkgRoot(), 'config/.cz.toml'), 'utf-8',
-		),
+		'.cz.toml': await fs.readFile(path.join(pkgRoot(), 'config/.cz.toml'), 'utf-8'),
 	})
 }

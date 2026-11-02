@@ -9,7 +9,7 @@ import type { Issues } from '#types'
 export const issues: Issues = async function* issues({ project }) {
 	if (project.type !== 'only-directory') {
 		yield {
-			skip: 'Project must have type of "only-directory"'
+			skip: 'Project must have type of "only-directory"',
 		}
 	}
 

@@ -10,11 +10,9 @@ export const issues: Issues = async function* issues() {
 		const formatterContent = await fs.readFile(sourceFormatterPath, 'utf-8')
 
 		// This is a strict rule - only runs when --strict flag is passed
-		for await (
-			const issue of filesMustHaveContent('eclipse-formatter', {
-				'formatter.xml': formatterContent,
-			})
-		) {
+		for await (const issue of filesMustHaveContent('eclipse-formatter', {
+			'formatter.xml': formatterContent,
+		})) {
 			yield {
 				...issue,
 				strict: true,

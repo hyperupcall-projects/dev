@@ -72,9 +72,7 @@ export const issues: Issues = async function* issues({ project }) {
 
 					const licenseData = spdxLicenseList[selectedLicenseId as string]
 					if (!licenseData) {
-						throw new Error(
-							`License "${selectedLicenseId}" is not an SPDX license`,
-						)
+						throw new Error(`License "${selectedLicenseId}" is not an SPDX license`)
 					}
 
 					await fs.writeFile('LICENSE', licenseData.licenseText, 'utf-8')

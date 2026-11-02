@@ -8,6 +8,6 @@ export const issues: Issues = async function* issues() {
   Add: [-xc]\n`
 
 	yield* filesMustHaveContent('clangd', {
-		'.clangd': content
+		'.clangd': content,
 	})
 }

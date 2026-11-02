@@ -10,11 +10,9 @@ import {
 import { IDE_IDS } from '../server/open-projects.ts'
 
 function codeList(values: readonly string[]) {
-	return values.map((value) => html`<code>${value}</code>`).reduce(
-		(acc, item, index) =>
-			index === 0 ? item : html`${acc}, ${item}`,
-		html``,
-	)
+	return values
+		.map((value) => html`<code>${value}</code>`)
+		.reduce((acc, item, index) => (index === 0 ? item : html`${acc}, ${item}`), html``)
 }
 
 export async function openDirectoryView() {
@@ -27,19 +25,17 @@ export async function openDirectoryView() {
 				<div class="mb-4">
 					<h1 class="title mb-1">Open directory</h1>
 					<p class="subtitle is-6 mb-0">
-						HTTP routes that open a single folder in VSCode, Cursor, Zed,
-						Obsidian, or another installed app
+						HTTP routes that open a single folder in VSCode, Cursor, Zed, Obsidian, or
+						another installed app
 					</p>
 				</div>
 
 				<div class="content">
 					<p>
-						These endpoints spawn the chosen app detached from the web
-						server. The binary must be on <code>PATH</code> (or configured
-						in the dev config for Obsidian and CLion). Each request body is
-						JSON. To open a specific file (optionally at a line) after a
-						directory, see
-						<a href="/docs/open-file">Open file</a>.
+						These endpoints spawn the chosen app detached from the web server. The binary
+						must be on <code>PATH</code> (or configured in the dev config for Obsidian and
+						CLion). Each request body is JSON. To open a specific file (optionally at a
+						line) after a directory, see <a href="/docs/open-file">Open file</a>.
 					</p>
 
 					<h2 class="title is-5">Knowledge folders</h2>
@@ -55,8 +51,7 @@ export async function openDirectoryView() {
 						<li>
 							<strong>obsidian</strong> — launches
 							<code>obsidian://open?path=…</code>
-							(falls back to <code>xdg-open</code> if the Obsidian binary
-							is missing)
+							(falls back to <code>xdg-open</code> if the Obsidian binary is missing)
 						</li>
 						<li>
 							<strong>vscode</strong> — <code>code</code> or
@@ -65,8 +60,8 @@ export async function openDirectoryView() {
 						<li><strong>zed</strong> — <code>zed</code></li>
 						<li><strong>zettlr</strong> — <code>zettlr</code></li>
 						<li>
-							<strong>file-manager</strong> —
-							<code>xdg-open</code>, Dolphin, Nautilus, or Thunar
+							<strong>file-manager</strong> — <code>xdg-open</code>, Dolphin, Nautilus, or
+							Thunar
 						</li>
 					</ul>
 					<p>Request:</p>
@@ -83,29 +78,32 @@ Content-Type: application/json
 	"opener": "obsidian",
 	"opened": "/absolute/path/to/folder"
 }</code></pre>
-					${knowledgeFolders.length === 0
-						? html`<p class="has-text-grey">No knowledge folders are configured.</p>`
-						: html`
-								<p>Configured <code>folderId</code> values:</p>
-								<ul>
-									${knowledgeFolders.map(
-										(folder) => html`
-											<li>
-												<code>${folder.id}</code>
-												— ${folder.name}
-												(<code>${folder.path}</code>)
-												${!folder.exists
-													? html`
-															<span class="tag is-warning is-light is-size-7">
-																missing
-															</span>
-														`
-													: ''}
-											</li>
-										`,
-									)}
-								</ul>
-							`}
+					${
+						knowledgeFolders.length === 0
+							? html`<p class="has-text-grey">No knowledge folders are configured.</p>`
+							: html`
+									<p>Configured <code>folderId</code> values:</p>
+									<ul>
+										${knowledgeFolders.map(
+											(folder) => html`
+												<li>
+													<code>${folder.id}</code>
+													— ${folder.name} (<code>${folder.path}</code>)
+													${
+														!folder.exists
+															? html`
+																	<span class="tag is-warning is-light is-size-7">
+																		missing
+																	</span>
+																`
+															: ''
+													}
+												</li>
+											`,
+										)}
+									</ul>
+								`
+					}
 
 					<h2 class="title is-5 mt-5">Computing folders</h2>
 					<p>
@@ -113,8 +111,7 @@ Content-Type: application/json
 						<a href="/projects">SW Projects</a>.
 						<code>POST /api/computing-folders/open</code>
 						opens a folder under
-						<code>~/Documents/Computing</code>, or one of its
-						subdirectories.
+						<code>~/Documents/Computing</code>, or one of its subdirectories.
 					</p>
 					<p>
 						<strong>Openers:</strong>
@@ -122,8 +119,7 @@ Content-Type: application/json
 					</p>
 					<p>
 						List folders and subdirectory ids first with
-						<code>GET /api/computing-folders</code>.
-						Known top-level ids:
+						<code>GET /api/computing-folders</code>. Known top-level ids:
 						${codeList(COMPUTING_FOLDER_IDS)}.
 					</p>
 					<p>Request:</p>
@@ -136,8 +132,8 @@ Content-Type: application/json
 	"opener": "vscode"
 }</code></pre>
 					<p>
-						<code>subdirectoryId</code> is optional. Omit it to open the
-						top-level computing folder. Subdirectory ids are
+						<code>subdirectoryId</code> is optional. Omit it to open the top-level
+						computing folder. Subdirectory ids are
 						<code>&lt;folderId&gt;::&lt;name&gt;</code>.
 					</p>
 					<p>Success response:</p>
@@ -152,8 +148,8 @@ Content-Type: application/json
 						<code>POST /api/projects/open</code>
 						opens one or more garden/pinned projects. With a
 						<strong>single</strong>
-						<code>projectIds</code> entry it opens that directory directly
-						in the chosen editor — including Cursor.
+						<code>projectIds</code> entry it opens that directory directly in the chosen
+						editor — including Cursor.
 					</p>
 					<p>
 						<strong>Editors:</strong>
@@ -186,13 +182,13 @@ Content-Type: application/json
 					<h2 class="title is-5 mt-5">Activity folders</h2>
 					<p>
 						<code>POST /api/activity/open</code>
-						opens a folder under the activity-projects root in the file
-						manager only (not an editor).
+						opens a folder under the activity-projects root in the file manager only (not
+						an editor).
 					</p>
 					<p>
 						List folders with
-						<code>GET /api/activity</code>.
-						The path must stay under the configured activity-projects root.
+						<code>GET /api/activity</code>. The path must stay under the configured
+						activity-projects root.
 					</p>
 					<p>Request:</p>
 					<pre><code>POST /api/activity/open

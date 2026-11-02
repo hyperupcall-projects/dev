@@ -3,23 +3,14 @@ import * as clack from '@clack/prompts'
 import { execa } from 'execa'
 import semver from 'semver'
 
-import {
-	detectEcosystem,
-	incrementVersionEcosystem,
-} from '#utilities/ecosystems.ts'
+import { detectEcosystem, incrementVersionEcosystem } from '#utilities/ecosystems.ts'
 import type { CommandVersionOptions } from '#types'
 
-export async function run(
-	options: CommandVersionOptions,
-	positionals: string[],
-) {
+export async function run(options: CommandVersionOptions, positionals: string[]) {
 	const rootDir = process.cwd()
 	const ecosystemIds = await detectEcosystem({ rootDir })
 
-	const { stdout: statusOutput } = await execa('git', [
-		'status',
-		'--porcelain',
-	])
+	const { stdout: statusOutput } = await execa('git', ['status', '--porcelain'])
 	if (statusOutput.trim() !== '') {
 		console.error(
 			'Working directory is not clean. Please commit or stash your changes first.',
@@ -31,9 +22,7 @@ export async function run(
 		const latestTag = await getLatestTag()
 		const currentVersion = latestTag.replace(/^v/, '')
 		if (!semver.valid(currentVersion)) {
-			console.error(
-				`Latest tag "${latestTag}" is not a valid semantic version`,
-			)
+			console.error(`Latest tag "${latestTag}" is not a valid semantic version`)
 			process.exit(1)
 		}
 

@@ -45,12 +45,7 @@ export async function run(options: CommandNewOptions, positionals: string[]) {
 	if (!options.ecosystem) {
 		const ecosystemChoice = await clack.select({
 			message: 'Choose an ecosystem',
-			options: (
-				Object.entries(ecosystems) as [
-					EcosystemId,
-					EcosystemDefinition,
-				][]
-			)
+			options: (Object.entries(ecosystems) as [EcosystemId, EcosystemDefinition][])
 				.filter(([, definition]) => definition.templates)
 				.map(([id, definition]) => ({
 					label: definition.label,
@@ -70,9 +65,7 @@ export async function run(options: CommandNewOptions, positionals: string[]) {
 			throw new Error(`Ecosystem "${options.ecosystem}" not supported`)
 		}
 
-		const parameters = getConfigEcosystem(
-			options.ecosystem as EcosystemId,
-		).templates
+		const parameters = getConfigEcosystem(options.ecosystem as EcosystemId).templates
 		if (!parameters) {
 			throw new Error(`Ecosystem "${options.ecosystem}" not supported`)
 		}

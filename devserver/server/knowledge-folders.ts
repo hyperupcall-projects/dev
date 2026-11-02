@@ -160,9 +160,7 @@ export async function openKnowledgeFolder(options: {
 
 	const binary = await resolveCommand(ZETTLR_CANDIDATES)
 	if (!binary) {
-		throw new Error(
-			'Could not find the Zettlr executable. Install it or add it to PATH.',
-		)
+		throw new Error('Could not find the Zettlr executable. Install it or add it to PATH.')
 	}
 	spawnDetached(binary, [folder.path])
 	return { folderId, opener, opened: folder.path }

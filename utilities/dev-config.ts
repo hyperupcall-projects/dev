@@ -77,7 +77,9 @@ function assertDevConfig(value: unknown, configPath: string): DevConfig {
 	}
 	const cfg = value as Partial<DevConfig>
 	if (cfg.githubTokenFile !== undefined && typeof cfg.githubTokenFile !== 'string') {
-		throw new Error(`Invalid dev config (githubTokenFile must be a string): ${configPath}`)
+		throw new Error(
+			`Invalid dev config (githubTokenFile must be a string): ${configPath}`,
+		)
 	}
 	if (!cfg.paths || typeof cfg.paths !== 'object') {
 		throw new Error(`Invalid dev config (missing paths): ${configPath}`)
@@ -86,9 +88,7 @@ function assertDevConfig(value: unknown, configPath: string): DevConfig {
 		throw new Error(`Invalid dev config (missing pinnedProjects): ${configPath}`)
 	}
 	if (!Array.isArray(cfg.knowledgeFolders)) {
-		throw new Error(
-			`Invalid dev config (missing knowledgeFolders): ${configPath}`,
-		)
+		throw new Error(`Invalid dev config (missing knowledgeFolders): ${configPath}`)
 	}
 	if (!cfg.binaries || typeof cfg.binaries !== 'object') {
 		throw new Error(`Invalid dev config (missing binaries): ${configPath}`)

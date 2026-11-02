@@ -1,5 +1,4 @@
 {
-
 	// Auto fix on save using ESLint
 	// "editor.codeActionsOnSave": {
 	// 	"source.fixAll.eslint": "explicit",

@@ -7,10 +7,7 @@ import {
 	updateServicePort,
 } from '#utilities/util.ts'
 import { processDictionaryFiles } from '../server/dictionary-watcher.ts'
-import {
-	listActivityProjects,
-	openActivityProject,
-} from '../server/activity-projects.ts'
+import { listActivityProjects, openActivityProject } from '../server/activity-projects.ts'
 import { compileBlocklists } from '../server/blocklists.ts'
 import { getGardenCatalog } from '../server/garden-projects.ts'
 import {
@@ -18,11 +15,7 @@ import {
 	KNOWLEDGE_OPENER_IDS,
 	type KnowledgeOpenerId,
 } from '../server/knowledge-folders.ts'
-import {
-	FILE_EDITOR_IDS,
-	openFile,
-	type FileEditorId,
-} from '../server/open-files.ts'
+import { FILE_EDITOR_IDS, openFile, type FileEditorId } from '../server/open-files.ts'
 import { openProjects, IDE_IDS, type IdeId } from '../server/open-projects.ts'
 import {
 	COMPUTING_FOLDER_IDS,
@@ -53,8 +46,7 @@ export const api = new Hono()
 api.use(
 	'*',
 	cors({
-		origin: (origin) =>
-			origin && isLocalhostOrigin(origin) ? origin : '',
+		origin: (origin) => (origin && isLocalhostOrigin(origin) ? origin : ''),
 		allowMethods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
 		allowHeaders: ['Content-Type'],
 	}),
@@ -73,10 +65,7 @@ api.post('/api/services/launch-terminal', async (c) => {
 	try {
 		return c.json(await launchServiceTerminal(body.service, body.action))
 	} catch (error) {
-		return c.json(
-			{ error: error instanceof Error ? error.message : String(error) },
-			500,
-		)
+		return c.json({ error: error instanceof Error ? error.message : String(error) }, 500)
 	}
 })
 
@@ -98,10 +87,7 @@ api.post('/api/services/control', async (c) => {
 	try {
 		return c.json(await controlService(body.service, body.action))
 	} catch (error) {
-		return c.json(
-			{ error: error instanceof Error ? error.message : String(error) },
-			500,
-		)
+		return c.json({ error: error instanceof Error ? error.message : String(error) }, 500)
 	}
 })
 
@@ -116,10 +102,7 @@ api.post('/api/services/port', async (c) => {
 	try {
 		return c.json(await updateServicePort(body.service, String(body.port)))
 	} catch (error) {
-		return c.json(
-			{ error: error instanceof Error ? error.message : String(error) },
-			500,
-		)
+		return c.json({ error: error instanceof Error ? error.message : String(error) }, 500)
 	}
 })
 
@@ -129,9 +112,7 @@ api.post('/api/dictionary/process-files', async (c) =>
 
 api.get('/api/projects', async (c) => c.json(await getGardenCatalog()))
 
-api.get('/api/computing-folders', async (c) =>
-	c.json(await listComputingFolders()),
-)
+api.get('/api/computing-folders', async (c) => c.json(await listComputingFolders()))
 
 api.post('/api/computing-folders/open', async (c) => {
 	const body = (await c.req.json()) as {
@@ -139,10 +120,16 @@ api.post('/api/computing-folders/open', async (c) => {
 		subdirectoryId?: string
 		opener?: string
 	}
-	if (!body.folderId || !COMPUTING_FOLDER_IDS.includes(body.folderId as ComputingFolderId)) {
+	if (
+		!body.folderId ||
+		!COMPUTING_FOLDER_IDS.includes(body.folderId as ComputingFolderId)
+	) {
 		return c.json({ error: 'Expected a valid computing folder id' }, 400)
 	}
-	if (!body.opener || !COMPUTING_FOLDER_OPENERS.includes(body.opener as ComputingFolderOpener)) {
+	if (
+		!body.opener ||
+		!COMPUTING_FOLDER_OPENERS.includes(body.opener as ComputingFolderOpener)
+	) {
 		return c.json(
 			{ error: `Expected opener to be one of: ${COMPUTING_FOLDER_OPENERS.join(', ')}` },
 			400,
@@ -157,10 +144,7 @@ api.post('/api/computing-folders/open', async (c) => {
 			}),
 		)
 	} catch (error) {
-		return c.json(
-			{ error: error instanceof Error ? error.message : String(error) },
-			400,
-		)
+		return c.json({ error: error instanceof Error ? error.message : String(error) }, 400)
 	}
 })
 
@@ -170,10 +154,7 @@ api.post('/api/projects/open', async (c) => {
 		projectIds?: string[]
 	}
 	if (!body.ide || !IDE_IDS.includes(body.ide as IdeId)) {
-		return c.json(
-			{ error: `Expected ide to be one of: ${IDE_IDS.join(', ')}` },
-			400,
-		)
+		return c.json({ error: `Expected ide to be one of: ${IDE_IDS.join(', ')}` }, 400)
 	}
 	if (!Array.isArray(body.projectIds) || body.projectIds.length === 0) {
 		return c.json({ error: 'Expected non-empty projectIds array' }, 400)
@@ -186,10 +167,7 @@ api.post('/api/projects/open', async (c) => {
 			}),
 		)
 	} catch (error) {
-		return c.json(
-			{ error: error instanceof Error ? error.message : String(error) },
-			400,
-		)
+		return c.json({ error: error instanceof Error ? error.message : String(error) }, 400)
 	}
 })
 
@@ -206,10 +184,7 @@ api.post('/api/project-groups', async (c) => {
 	try {
 		return c.json(await createSavedGroup(body.name, body.projectIds), 201)
 	} catch (error) {
-		return c.json(
-			{ error: error instanceof Error ? error.message : String(error) },
-			400,
-		)
+		return c.json({ error: error instanceof Error ? error.message : String(error) }, 400)
 	}
 })
 
@@ -250,10 +225,7 @@ api.post('/api/activity/open', async (c) => {
 	try {
 		return c.json(await openActivityProject(body.path))
 	} catch (error) {
-		return c.json(
-			{ error: error instanceof Error ? error.message : String(error) },
-			400,
-		)
+		return c.json({ error: error instanceof Error ? error.message : String(error) }, 400)
 	}
 })
 
@@ -261,10 +233,7 @@ api.post('/api/blocklists/compile', async (c) => {
 	try {
 		return c.json(await compileBlocklists())
 	} catch (error) {
-		return c.json(
-			{ error: error instanceof Error ? error.message : String(error) },
-			500,
-		)
+		return c.json({ error: error instanceof Error ? error.message : String(error) }, 500)
 	}
 })
 
@@ -294,10 +263,7 @@ api.post('/api/files/open', async (c) => {
 			}),
 		)
 	} catch (error) {
-		return c.json(
-			{ error: error instanceof Error ? error.message : String(error) },
-			400,
-		)
+		return c.json({ error: error instanceof Error ? error.message : String(error) }, 400)
 	}
 })
 
@@ -306,10 +272,7 @@ api.post('/api/knowledge/open', async (c) => {
 		folderId?: string
 		opener?: string
 	}
-	if (
-		!body.opener ||
-		!KNOWLEDGE_OPENER_IDS.includes(body.opener as KnowledgeOpenerId)
-	) {
+	if (!body.opener || !KNOWLEDGE_OPENER_IDS.includes(body.opener as KnowledgeOpenerId)) {
 		return c.json(
 			{
 				error: `Expected opener to be one of: ${KNOWLEDGE_OPENER_IDS.join(', ')}`,
@@ -328,9 +291,6 @@ api.post('/api/knowledge/open', async (c) => {
 			}),
 		)
 	} catch (error) {
-		return c.json(
-			{ error: error instanceof Error ? error.message : String(error) },
-			400,
-		)
+		return c.json({ error: error instanceof Error ? error.message : String(error) }, 400)
 	}
 })

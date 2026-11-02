@@ -55,7 +55,9 @@ export const issues: Issues = async function* issues({ project }: { project: Pro
 	}
 
 	// Check that the project description matches the GitHub description.
-	const { data: { description: githubDescription } } = await octokit.rest.repos.get({
+	const {
+		data: { description: githubDescription },
+	} = await octokit.rest.repos.get({
 		owner: project.owner,
 		repo: project.name,
 	})
@@ -72,7 +74,11 @@ export const issues: Issues = async function* issues({ project }: { project: Pro
 					await fs.writeFile(manifestPath, manifestLines.join('\n'))
 				} else {
 					if (nameLineIndex !== -1) {
-						manifestLines.splice(nameLineIndex + 1, 0, `description = ${githubDescription}`)
+						manifestLines.splice(
+							nameLineIndex + 1,
+							0,
+							`description = ${githubDescription}`,
+						)
 						await fs.writeFile(manifestPath, manifestLines.join('\n'))
 					}
 				}
@@ -81,7 +87,9 @@ export const issues: Issues = async function* issues({ project }: { project: Pro
 	}
 }
 
-async function getGitHubDescription(project: Project & { type: 'with-remote-url' }): Promise<string | null> {
+async function getGitHubDescription(
+	project: Project & { type: 'with-remote-url' },
+): Promise<string | null> {
 	try {
 		const { data } = await octokit.rest.repos.get({
 			owner: project.owner,
