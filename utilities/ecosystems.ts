@@ -72,8 +72,8 @@ export const ecosystems = {
 		label: 'Deno',
 		async ecosystemInDir(context) {
 			return (
-				(await fileExists(path.join(context.rootDir, 'process.jsonc'))) ||
-				(await fileExists(path.join(context.rootDir, 'process.json')))
+				(await fileExists(path.join(context.rootDir, 'deno.jsonc'))) ||
+				(await fileExists(path.join(context.rootDir, 'deno.json')))
 			)
 		},
 		vscodePackId: 'vscode-hyperupcall-pack-web',
@@ -85,7 +85,17 @@ export const ecosystems = {
 		async lintFileGlobs() {
 			return ['400-ecosystem/deno/*']
 		},
-		updateVersion: updateDenoVersion,
+		async updateVersion(rootDir, version) {
+			const modified: string[] = []
+			for (const relative of [
+				'deno.json',
+				'deno.jsonc',
+			]) {
+				modified.push(...(await updateJsonVersion(rootDir, relative, version)))
+			}
+
+			return modified
+		},
 	},
 	c: {
 		label: 'C',
