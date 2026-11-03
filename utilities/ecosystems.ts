@@ -41,7 +41,9 @@ export const ecosystems = {
 		async lintFileGlobs() {
 			return ['400-ecosystem/nodejs/*']
 		},
-		updateVersion: updatePackageJsonVersion,
+		async updateVersion(rootDir, version) {
+			return await updateJsonVersion(rootDir, 'package.json', version)
+		},
 	},
 	'vscode-extension': {
 		label: 'VS Code Extension',
@@ -66,7 +68,9 @@ export const ecosystems = {
 		async lintFileGlobs() {
 			return ['400-ecosystem/vscode-extension/*']
 		},
-		updateVersion: updatePackageJsonVersion,
+		async updateVersion(rootDir, version) {
+			return await updateJsonVersion(rootDir, 'package.json', version)
+		},
 	},
 	deno: {
 		label: 'Deno',
@@ -110,7 +114,9 @@ export const ecosystems = {
 		async lintFileGlobs() {
 			return ['400-ecosystem/c/*']
 		},
-		updateVersion: updateCVersion,
+		async updateVersion(rootDir, version) {
+			return await updateCFamilyVersion(rootDir, version)
+		},
 	},
 	python: {
 		label: 'Python',
@@ -123,7 +129,51 @@ export const ecosystems = {
 		async lintFileGlobs() {
 			return ['400-ecosystem/python/*']
 		},
-		updateVersion: updatePythonVersion,
+		// Handles pyproject.toml, setup.cfg, and setup.py so a later split into
+		// `python-pyproject` / `python-pip` can reuse the same updater.
+		async updateVersion(rootDir, version) {
+			const pyproject = 'pyproject.toml'
+			const pyprojectPath = path.join(rootDir, pyproject)
+			if (await fileExists(pyprojectPath)) {
+				const text = await fs.readFile(pyprojectPath, 'utf-8')
+				let output = text
+				for (const section of ['project', 'tool.poetry']) {
+					output = replaceTomlValue(output, section, 'version', version)
+				}
+
+				if (output !== text) {
+					await fs.writeFile(pyprojectPath, output)
+					return [pyproject]
+				}
+			}
+
+			const setupCfg = 'setup.cfg'
+			const setupCfgPath = path.join(rootDir, setupCfg)
+			if (await fileExists(setupCfgPath)) {
+				const text = await fs.readFile(setupCfgPath, 'utf-8')
+				const output = replaceIniValue(text, 'metadata', 'version', version)
+				if (output !== text) {
+					await fs.writeFile(setupCfgPath, output)
+					return [setupCfg]
+				}
+			}
+
+			const setupPy = 'setup.py'
+			const setupPyPath = path.join(rootDir, setupPy)
+			if (await fileExists(setupPyPath)) {
+				const text = await fs.readFile(setupPyPath, 'utf-8')
+				const output = text.replace(
+					/(\bversion\s*=\s*)(['"])([^'"]*)\2/,
+					`$1$2${version}$2`,
+				)
+				if (output !== text) {
+					await fs.writeFile(setupPyPath, output)
+					return [setupPy]
+				}
+			}
+
+			return []
+		},
 	},
 	cpp: {
 		label: 'C++',
@@ -145,7 +195,9 @@ export const ecosystems = {
 		async lintFileGlobs() {
 			return ['400-ecosystem/cpp/*']
 		},
-		updateVersion: updateCVersion,
+		async updateVersion(rootDir, version) {
+			return await updateCFamilyVersion(rootDir, version)
+		},
 	},
 	bash: {
 		label: 'Bash',
@@ -155,7 +207,9 @@ export const ecosystems = {
 		async lintFileGlobs() {
 			return ['400-ecosystem/bash/*']
 		},
-		updateVersion: updateBashVersion,
+		async updateVersion(rootDir, version) {
+			return await updateTomlVersion(rootDir, 'basalt.toml', 'package', version)
+		},
 	},
 	'woof-plugin': {
 		label: 'Woof Plugin',
@@ -168,7 +222,22 @@ export const ecosystems = {
 		async lintFileGlobs() {
 			return ['400-ecosystem/woof-plugin/*']
 		},
-		updateVersion: updateWoofPluginVersion,
+		async updateVersion(rootDir, version) {
+			const relative = 'manifest.ini'
+			const filepath = path.join(rootDir, relative)
+			if (!(await fileExists(filepath))) {
+				return []
+			}
+
+			const text = await fs.readFile(filepath, 'utf-8')
+			const output = replaceIniTopLevelValue(text, 'version', version)
+			if (output === text) {
+				return []
+			}
+
+			await fs.writeFile(filepath, output)
+			return [relative]
+		},
 	},
 	'zed-extension': {
 		label: 'Zed Extension',
@@ -178,7 +247,9 @@ export const ecosystems = {
 		async lintFileGlobs() {
 			return ['400-ecosystem/zed-extension/*']
 		},
-		updateVersion: updateZedExtensionVersion,
+		async updateVersion(rootDir, version) {
+			return await updateTomlVersion(rootDir, 'extension.toml', null, version)
+		},
 	},
 	java: {
 		label: 'Java',
@@ -192,7 +263,65 @@ export const ecosystems = {
 		async lintFileGlobs() {
 			return ['400-ecosystem/java/*']
 		},
-		updateVersion: updateJavaVersion,
+		// Handles both Gradle and Maven so a later `java-gradle` / `java-maven` split
+		// can reuse the same updater.
+		async updateVersion(rootDir, version) {
+			const modified: string[] = []
+
+			const gradleProperties = 'gradle.properties'
+			const gradlePropertiesPath = path.join(rootDir, gradleProperties)
+			if (await fileExists(gradlePropertiesPath)) {
+				const text = await fs.readFile(gradlePropertiesPath, 'utf-8')
+				const match =
+					/^([ \t]*version[ \t]*=[ \t]*)([^\s#;]+)([ \t]*(?:[#;].*)?)$/m.exec(text)
+				if (match && isLiteralVersion(match[2]!)) {
+					const output =
+						text.slice(0, match.index) +
+						`${match[1]}${version}${match[3]}` +
+						text.slice(match.index + match[0].length)
+					await fs.writeFile(gradlePropertiesPath, output)
+					modified.push(gradleProperties)
+				}
+			}
+
+			for (const relative of ['build.gradle', 'build.gradle.kts']) {
+				const filepath = path.join(rootDir, relative)
+				if (!(await fileExists(filepath))) {
+					continue
+				}
+
+				const text = await fs.readFile(filepath, 'utf-8')
+				let match =
+					/^([ \t]*version[ \t]*=[ \t]*)(['"])([^'"]*)\2([ \t]*(?:\/\/.*)?)$/m.exec(text)
+				if (!match) {
+					match = /^([ \t]*version[ \t]+)(['"])([^'"]*)\2([ \t]*(?:\/\/.*)?)$/m.exec(
+						text,
+					)
+				}
+
+				if (match && isLiteralVersion(match[3]!)) {
+					const output =
+						text.slice(0, match.index) +
+						`${match[1]}${match[2]}${version}${match[2]}${match[4]}` +
+						text.slice(match.index + match[0].length)
+					await fs.writeFile(filepath, output)
+					modified.push(relative)
+				}
+			}
+
+			const pom = 'pom.xml'
+			const pomPath = path.join(rootDir, pom)
+			if (await fileExists(pomPath)) {
+				const text = await fs.readFile(pomPath, 'utf-8')
+				const output = replacePomVersion(text, version)
+				if (output !== text) {
+					await fs.writeFile(pomPath, output)
+					modified.push(pom)
+				}
+			}
+
+			return modified
+		},
 	},
 	rust: {
 		label: 'Rust',
@@ -213,7 +342,9 @@ export const ecosystems = {
 		async lintFileGlobs() {
 			return ['400-ecosystem/rust/*']
 		},
-		updateVersion: updateRustVersion,
+		async updateVersion(rootDir, version) {
+			return await updateTomlVersion(rootDir, 'Cargo.toml', 'package', version)
+		},
 	},
 	webext: {
 		label: 'Web Extension',
@@ -240,7 +371,9 @@ export const ecosystems = {
 		async lintFileGlobs() {
 			return ['400-ecosystem/webext/*']
 		},
-		updateVersion: updateWebextVersion,
+		async updateVersion(rootDir, version) {
+			return await updateJsonVersion(rootDir, 'manifest.json', version)
+		},
 	},
 	go: {
 		label: 'Go',
@@ -253,7 +386,24 @@ export const ecosystems = {
 		async lintFileGlobs() {
 			return ['400-ecosystem/go/*']
 		},
-		updateVersion: updateGoVersion,
+		async updateVersion(rootDir, version) {
+			// Go module versions come from Git tags. If the project keeps an explicit
+			// VERSION file, keep that in sync as well.
+			const relative = 'VERSION'
+			const filepath = path.join(rootDir, relative)
+			if (!(await fileExists(filepath))) {
+				return []
+			}
+
+			const text = await fs.readFile(filepath, 'utf-8')
+			const output = `${version}${text.endsWith('\n') ? '\n' : ''}`
+			if (output === text) {
+				return []
+			}
+
+			await fs.writeFile(filepath, output)
+			return [relative]
+		},
 		templates: {
 			'hello-world': {
 				name: 'Hello World',
@@ -337,13 +487,6 @@ async function getCmakeLanguage(rootDir: string): Promise<string | undefined> {
 	return lang
 }
 
-async function updatePackageJsonVersion(
-	rootDir: string,
-	version: string,
-): Promise<string[]> {
-	return await updateJsonVersion(rootDir, 'package.json', version)
-}
-
 async function updateJsonVersion(
 	rootDir: string,
 	relative: string,
@@ -388,119 +531,10 @@ async function updateTomlVersion(
 	return [relative]
 }
 
-async function updateDenoVersion(rootDir: string, version: string): Promise<string[]> {
-	const modified: string[] = []
-	for (const relative of ['deno.json', 'deno.jsonc', 'process.json', 'process.jsonc']) {
-		modified.push(...(await updateJsonVersion(rootDir, relative, version)))
-	}
-
-	return modified
-}
-
-async function updateBashVersion(rootDir: string, version: string): Promise<string[]> {
-	return await updateTomlVersion(rootDir, 'basalt.toml', 'package', version)
-}
-
-async function updateRustVersion(rootDir: string, version: string): Promise<string[]> {
-	return await updateTomlVersion(rootDir, 'Cargo.toml', 'package', version)
-}
-
-async function updateZedExtensionVersion(
-	rootDir: string,
-	version: string,
-): Promise<string[]> {
-	return await updateTomlVersion(rootDir, 'extension.toml', null, version)
-}
-
-async function updateWebextVersion(rootDir: string, version: string): Promise<string[]> {
-	return await updateJsonVersion(rootDir, 'manifest.json', version)
-}
-
-async function updateWoofPluginVersion(
-	rootDir: string,
-	version: string,
-): Promise<string[]> {
-	const relative = 'manifest.ini'
-	const filepath = path.join(rootDir, relative)
-	if (!(await fileExists(filepath))) {
-		return []
-	}
-
-	const text = await fs.readFile(filepath, 'utf-8')
-	const output = replaceIniTopLevelValue(text, 'version', version)
-	if (output === text) {
-		return []
-	}
-
-	await fs.writeFile(filepath, output)
-	return [relative]
-}
-
-async function updateGoVersion(rootDir: string, version: string): Promise<string[]> {
-	// Go module versions come from Git tags. If the project keeps an explicit
-	// VERSION file, keep that in sync as well.
-	const relative = 'VERSION'
-	const filepath = path.join(rootDir, relative)
-	if (!(await fileExists(filepath))) {
-		return []
-	}
-
-	const text = await fs.readFile(filepath, 'utf-8')
-	const output = `${version}${text.endsWith('\n') ? '\n' : ''}`
-	if (output === text) {
-		return []
-	}
-
-	await fs.writeFile(filepath, output)
-	return [relative]
-}
-
-// Handles pyproject.toml, setup.cfg, and setup.py so a later split into
-// `python-pyproject` / `python-pip` can reuse the same updater.
-async function updatePythonVersion(rootDir: string, version: string): Promise<string[]> {
-	const pyproject = 'pyproject.toml'
-	const pyprojectPath = path.join(rootDir, pyproject)
-	if (await fileExists(pyprojectPath)) {
-		const text = await fs.readFile(pyprojectPath, 'utf-8')
-		let output = text
-		for (const section of ['project', 'tool.poetry']) {
-			output = replaceTomlValue(output, section, 'version', version)
-		}
-
-		if (output !== text) {
-			await fs.writeFile(pyprojectPath, output)
-			return [pyproject]
-		}
-	}
-
-	const setupCfg = 'setup.cfg'
-	const setupCfgPath = path.join(rootDir, setupCfg)
-	if (await fileExists(setupCfgPath)) {
-		const text = await fs.readFile(setupCfgPath, 'utf-8')
-		const output = replaceIniValue(text, 'metadata', 'version', version)
-		if (output !== text) {
-			await fs.writeFile(setupCfgPath, output)
-			return [setupCfg]
-		}
-	}
-
-	const setupPy = 'setup.py'
-	const setupPyPath = path.join(rootDir, setupPy)
-	if (await fileExists(setupPyPath)) {
-		const text = await fs.readFile(setupPyPath, 'utf-8')
-		const output = text.replace(/(\bversion\s*=\s*)(['"])([^'"]*)\2/, `$1$2${version}$2`)
-		if (output !== text) {
-			await fs.writeFile(setupPyPath, output)
-			return [setupPy]
-		}
-	}
-
-	return []
-}
-
-// Probes CMake, autoconf, Meson, and Make instead of assuming one build
-// system, so `c-cmake` / `c-autoconf` / `c-meson` / `c-make` can reuse it.
-async function updateCVersion(rootDir: string, version: string): Promise<string[]> {
+// Shared by C and C++. Probes CMake, autoconf, Meson, and Make instead of
+// assuming one build system, so `c-cmake` / `c-autoconf` / `c-meson` / `c-make`
+// can reuse it.
+async function updateCFamilyVersion(rootDir: string, version: string): Promise<string[]> {
 	const candidates: [string, (text: string) => string][] = [
 		['CMakeLists.txt', (text) => replaceCmakeVersion(text, version)],
 		['configure.ac', (text) => replaceAutoconfVersion(text, version)],
@@ -526,66 +560,6 @@ async function updateCVersion(rootDir: string, version: string): Promise<string[
 	}
 
 	return []
-}
-
-// Handles both Gradle and Maven so a later `java-gradle` / `java-maven` split
-// can reuse the same updater.
-async function updateJavaVersion(rootDir: string, version: string): Promise<string[]> {
-	const modified: string[] = []
-
-	const gradleProperties = 'gradle.properties'
-	const gradlePropertiesPath = path.join(rootDir, gradleProperties)
-	if (await fileExists(gradlePropertiesPath)) {
-		const text = await fs.readFile(gradlePropertiesPath, 'utf-8')
-		const match = /^([ \t]*version[ \t]*=[ \t]*)([^\s#;]+)([ \t]*(?:[#;].*)?)$/m.exec(
-			text,
-		)
-		if (match && isLiteralVersion(match[2]!)) {
-			const output =
-				text.slice(0, match.index) +
-				`${match[1]}${version}${match[3]}` +
-				text.slice(match.index + match[0].length)
-			await fs.writeFile(gradlePropertiesPath, output)
-			modified.push(gradleProperties)
-		}
-	}
-
-	for (const relative of ['build.gradle', 'build.gradle.kts']) {
-		const filepath = path.join(rootDir, relative)
-		if (!(await fileExists(filepath))) {
-			continue
-		}
-
-		const text = await fs.readFile(filepath, 'utf-8')
-		let match = /^([ \t]*version[ \t]*=[ \t]*)(['"])([^'"]*)\2([ \t]*(?:\/\/.*)?)$/m.exec(
-			text,
-		)
-		if (!match) {
-			match = /^([ \t]*version[ \t]+)(['"])([^'"]*)\2([ \t]*(?:\/\/.*)?)$/m.exec(text)
-		}
-
-		if (match && isLiteralVersion(match[3]!)) {
-			const output =
-				text.slice(0, match.index) +
-				`${match[1]}${match[2]}${version}${match[2]}${match[4]}` +
-				text.slice(match.index + match[0].length)
-			await fs.writeFile(filepath, output)
-			modified.push(relative)
-		}
-	}
-
-	const pom = 'pom.xml'
-	const pomPath = path.join(rootDir, pom)
-	if (await fileExists(pomPath)) {
-		const text = await fs.readFile(pomPath, 'utf-8')
-		const output = replacePomVersion(text, version)
-		if (output !== text) {
-			await fs.writeFile(pomPath, output)
-			modified.push(pom)
-		}
-	}
-
-	return modified
 }
 
 function replaceTomlValue(
