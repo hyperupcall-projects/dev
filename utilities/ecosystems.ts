@@ -1,7 +1,11 @@
 import * as fs from 'node:fs/promises'
+import * as os from 'node:os'
 import * as path from 'node:path'
 
 import { globby } from 'globby'
+import toml from 'smol-toml'
+
+import { mergeTOML } from './util.ts'
 
 export type DetectionContext = Readonly<{
 	rootDir: string
@@ -129,20 +133,16 @@ export const ecosystems = {
 		async lintFileGlobs() {
 			return ['400-ecosystem/python/*']
 		},
-		// Handles pyproject.toml, setup.cfg, and setup.py so a later split into
-		// `python-pyproject` / `python-pip` can reuse the same updater.
 		async updateVersion(rootDir, version) {
 			const pyproject = 'pyproject.toml'
 			const pyprojectPath = path.join(rootDir, pyproject)
 			if (await fileExists(pyprojectPath)) {
-				const text = await fs.readFile(pyprojectPath, 'utf-8')
-				let output = text
+				let changed = false
 				for (const section of ['project', 'tool.poetry']) {
-					output = replaceTomlValue(output, section, 'version', version)
+					changed = (await mergeTomlVersion(pyprojectPath, section, version)) || changed
 				}
 
-				if (output !== text) {
-					await fs.writeFile(pyprojectPath, output)
+				if (changed) {
 					return [pyproject]
 				}
 			}
@@ -518,17 +518,7 @@ async function updateTomlVersion(
 		return []
 	}
 
-	const text = await fs.readFile(filepath, 'utf-8')
-	const output =
-		section === null
-			? replaceTomlTopLevelValue(text, 'version', version)
-			: replaceTomlValue(text, section, 'version', version)
-	if (output === text) {
-		return []
-	}
-
-	await fs.writeFile(filepath, output)
-	return [relative]
+	return (await mergeTomlVersion(filepath, section, version)) ? [relative] : []
 }
 
 // Shared by C and C++. Probes CMake, autoconf, Meson, and Make instead of
@@ -562,60 +552,40 @@ async function updateCFamilyVersion(rootDir: string, version: string): Promise<s
 	return []
 }
 
-function replaceTomlValue(
-	text: string,
-	section: string,
-	key: string,
-	value: string,
-): string {
-	const newline = text.includes('\r\n') ? '\r\n' : '\n'
-	const lines = text.split(/\r?\n/)
-	let inSection = false
-
-	for (let index = 0; index < lines.length; index++) {
-		const line = lines[index]!
-		const header = /^\s*\[([^\]]+)\]\s*(?:#.*)?$/.exec(line)
-		if (header) {
-			inSection = header[1]!.trim() === section
-			continue
-		}
-
-		if (!inSection) {
-			continue
-		}
-
-		const match = new RegExp(
-			`^(\\s*${escapeRegExp(key)}\\s*=\\s*)(['"])(.*?)\\2(\\s*(?:#.*)?)$`,
-		).exec(line)
-		if (match && isLiteralVersion(match[3]!)) {
-			lines[index] = `${match[1]}${match[2]}${value}${match[2]}${match[4]}`
-			return lines.join(newline)
-		}
+// Merges `version` into an existing literal version using the comment-preserving
+// TOML merge. Missing or non-literal versions are left alone.
+async function mergeTomlVersion(
+	filepath: string,
+	section: string | null,
+	version: string,
+): Promise<boolean> {
+	const text = await fs.readFile(filepath, 'utf-8')
+	const keys = section === null ? [] : section.split('.')
+	let table: any = toml.parse(text)
+	for (const key of keys) {
+		table = table?.[key]
+	}
+	if (typeof table?.version !== 'string' || !isLiteralVersion(table.version)) {
+		return false
+	}
+	if (table.version === version) {
+		return false
 	}
 
-	return text
-}
-
-function replaceTomlTopLevelValue(text: string, key: string, value: string): string {
-	const newline = text.includes('\r\n') ? '\r\n' : '\n'
-	const lines = text.split(/\r?\n/)
-
-	for (let index = 0; index < lines.length; index++) {
-		const line = lines[index]!
-		if (/^\s*\[/.test(line)) {
-			break
+	const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'dev-toml-'))
+	try {
+		const overridePath = path.join(tmpDir, 'override.toml')
+		const header = section === null ? '' : `[${keys.map((k) => JSON.stringify(k)).join('.')}]\n`
+		await fs.writeFile(overridePath, `${header}version = ${JSON.stringify(version)}\n`)
+		const output = await mergeTOML(filepath, overridePath)
+		if (output === text) {
+			return false
 		}
-
-		const match = new RegExp(
-			`^(\\s*${escapeRegExp(key)}\\s*=\\s*)(['"])(.*?)\\2(\\s*(?:#.*)?)$`,
-		).exec(line)
-		if (match && isLiteralVersion(match[3]!)) {
-			lines[index] = `${match[1]}${match[2]}${value}${match[2]}${match[4]}`
-			return lines.join(newline)
-		}
+		await fs.writeFile(filepath, output)
+		return true
+	} finally {
+		await fs.rm(tmpDir, { recursive: true, force: true })
 	}
-
-	return text
 }
 
 function replaceIniValue(
