@@ -9,7 +9,7 @@ import sys
 
 import tomlkit
 from tomlkit.container import Container
-from tomlkit.items import AoT, Table
+from tomlkit.items import AbstractTable, AoT
 
 
 def merge_containers(base: Container, override: Container) -> None:
@@ -19,8 +19,10 @@ def merge_containers(base: Container, override: Container) -> None:
 
         if key in base:
             base_val = base[key]
-            if isinstance(base_val, Table) and isinstance(value, Table):
-                merge_containers(base_val.value, value.value)
+            # Inline tables are merged too, so that e.g. `foo = { path = "..", version = "1" }`
+            # keeps its other keys when only `version` is overridden.
+            if isinstance(base_val, AbstractTable) and isinstance(value, AbstractTable):
+                merge_containers(base_val, value.value)
             elif (
                 isinstance(base_val, AoT)
                 and isinstance(value, AoT)

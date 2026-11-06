@@ -343,12 +343,7 @@ export const ecosystems = {
 			return ['400-ecosystem/rust/*']
 		},
 		async updateVersion(rootDir, version) {
-			const modified = await updateTomlVersion(rootDir, 'Cargo.toml', 'package', version)
-			if (modified.length > 0) {
-				modified.push(...(await updateCargoLockVersion(rootDir, version)))
-			}
-
-			return modified
+			return await updateCargoVersion(rootDir, version)
 		},
 	},
 	webext: {
@@ -526,34 +521,292 @@ async function updateTomlVersion(
 	return (await mergeTomlVersion(filepath, section, version)) ? [relative] : []
 }
 
-// Updates the root package's entry in Cargo.lock to match Cargo.toml.
-async function updateCargoLockVersion(rootDir: string, version: string): Promise<string[]> {
-	const lockPath = path.join(rootDir, 'Cargo.lock')
-	if (!(await fileExists(lockPath))) {
+type CargoManifest = {
+	package?: { name?: unknown; version?: unknown }
+	workspace?: {
+		members?: unknown
+		exclude?: unknown
+		package?: { version?: unknown }
+		dependencies?: Record<string, unknown>
+	}
+	[key: string]: unknown
+}
+
+const cargoDependencyTables = ['dependencies', 'dev-dependencies', 'build-dependencies']
+
+// Updates the version of a Cargo package or workspace. For a workspace, this
+// bumps `[workspace.package].version`, every member with a literal version, the
+// version requirements of path dependencies between members (both in
+// `[workspace.dependencies]` and in each member's dependency tables), and the
+// entries of the members in the shared Cargo.lock.
+async function updateCargoVersion(rootDir: string, version: string): Promise<string[]> {
+	const rootManifestPath = path.join(rootDir, 'Cargo.toml')
+	if (!(await fileExists(rootManifestPath))) {
+		return []
+	}
+	const rootManifest = toml.parse(await fs.readFile(rootManifestPath, 'utf-8')) as CargoManifest
+
+	const modified = new Set<string>()
+	// Package name -> version before the update, for every package whose version was bumped.
+	const bumped = new Map<string, string>()
+
+	const workspaceVersion = rootManifest.workspace?.package?.version
+	const workspaceVersionBumped =
+		typeof workspaceVersion === 'string' &&
+		isLiteralVersion(workspaceVersion) &&
+		workspaceVersion !== version
+	if (workspaceVersionBumped) {
+		if (await mergeTomlVersion(rootManifestPath, 'workspace.package', version)) {
+			modified.add('Cargo.toml')
+		}
+	}
+
+	const memberDirs = ['.']
+	if (rootManifest.workspace) {
+		memberDirs.push(...(await getCargoWorkspaceMembers(rootDir, rootManifest)))
+	}
+
+	const memberManifests = new Map<string, CargoManifest>()
+	for (const memberDir of memberDirs) {
+		const relative = path.join(memberDir, 'Cargo.toml')
+		const manifestPath = path.join(rootDir, relative)
+		const manifest =
+			memberDir === '.'
+				? rootManifest
+				: (toml.parse(await fs.readFile(manifestPath, 'utf-8')) as CargoManifest)
+		memberManifests.set(memberDir, manifest)
+
+		const pkg = manifest.package
+		if (typeof pkg?.name !== 'string') {
+			continue
+		}
+
+		if (typeof pkg.version === 'string') {
+			if (!isLiteralVersion(pkg.version) || pkg.version === version) {
+				continue
+			}
+			if (await mergeTomlVersion(manifestPath, 'package', version)) {
+				modified.add(relative)
+				bumped.set(pkg.name, pkg.version)
+			}
+		} else if (isCargoWorkspaceInherited(pkg.version) && workspaceVersionBumped) {
+			bumped.set(pkg.name, workspaceVersion)
+		}
+	}
+
+	if (bumped.size === 0) {
+		return [...modified]
+	}
+
+	// Update version requirements of path dependencies that point to bumped members.
+	if (rootManifest.workspace?.dependencies) {
+		const override = cargoDependencyOverride(rootManifest.workspace.dependencies, bumped, version)
+		if (override && (await mergeTomlOverride(rootManifestPath, { workspace: { dependencies: override } }))) {
+			modified.add('Cargo.toml')
+		}
+	}
+	for (const [memberDir, manifest] of memberManifests) {
+		const override: Record<string, any> = {}
+		for (const table of cargoDependencyTables) {
+			const deps = cargoDependencyOverride(manifest[table], bumped, version)
+			if (deps) {
+				override[table] = deps
+			}
+		}
+		if (manifest.target && typeof manifest.target === 'object') {
+			for (const [target, targetTable] of Object.entries(manifest.target as Record<string, any>)) {
+				for (const table of cargoDependencyTables) {
+					const deps = cargoDependencyOverride(targetTable?.[table], bumped, version)
+					if (deps) {
+						override.target ??= {}
+						override.target[target] ??= {}
+						override.target[target][table] = deps
+					}
+				}
+			}
+		}
+
+		const relative = path.join(memberDir, 'Cargo.toml')
+		if (
+			Object.keys(override).length > 0 &&
+			(await mergeTomlOverride(path.join(rootDir, relative), override))
+		) {
+			modified.add(relative)
+		}
+	}
+
+	if (await updateCargoLockVersion(rootDir, bumped, version)) {
+		modified.add('Cargo.lock')
+	}
+
+	return [...modified]
+}
+
+function isCargoWorkspaceInherited(value: unknown): boolean {
+	return (
+		value !== null &&
+		typeof value === 'object' &&
+		(value as { workspace?: unknown }).workspace === true
+	)
+}
+
+// Returns the member directories (relative to rootDir) of a Cargo workspace,
+// excluding the root package itself.
+async function getCargoWorkspaceMembers(
+	rootDir: string,
+	manifest: CargoManifest,
+): Promise<string[]> {
+	const members = Array.isArray(manifest.workspace?.members)
+		? manifest.workspace.members.filter((m): m is string => typeof m === 'string')
+		: []
+	const exclude = Array.isArray(manifest.workspace?.exclude)
+		? manifest.workspace.exclude
+				.filter((e): e is string => typeof e === 'string')
+				.map((e) => path.normalize(e))
+		: []
+	if (members.length === 0) {
 		return []
 	}
 
-	const manifest: any = toml.parse(await fs.readFile(path.join(rootDir, 'Cargo.toml'), 'utf-8'))
-	const name = manifest?.package?.name
-	if (typeof name !== 'string') {
-		return []
+	const manifests = await globby(
+		members.map((member) => path.posix.join(member, 'Cargo.toml')),
+		{ cwd: rootDir, gitignore: false },
+	)
+	const dirs = new Set<string>()
+	for (const manifestPath of manifests) {
+		const dir = path.normalize(path.dirname(manifestPath))
+		if (dir === '.') {
+			continue
+		}
+		if (exclude.some((e) => dir === e || dir.startsWith(e + path.sep))) {
+			continue
+		}
+		dirs.add(dir)
+	}
+
+	return [...dirs].sort()
+}
+
+// Given a dependency table, returns an override object that updates the version
+// requirement of every path dependency on a bumped package. Returns undefined
+// when nothing needs to change.
+function cargoDependencyOverride(
+	deps: unknown,
+	bumped: Map<string, string>,
+	version: string,
+): Record<string, { version: string }> | undefined {
+	if (deps === null || typeof deps !== 'object') {
+		return undefined
+	}
+
+	const override: Record<string, { version: string }> = {}
+	for (const [key, dep] of Object.entries(deps as Record<string, any>)) {
+		if (dep === null || typeof dep !== 'object' || typeof dep.path !== 'string') {
+			continue
+		}
+		const name = typeof dep.package === 'string' ? dep.package : key
+		if (!bumped.has(name) || typeof dep.version !== 'string') {
+			continue
+		}
+
+		// Keep the requirement operator (e.g. `=`, `^`, `~`) but replace the version.
+		const match = /^(\s*[=^~]?\s*)([^\s,]+)(\s*)$/.exec(dep.version)
+		if (!match || !isLiteralVersion(match[2]!)) {
+			continue
+		}
+		const requirement = `${match[1]}${version}${match[3]}`
+		if (requirement !== dep.version) {
+			override[key] = { version: requirement }
+		}
+	}
+
+	return Object.keys(override).length > 0 ? override : undefined
+}
+
+async function mergeTomlOverride(filepath: string, override: Record<string, any>): Promise<boolean> {
+	const text = await fs.readFile(filepath, 'utf-8')
+	const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'dev-toml-'))
+	try {
+		const overridePath = path.join(tmpDir, 'override.toml')
+		await fs.writeFile(overridePath, toml.stringify(override))
+		const output = await mergeTOML(filepath, overridePath)
+		if (output === text) {
+			return false
+		}
+		await fs.writeFile(filepath, output)
+		return true
+	} finally {
+		await fs.rm(tmpDir, { recursive: true, force: true })
+	}
+}
+
+// Updates the entries of bumped workspace packages in Cargo.lock, along with
+// any `dependencies` references that spell out their old version.
+async function updateCargoLockVersion(
+	rootDir: string,
+	bumped: Map<string, string>,
+	version: string,
+): Promise<boolean> {
+	const lockPath = path.join(rootDir, 'Cargo.lock')
+	if (!(await fileExists(lockPath))) {
+		return false
 	}
 
 	const lock: any = toml.parse(await fs.readFile(lockPath, 'utf-8'))
-	const root = lock.package?.find((pkg: any) => pkg.name === name && !pkg.source)
-	if (!root || root.version === version) {
-		return []
+	if (!Array.isArray(lock.package)) {
+		return false
 	}
-	root.version = version
+
+	// References look like "name", "name version", or "name version (source)".
+	// Local (path) packages have no source, so only bare "name version" refer to them.
+	const renamedRefs = new Map<string, string>()
+	for (const [name, oldVersion] of bumped) {
+		renamedRefs.set(`${name} ${oldVersion}`, `${name} ${version}`)
+	}
+
+	let changed = false
+	const overrides = lock.package.map((pkg: any) => {
+		const override: Record<string, unknown> = {}
+		if (!pkg.source && bumped.has(pkg.name) && pkg.version !== version) {
+			override.version = version
+			changed = true
+		}
+		if (Array.isArray(pkg.dependencies)) {
+			const deps = pkg.dependencies.map((dep: string) => renamedRefs.get(dep) ?? dep)
+			if (deps.some((dep: string, i: number) => dep !== pkg.dependencies[i])) {
+				override.dependencies = deps
+				changed = true
+			}
+		}
+		return override
+	})
+	if (!changed) {
+		return false
+	}
+
+	// Written by hand so that `dependencies` arrays keep Cargo's multi-line formatting.
+	let overrideText = ''
+	for (const override of overrides) {
+		overrideText += '[[package]]\n'
+		if (typeof override.version === 'string') {
+			overrideText += `version = ${JSON.stringify(override.version)}\n`
+		}
+		if (Array.isArray(override.dependencies)) {
+			overrideText += 'dependencies = [\n'
+			for (const dep of override.dependencies) {
+				overrideText += ` ${JSON.stringify(dep)},\n`
+			}
+			overrideText += ']\n'
+		}
+		overrideText += '\n'
+	}
 
 	const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'dev-toml-'))
 	try {
 		const overridePath = path.join(tmpDir, 'override.toml')
-		await fs.writeFile(overridePath, toml.stringify({
-				package: lock.package.map((pkg: any) => ({ version: pkg.version })),
-			}))
+		await fs.writeFile(overridePath, overrideText)
 		await fs.writeFile(lockPath, await mergeTOML(lockPath, overridePath))
-		return ['Cargo.lock']
+		return true
 	} finally {
 		await fs.rm(tmpDir, { recursive: true, force: true })
 	}

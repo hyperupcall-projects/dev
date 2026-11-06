@@ -6,13 +6,7 @@ import { execa } from 'execa'
 import { fileExists, octokit } from '#common'
 import type { CommandScriptOptions } from '#types'
 
-export async function run(options: CommandScriptOptions, positionals: string[]) {
-	const sub = positionals[0]
-	if (sub !== 'pull') {
-		console.error(`Unknown changelog subcommand: ${sub}`)
-		process.exit(1)
-	}
-
+export async function runPull(_options: CommandScriptOptions) {
 	if (!(await fileExists('.git'))) {
 		console.error('Not a git repository (no .git directory)')
 		process.exit(1)
@@ -23,6 +17,7 @@ export async function run(options: CommandScriptOptions, positionals: string[]) 
 			stdout: '',
 		}),
 	)
+	// TODO
 	const remoteNameResult = await (async () => {
 		try {
 			if (branchName) {
@@ -95,22 +90,12 @@ export async function run(options: CommandScriptOptions, positionals: string[]) 
 	if (releases.length === 0) {
 		out += '_No releases found._\n'
 	} else {
-		for (let i = 0; i < releases.length; i++) {
-			const r = releases[i]
+		for (const r of releases) {
 			const currentTag = r.tag_name ?? r.name ?? ''
 			const releaseUrl =
 				r.html_url ?? `https://github.com/${owner}/${repo}/releases/tag/${currentTag}`
 
 			out += `## [${currentTag}](${releaseUrl})\n\n`
-
-			const prevTag = releases[i + 1]
-				? (releases[i + 1].tag_name ?? releases[i + 1].name ?? '')
-				: ''
-			if (prevTag) {
-				out += `**Full Changelog**: https://github.com/${owner}/${repo}/compare/${prevTag}...${currentTag}\n\n`
-			} else {
-				out += `**Full Changelog**: https://github.com/${owner}/${repo}/releases\n\n`
-			}
 
 			let body = (r.body ?? '').toString()
 			// Downgrade every markdown heading by one level (add one '#')

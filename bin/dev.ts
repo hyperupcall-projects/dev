@@ -6,7 +6,7 @@ import { run as runFix } from '../commands/lint.ts'
 import { run as runVersion } from '../commands/version.ts'
 
 import { run as runRepos } from '../commands/repos.ts'
-import { run as runChangelog } from '../commands/changelog.ts'
+import { runPull as runChangelogPull } from '../commands/changelog.ts'
 import { run as runTask } from '../commands/task.ts'
 import { execa } from 'execa'
 import path from 'node:path'
@@ -116,17 +116,15 @@ cli.register(
 	},
 )
 cli.register(
-	class ChangelogCommand extends DevCommand {
-		static override paths = [[`changelog`]]
+	class ChangelogPullCommand extends DevCommand {
+		static override paths = [[`changelog`, `pull`]]
 		static override usage = Command.Usage({
-			description: `Manage changelog for repository`,
+			description: `Write CHANGELOG.md from the repository's GitHub releases`,
 		})
-
-		positionals = Option.Proxy()
 
 		async execute() {
 			this.maybeChangeDir()
-			await runChangelog({}, this.positionals)
+			await runChangelogPull({})
 		}
 	},
 )
