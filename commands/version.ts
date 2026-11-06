@@ -1,10 +1,13 @@
+import * as fs from 'node:fs/promises'
+import * as path from 'node:path'
 import process from 'node:process'
 import * as clack from '@clack/prompts'
 import { execa } from 'execa'
 import semver from 'semver'
+import toml from 'smol-toml'
 
 import { detectEcosystem, incrementVersionEcosystem } from '#utilities/ecosystems.ts'
-import type { CommandVersionOptions } from '#types'
+import type { CommandVersionOptions, Config } from '#types'
 
 export async function run(options: CommandVersionOptions, positionals: string[]) {
 	const rootDir = process.cwd()
@@ -40,6 +43,19 @@ export async function run(options: CommandVersionOptions, positionals: string[])
 			}
 		}
 
+		for (const directory of await getUpdateVersionDirectories(rootDir)) {
+			const dirPath = path.resolve(rootDir, directory)
+			for (const ecosystemId of await detectEcosystem({ rootDir: dirPath })) {
+				for (const modifiedFile of await incrementVersionEcosystem(
+					ecosystemId,
+					dirPath,
+					finalVersion,
+				)) {
+					modifiedFiles.add(path.join(directory, modifiedFile))
+				}
+			}
+		}
+
 		if (modifiedFiles.size > 0) {
 			await execa('git', ['add', ...modifiedFiles])
 		}
@@ -52,6 +68,20 @@ export async function run(options: CommandVersionOptions, positionals: string[])
 			console.error('Error:', err.message)
 		}
 		process.exit(1)
+	}
+}
+
+async function getUpdateVersionDirectories(rootDir: string): Promise<string[]> {
+	try {
+		const config = toml.parse(
+			await fs.readFile(path.join(rootDir, 'dev.toml'), 'utf-8'),
+		) as Config
+		return config.updateVersionDirectories ?? []
+	} catch (err) {
+		if ((err as NodeJS.ErrnoException)?.code === 'ENOENT') {
+			return []
+		}
+		throw err
 	}
 }
 

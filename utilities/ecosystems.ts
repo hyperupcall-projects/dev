@@ -343,7 +343,12 @@ export const ecosystems = {
 			return ['400-ecosystem/rust/*']
 		},
 		async updateVersion(rootDir, version) {
-			return await updateTomlVersion(rootDir, 'Cargo.toml', 'package', version)
+			const modified = await updateTomlVersion(rootDir, 'Cargo.toml', 'package', version)
+			if (modified.length > 0) {
+				modified.push(...(await updateCargoLockVersion(rootDir, version)))
+			}
+
+			return modified
 		},
 	},
 	webext: {
@@ -519,6 +524,39 @@ async function updateTomlVersion(
 	}
 
 	return (await mergeTomlVersion(filepath, section, version)) ? [relative] : []
+}
+
+// Updates the root package's entry in Cargo.lock to match Cargo.toml.
+async function updateCargoLockVersion(rootDir: string, version: string): Promise<string[]> {
+	const lockPath = path.join(rootDir, 'Cargo.lock')
+	if (!(await fileExists(lockPath))) {
+		return []
+	}
+
+	const manifest: any = toml.parse(await fs.readFile(path.join(rootDir, 'Cargo.toml'), 'utf-8'))
+	const name = manifest?.package?.name
+	if (typeof name !== 'string') {
+		return []
+	}
+
+	const lock: any = toml.parse(await fs.readFile(lockPath, 'utf-8'))
+	const root = lock.package?.find((pkg: any) => pkg.name === name && !pkg.source)
+	if (!root || root.version === version) {
+		return []
+	}
+	root.version = version
+
+	const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'dev-toml-'))
+	try {
+		const overridePath = path.join(tmpDir, 'override.toml')
+		await fs.writeFile(overridePath, toml.stringify({
+				package: lock.package.map((pkg: any) => ({ version: pkg.version })),
+			}))
+		await fs.writeFile(lockPath, await mergeTOML(lockPath, overridePath))
+		return ['Cargo.lock']
+	} finally {
+		await fs.rm(tmpDir, { recursive: true, force: true })
+	}
 }
 
 // Shared by C and C++. Probes CMake, autoconf, Meson, and Make instead of

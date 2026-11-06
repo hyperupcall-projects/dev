@@ -9,7 +9,7 @@ import sys
 
 import tomlkit
 from tomlkit.container import Container
-from tomlkit.items import Table
+from tomlkit.items import AoT, Table
 
 
 def merge_containers(base: Container, override: Container) -> None:
@@ -21,6 +21,14 @@ def merge_containers(base: Container, override: Container) -> None:
             base_val = base[key]
             if isinstance(base_val, Table) and isinstance(value, Table):
                 merge_containers(base_val.value, value.value)
+            elif (
+                isinstance(base_val, AoT)
+                and isinstance(value, AoT)
+                and len(base_val) == len(value)
+            ):
+                # Same-length arrays of tables are merged element-wise.
+                for base_table, override_table in zip(base_val, value):
+                    merge_containers(base_table.value, override_table.value)
             else:
                 base[key] = value
         else:

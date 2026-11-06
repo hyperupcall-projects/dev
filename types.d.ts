@@ -36,7 +36,10 @@ export type CommandStartServerOptions = {
 }
 
 // Fix.
-export type Config = { rules?: Record<string, 'off'> }
+export type Config = {
+	rules?: Record<string, 'off'>
+	updateVersionDirectories?: string[]
+}
 export type Project =
 	| {
 			type: 'only-directory'
