@@ -29,7 +29,9 @@ export type CommandReposOptions = Record<PropertyKey, never>
 
 export type CommandScriptOptions = Record<PropertyKey, never>
 
-export type CommandVersionOptions = Record<PropertyKey, never>
+export type CommandVersionOptions = {
+	force?: boolean
+}
 
 export type CommandStartServerOptions = {
 	prebundle?: boolean

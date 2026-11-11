@@ -165,11 +165,11 @@ cli.register(
 			description: `Manage project versioning`,
 		})
 
-		positionals = Option.Proxy()
+		force = Option.Boolean('--force')
 
 		async execute() {
 			this.maybeChangeDir()
-			await runVersion({}, this.positionals)
+			await runVersion({ force: this.force }, [])
 		}
 	},
 )

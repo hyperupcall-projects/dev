@@ -12,9 +12,8 @@ import type { CommandVersionOptions, Config } from '#types'
 export async function run(options: CommandVersionOptions, positionals: string[]) {
 	const rootDir = process.cwd()
 	const ecosystemIds = await detectEcosystem({ rootDir })
-
 	const { stdout: statusOutput } = await execa('git', ['status', '--porcelain'])
-	if (statusOutput.trim() !== '') {
+	if (statusOutput.trim() !== '' && !options.force) {
 		console.error(
 			'Working directory is not clean. Please commit or stash your changes first.',
 		)
@@ -29,9 +28,8 @@ export async function run(options: CommandVersionOptions, positionals: string[])
 			process.exit(1)
 		}
 
-		console.log(`\nCurrent version: ${latestTag}`)
+		console.log(`Current version: ${latestTag}`)
 		const finalVersion = await askForNewVersion(currentVersion)
-		await assertChangelogHasEntry(rootDir, finalVersion)
 
 		const modifiedFiles = new Set<string>()
 		for (const ecosystemId of ecosystemIds) {
@@ -68,27 +66,6 @@ export async function run(options: CommandVersionOptions, positionals: string[])
 		} else {
 			console.error('Error:', err.message)
 		}
-		process.exit(1)
-	}
-}
-
-async function assertChangelogHasEntry(rootDir: string, version: string) {
-	const changelogPath = path.join(rootDir, 'CHANGELOG.md')
-	let content: string
-	try {
-		content = await fs.readFile(changelogPath, 'utf-8')
-	} catch (err) {
-		if ((err as NodeJS.ErrnoException)?.code === 'ENOENT') {
-			return
-		}
-		throw err
-	}
-
-	// Matches headings like "## v1.2.3", "## [1.2.3]", "## [v1.2.3](url) - date".
-	const escaped = version.replaceAll('.', '\\.')
-	const headingRegex = new RegExp(`^#+\\s+\\[?v?${escaped}(?![\\w.-])`, 'mu')
-	if (!headingRegex.test(content)) {
-		console.error(`CHANGELOG.md has no entry for version ${version}`)
 		process.exit(1)
 	}
 }
@@ -135,12 +112,6 @@ async function getLatestTag() {
 
 		return initialVersion
 	}
-
-	const latest5 = tags.slice(0, 5)
-	console.log('\nLatest 5 releases:')
-	latest5.forEach((tag, index) => {
-		console.log(`${index + 1}. ${tag}`)
-	})
 
 	return tags[0]
 }
