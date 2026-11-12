@@ -27,7 +27,6 @@
 		"ansi-escapes": "^7.3.0",
 		"bulma": "^1.0.4",
 		"chokidar": "^5.0.0",
-		"clipanion": "4.0.0-rc.4",
 		"debounce": "^3.0.0",
 		"dedent": "^1.7.2",
 		"detect-indent": "^7.0.2",
@@ -64,6 +63,7 @@
 		"vfile-reporter": "^8.1.1",
 		"ws": "^8.22.1",
 		"yaml": "^2.9.1",
+		"yargs": "^18.2.0",
 		"yn": "^5.1.0"
 	},
 	"devDependencies": {
@@ -79,6 +79,7 @@
 		"@types/semver": "^7.8.0",
 		"@types/terminal-kit": "^2.5.7",
 		"@types/ws": "^8.18.2",
+		"@types/yargs": "^17.0.35",
 		"jsonc-eslint-parser": "^3.3.0",
 		"kysely-codegen": "^0.20.0",
 		"type-fest": "^5.10.0",

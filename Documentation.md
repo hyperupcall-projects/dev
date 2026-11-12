@@ -14,14 +14,14 @@ You can change how a project is linted and versioned by adding a **`dev.toml`** 
 
 ## Running the tool
 
-The entry point is `bin/dev.ts`, a [Clipanion](https://github.com/arcanis/clipanion) CLI. It runs on Node.js directly, with no build step:
+The entry point is `bin/dev.ts`, a [yargs](https://yargs.js.org) CLI. It runs on Node.js directly, with no build step:
 
 ```sh
 node --run cli -- <command> [args]   # from this repository
 dev <command> [args]                 # if `dev` is on your PATH
 ```
 
-Every command except `start-dev-server` accepts this option:
+All commands accept this global option:
 
 | Option         | Description                                                                 |
 | -------------- | --------------------------------------------------------------------------- |
@@ -128,9 +128,9 @@ Manages repositories across GitHub accounts and organizations. Requires the priv
 | `fetch-repository-data`   | Fetches the list of repositories from GitHub. |
 | `tui`                     | Opens a repository interactively.            |
 | `sync`                    | Synchronizes the managed repositories.        |
-| `run <command> [args...]` | Runs a command in every managed repository.   |
+| `run -- <command> [args...]` | Runs a command in every managed repository. |
 
-`dev repos run` forwards everything after the command name to it verbatim, so `dev repos run npm test --watch` runs `npm test --watch` in each repository.
+`dev repos run` forwards everything after `--` to it verbatim, so `dev repos run -- npm test --watch` runs `npm test --watch` in each repository.
 
 ### `dev changelog pull`
 
