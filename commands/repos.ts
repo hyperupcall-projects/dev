@@ -13,17 +13,21 @@ import {
 } from '#utilities/repositories.ts'
 import type { Octokit } from 'octokit'
 import { detectEcosystem, getConfigEcosystem } from '#utilities/ecosystems.ts'
-import type { CommandScriptOptions } from '#types'
+import type { CommandReposRunOptions } from '#types'
 import process from 'node:process'
 import { getDevConfig } from '#utilities/dev-config.ts'
 
 type Config = {
 	organizationsDir: string
+	repositoryGroups: {
+		name: string
+		repositories: string[]
+	}[]
 	ignored: string[]
 }
 
-export async function run(options: CommandScriptOptions, positionals: string[]) {
-	const config = {
+async function getRepositoriesConfig(): Promise<Config> {
+	return {
 		organizationsDir: (await getDevConfig()).paths.managedRepositories,
 		repositoryGroups: [
 			{
@@ -40,7 +44,7 @@ export async function run(options: CommandScriptOptions, positionals: string[]) 
 			},
 			{
 				name: 'Bash Bastion',
-				repoitories: ['bash-bastion/*'],
+				repositories: ['bash-bastion/*'],
 			},
 			{
 				name: 'SchemaStore',
@@ -68,189 +72,191 @@ export async function run(options: CommandScriptOptions, positionals: string[]) 
 			'SchemaStore/json-validator',
 		],
 	}
-	if (positionals[0] === 'fetch-repository-data') {
-		const Repositories = await collectGitHubRepositories2({
-			fromCurrentlyAuthenticatedUser: true, // hyperupcall
-			users: ['sindresorhus', 'isaacs'],
-			organizations: [
-				'refined-github',
-				'expressjs',
-				'hacks-guide',
-				'todotxt',
-				'pallets',
-				'Bash-it',
-			],
-			ignored: [
-				'eshsrobotics/*',
-				'hackclub/*',
-				'replit-discord/*',
-				'gamedevunite-at-smc/*',
-				'cs-club-smc/*',
-				'hyperupcall-archives/*',
-				'hyperupcall-forks/*', // TODO
-				'foxium-browser/*',
-				'hyperupcall-forks/*',
-				'asdf-contrib-hyperupcall/*',
-				'GameDevUniteAtECC/*',
-				'EpicGames/*',
-				'hyperupcall/hidden',
-			],
-		})
+}
 
-		// TODO
-		await fs.writeFile(
-			(await getDevConfig()).paths.repositoriesJson,
-			JSON.stringify(Repositories, null, '\t'),
-		)
-	} else if (positionals[0] === 'tui') {
-		const repositories = JSON.parse(
-			await fs.readFile((await getDevConfig()).paths.repositoriesJson, 'utf-8'),
-		)
-		const allRepoNames: string[] = []
-		for (const orgName in repositories) {
-			for (const repo of repositories[orgName]) {
-				allRepoNames.push(`${orgName}/${repo.name}`)
-			}
+export async function runFetchRepositoryData() {
+	const Repositories = await collectGitHubRepositories2({
+		fromCurrentlyAuthenticatedUser: true, // hyperupcall
+		users: ['sindresorhus', 'isaacs'],
+		organizations: [
+			'refined-github',
+			'expressjs',
+			'hacks-guide',
+			'todotxt',
+			'pallets',
+			'Bash-it',
+		],
+		ignored: [
+			'eshsrobotics/*',
+			'hackclub/*',
+			'replit-discord/*',
+			'gamedevunite-at-smc/*',
+			'cs-club-smc/*',
+			'hyperupcall-archives/*',
+			'hyperupcall-forks/*', // TODO
+			'foxium-browser/*',
+			'hyperupcall-forks/*',
+			'asdf-contrib-hyperupcall/*',
+			'GameDevUniteAtECC/*',
+			'EpicGames/*',
+			'hyperupcall/hidden',
+		],
+	})
+
+	// TODO
+	await fs.writeFile(
+		(await getDevConfig()).paths.repositoriesJson,
+		JSON.stringify(Repositories, null, '\t'),
+	)
+}
+
+export async function runRepositoriesTui() {
+	const repositories = JSON.parse(
+		await fs.readFile((await getDevConfig()).paths.repositoriesJson, 'utf-8'),
+	)
+	const allRepoNames: string[] = []
+	for (const orgName in repositories) {
+		for (const repo of repositories[orgName]) {
+			allRepoNames.push(`${orgName}/${repo.name}`)
 		}
+	}
 
-		const repository = await clack.select({
-			message: 'Select repository',
-			options: allRepoNames.map((fullName) => ({
-				label: fullName,
-				value: fullName,
-			})),
+	const repository = await clack.select({
+		message: 'Select repository',
+		options: allRepoNames.map((fullName) => ({
+			label: fullName,
+			value: fullName,
+		})),
+	})
+
+	if (clack.isCancel(repository)) {
+		process.exit(1)
+	}
+	const dir = await getRepositoryDestDirectory(repository)
+	if (!existsSync(dir)) {
+		const shouldClone = await clack.confirm({
+			message: 'Would you like to clone this repository?',
 		})
 
-		if (clack.isCancel(repository)) {
+		if (clack.isCancel(shouldClone)) {
 			process.exit(1)
 		}
-		const dir = await getRepositoryDestDirectory(repository)
-		if (!existsSync(dir)) {
-			const shouldClone = await clack.confirm({
-				message: 'Would you like to clone this repository?',
-			})
 
-			if (clack.isCancel(shouldClone)) {
+		if (shouldClone) {
+			await execa({
+				stdout: 'inherit',
+				stderr: 'inherit',
+			})`git clone git@github.com:${repository} ${dir}`
+		}
+	}
+	const action = await clack.select({
+		message: 'Choose action',
+		options: [
+			{
+				label: 'Open in VSCode (Default)',
+				value: 'vscode-default',
+			},
+			{
+				label: 'Open in VSCode (Ecosystem)',
+				value: 'vscode-ecosystem',
+			},
+			{
+				label: 'Open in VSCode Insiders',
+				value: 'vscode-insiders',
+			},
+			{
+				label: 'Open in Zed',
+				value: 'zed',
+			},
+		],
+	})
+
+	if (clack.isCancel(action)) {
+		process.exit(1)
+	}
+
+	switch (action) {
+		case 'vscode-default':
+			await execa({
+				stdout: 'inherit',
+				stderr: 'inherit',
+			})`code ${dir}`
+			break
+		case 'vscode-ecosystem': {
+			let packname = ''
+			const ecosystemIds = await detectEcosystem({ rootDir: dir })
+			for (const ecosystemId of ecosystemIds) {
+				const vscodePack = getConfigEcosystem(ecosystemId).vscodePackId
+				if (vscodePack) {
+					packname = vscodePack
+					break
+				}
+			}
+
+			if (!packname) {
+				console.info(`An ecosystem could not be inferred...`)
+				process.exit(1) // TODO
+			}
+
+			// TODO: put in function
+			await execa({
+				stdout: 'inherit',
+				stderr: 'inherit',
+			})`code --user-data-dir ${path.join((await getDevConfig()).paths.vscodeDataDirs, packname.replace(/^vscode-/, ''))} --extensions-dir ${path.join((await getDevConfig()).paths.vscodeExtensions, packname.replace(/^vscode-/, ''))} --new-window ${dir}`
+			break
+		}
+		case 'vscode-insiders':
+			await execa({
+				stdout: 'inherit',
+				stderr: 'inherit',
+			})`code-insiders ${dir}`
+			break
+		case 'zed':
+			await execa({
+				stdout: 'inherit',
+				stderr: 'inherit',
+			})`zed ${dir}`
+			break
+	}
+}
+
+export async function runSyncRepositories() {
+	await syncRepositories({ octokit, config: await getRepositoriesConfig() })
+}
+
+export async function runCommandInRepositories({
+	command,
+	args,
+}: CommandReposRunOptions) {
+	const config = await getRepositoriesConfig()
+	for (const orgEntry of await fs.readdir(config.organizationsDir, {
+		withFileTypes: true,
+	})) {
+		for (const repoEntry of await fs.readdir(
+			path.join(orgEntry.parentPath, orgEntry.name),
+			{
+				withFileTypes: true,
+			},
+		)) {
+			const repoPath = path.join(repoEntry.parentPath, repoEntry.name)
+
+			{
+				let str = '\n\n\n'
+				str += styleText(['magenta', 'bold'], repoPath) + styleText('reset', '') + '\n'
+				str += '='.repeat(process.stdout.columns) + '\n'
+				process.stdout.write(str)
+			}
+
+			const child = await execa(command, args, {
+				cwd: repoPath,
+				stdin: 'inherit',
+				stdout: 'inherit',
+				stderr: 'inherit',
+			}).catch(() => {})
+			if (!child || (child.exitCode ?? 0) > 1) {
 				process.exit(1)
 			}
-
-			if (shouldClone) {
-				await execa({
-					stdout: 'inherit',
-					stderr: 'inherit',
-				})`git clone git@github.com:${repository} ${dir}`
-			}
 		}
-		const action = await clack.select({
-			message: 'Choose action',
-			options: [
-				{
-					label: 'Open in VSCode (Default)',
-					value: 'vscode-default',
-				},
-				{
-					label: 'Open in VSCode (Ecosystem)',
-					value: 'vscode-ecosystem',
-				},
-				{
-					label: 'Open in VSCode Insiders',
-					value: 'vscode-insiders',
-				},
-				{
-					label: 'Open in Zed',
-					value: 'zed',
-				},
-			],
-		})
-
-		if (clack.isCancel(action)) {
-			process.exit(1)
-		}
-
-		switch (action) {
-			case 'vscode-default':
-				await execa({
-					stdout: 'inherit',
-					stderr: 'inherit',
-				})`code ${dir}`
-				break
-			case 'vscode-ecosystem': {
-				let packname = ''
-				const ecosystemIds = await detectEcosystem({ rootDir: dir })
-				for (const ecosystemId of ecosystemIds) {
-					const vscodePack = getConfigEcosystem(ecosystemId).vscodePackId
-					if (vscodePack) {
-						packname = vscodePack
-						break
-					}
-				}
-
-				if (!packname) {
-					console.info(`An ecosystem could not be inferred...`)
-					process.exit(1) // TODO
-				}
-
-				// TODO: put in function
-				await execa({
-					stdout: 'inherit',
-					stderr: 'inherit',
-				})`code --user-data-dir ${path.join((await getDevConfig()).paths.vscodeDataDirs, packname.replace(/^vscode-/, ''))} --extensions-dir ${path.join((await getDevConfig()).paths.vscodeExtensions, packname.replace(/^vscode-/, ''))} --new-window ${dir}`
-				break
-			}
-			case 'vscode-insiders':
-				await execa({
-					stdout: 'inherit',
-					stderr: 'inherit',
-				})`code-insiders ${dir}`
-				break
-			case 'zed':
-				await execa({
-					stdout: 'inherit',
-					stderr: 'inherit',
-				})`zed ${dir}`
-				break
-		}
-	} else if (positionals[0] === 'sync') {
-		await syncRepositories({ octokit, config })
-	} else if (positionals[0] === 'run') {
-		for (const orgEntry of await fs.readdir(config.organizationsDir, {
-			withFileTypes: true,
-		})) {
-			for (const repoEntry of await fs.readdir(
-				path.join(orgEntry.parentPath, orgEntry.name),
-				{
-					withFileTypes: true,
-				},
-			)) {
-				const repoPath = path.join(repoEntry.parentPath, repoEntry.name)
-
-				{
-					let str = '\n\n\n'
-					str += styleText(['magenta', 'bold'], repoPath) + styleText('reset', '') + '\n'
-					str += '='.repeat(process.stdout.columns) + '\n'
-					process.stdout.write(str)
-				}
-
-				const cmdName = positionals[1]
-				const cmdArgs = positionals.slice(2)
-				if (!cmdName) {
-					console.error(`Failed determine command name`)
-					process.exit(1)
-				}
-				const child = await execa(cmdName, cmdArgs, {
-					cwd: repoPath,
-					stdin: 'inherit',
-					stdout: 'inherit',
-					stderr: 'inherit',
-				}).catch(() => {})
-				if (!child || !child.exitCode || child.exitCode > 1) {
-					process.exit(1)
-				}
-			}
-		}
-	} else {
-		console.error(`Unknown command: ${positionals[0]}`)
-		process.exit(1)
 	}
 }
 

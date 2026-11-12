@@ -8,6 +8,7 @@ export type PageDataFn<T> = () => Promise<T>
 
 // Commands.
 export type CommandNewOptions = {
+	dir?: string
 	ecosystem?: string
 	templateName?: string
 	projectName?: string
@@ -16,6 +17,7 @@ export type CommandNewOptions = {
 }
 
 export type CommandFixOptions = {
+	dir?: string
 	yes?: boolean
 	match?: string[]
 	exclude?: string[]
@@ -26,6 +28,11 @@ export type CommandFixOptions = {
 export type CommandInstallOptions = Record<PropertyKey, never>
 
 export type CommandReposOptions = Record<PropertyKey, never>
+
+export type CommandReposRunOptions = {
+	command: string
+	args: string[]
+}
 
 export type CommandScriptOptions = Record<PropertyKey, never>
 

@@ -15,8 +15,8 @@ import {
 	type EcosystemId,
 } from '#utilities/ecosystems.ts'
 
-export async function run(options: CommandNewOptions, positionals: string[]) {
-	if (!positionals[0]) {
+export async function run(options: CommandNewOptions) {
+	if (!options.dir) {
 		const inputValue = await clack.text({
 			message: 'Choose a directory',
 		})
@@ -25,10 +25,10 @@ export async function run(options: CommandNewOptions, positionals: string[]) {
 			process.exit(1)
 		}
 
-		positionals = [inputValue]
+		options.dir = inputValue
 	}
 
-	if (!existsSync(positionals[0])) {
+	if (!existsSync(options.dir)) {
 		const shouldCreate = await clack.confirm({
 			message: 'Would you like to create the directory?',
 		})
@@ -38,7 +38,7 @@ export async function run(options: CommandNewOptions, positionals: string[]) {
 		}
 
 		if (shouldCreate) {
-			await fs.mkdir(positionals[0], { recursive: true })
+			await fs.mkdir(options.dir, { recursive: true })
 		}
 	}
 
@@ -98,12 +98,12 @@ export async function run(options: CommandNewOptions, positionals: string[]) {
 	}
 
 	await createProject({
-		dir: positionals[0] ?? '.',
+		dir: options.dir,
 		ecosystem: options.ecosystem,
 		templateName: options.templateName,
 		projectName: options.projectName,
 		forceTemplate: options.force ?? false,
-		options: (options.options ?? '').split(','),
+		options: options.options ? options.options.split(',') : [],
 	})
 }
 

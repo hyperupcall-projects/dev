@@ -21,9 +21,9 @@ import _ from 'lodash'
 import process from 'node:process'
 import { mergeJSONWithComments } from '#utilities/util.ts'
 
-export async function run(options: CommandFixOptions, positionals: string[]) {
-	if (positionals.length > 0) {
-		process.chdir(positionals[0] || '.')
+export async function run(options: CommandFixOptions) {
+	if (options.dir) {
+		process.chdir(options.dir)
 	}
 
 	const project = await getProject()

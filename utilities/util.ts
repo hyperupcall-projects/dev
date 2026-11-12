@@ -2,12 +2,26 @@ import { execFile, spawn } from 'node:child_process'
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
+import * as readline from 'node:readline/promises'
 import type { Dirent } from 'node:fs'
 import { promisify, styleText } from 'node:util'
 import * as jsonc from 'jsonc-parser'
 import { getDevConfig } from '#utilities/dev-config.ts'
 
 const execFileAsync = promisify(execFile)
+
+/** Ask the user a question on the terminal and return their answer. */
+export async function prompt(message: string): Promise<string> {
+	const rl = readline.createInterface({
+		input: process.stdin,
+		output: process.stdout,
+	})
+	try {
+		return await rl.question(message)
+	} finally {
+		rl.close()
+	}
+}
 
 async function getServiceListDir(): Promise<string> {
 	return (await getDevConfig()).paths.serviceListDir

@@ -9,7 +9,7 @@ import toml from 'smol-toml'
 import { detectEcosystem, incrementVersionEcosystem } from '#utilities/ecosystems.ts'
 import type { CommandVersionOptions, Config } from '#types'
 
-export async function run(options: CommandVersionOptions, positionals: string[]) {
+export async function run(options: CommandVersionOptions) {
 	const rootDir = process.cwd()
 	const ecosystemIds = await detectEcosystem({ rootDir })
 	const { stdout: statusOutput } = await execa('git', ['status', '--porcelain'])

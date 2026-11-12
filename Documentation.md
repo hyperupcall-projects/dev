@@ -27,6 +27,8 @@ Every command except `start-dev-server` accepts this option:
 | -------------- | --------------------------------------------------------------------------- |
 | `--dir <path>` | Run as if `dev` had been started in `<path>`. It changes the working directory first. |
 
+`dev new` and `dev lint` also take the target directory as their first positional argument, which is not the same as `--dir`: `dev lint ./project` lints `./project`, while `dev lint --dir ./project` changes into `./project` first.
+
 `dev help` lists all commands.
 
 ### Other package scripts
@@ -43,20 +45,20 @@ Every command except `start-dev-server` accepts this option:
 
 ## Commands
 
-### `dev new [dir] [ecosystem] [template-name] [project-name]`
+### `dev new [dir] [ecosystem] [templateName] [projectName]`
 
 Creates a new project from a template.
 
 1. If `dir` is missing, it asks for a directory. It offers to create the directory if it doesn't exist.
 2. If `ecosystem` is missing, it asks you to pick one. Only ecosystems that have templates are listed.
-3. If `template-name` is missing, it asks you to pick a template for that ecosystem.
-4. If `project-name` is missing, it asks for one.
+3. If `templateName` is missing, it asks you to pick a template for that ecosystem.
+4. If `projectName` is missing, it asks for one.
 5. It copies `config/templates/<ecosystem>/<ecosystem>-<template>/` into the target directory, rendering every file with [Handlebars](https://handlebarsjs.com). It skips `node_modules` and `__pycache__`.
 
 Options:
 
 - `--force`: use the directory even if it isn't empty. Without it, the directory must be empty.
-- `options`: a comma-separated list of extra template options.
+- `--options`: a comma-separated list of extra template options.
 
 Templates you can pick from `dev new`:
 
@@ -74,12 +76,13 @@ Templates you can pick from `dev new`:
 
 Checks the current project (or `dir`) against a set of **lint rules**. For each problem it finds, it offers to fix it.
 
-| Option     | Description                                                       |
-| ---------- | ----------------------------------------------------------------- |
-| `--yes`    | Apply every fix without asking                                    |
-| `--strict` | Also run checks marked as *strict*. These are skipped by default. |
-
-`--match`, `--only` and `--exclude` are parsed but have no effect yet.
+| Option      | Description                                                       |
+| ----------- | ----------------------------------------------------------------- |
+| `--yes`     | Apply every fix without asking                                    |
+| `--strict`  | Also run checks marked as *strict*. These are skipped by default. |
+| `--match`   | Parsed but has no effect yet.                                     |
+| `--only`    | Parsed but has no effect yet.                                     |
+| `--exclude` | Parsed but has no effect yet.                                     |
 
 What `dev lint` does:
 
@@ -102,11 +105,11 @@ What `dev lint` does:
    If two rule files have the same base name (ignoring the numeric prefix), only the one collected later is kept. More specific rules therefore replace general ones.
 5. **Runs each rule file** and prints `PASS`, `SKIP`, `FAIL` or `QUES` (a problem was found and it asks whether to fix it). A problem with no fix function counts as `FAIL`. Any `FAIL` makes the command exit with code 1.
 
-### `dev version`
+### `dev version [--force]`
 
 Bumps the project's version, then creates a release commit and tag.
 
-1. Stops if the git working tree has uncommitted changes.
+1. Stops if the git working tree has uncommitted changes. Pass `--force` to continue anyway.
 2. Reads the newest `v*` tag. If there are none, it asks for a starting version (default `0.1.0`).
 3. Asks for the new version: patch, minor, major, or a custom semver. A custom version must be higher than the current one.
 4. Writes the new version into the version files of every ecosystem detected at the root (see the table below).
@@ -118,7 +121,16 @@ It only changes versions that are already written in a file. If a file has no ve
 
 ### `dev repos <subcommand>`
 
-Manages repositories across GitHub accounts and organizations. Subcommands: `fetch-repository-data`, `tui`, `sync` and `run`. Requires the private config described below.
+Manages repositories across GitHub accounts and organizations. Requires the private config described below.
+
+| Subcommand                | Description                                  |
+| ------------------------- | -------------------------------------------- |
+| `fetch-repository-data`   | Fetches the list of repositories from GitHub. |
+| `tui`                     | Opens a repository interactively.            |
+| `sync`                    | Synchronizes the managed repositories.        |
+| `run <command> [args...]` | Runs a command in every managed repository.   |
+
+`dev repos run` forwards everything after the command name to it verbatim, so `dev repos run npm test --watch` runs `npm test --watch` in each repository.
 
 ### `dev changelog pull`
 
@@ -132,7 +144,7 @@ Runs a maintenance task across your repositories:
 - `symlink-hidden-dirs`
 - `validate-hyperupcall-archives`
 - `create-vscode-launchers`
-- `toggletools`
+- `toggle-tools`
 
 ### `dev start-dev-server`
 
@@ -279,7 +291,7 @@ This is separate from `dev.toml`. Commands that work across many repositories (`
 - Required keys: `paths` (object), `pinnedProjects` (array), `knowledgeFolders` (array of `{ id, name, path }`), `binaries` (object with `obsidian` and `clion` command arrays). Optional: `githubTokenFile`.
 - Print one resolved value: `node utilities/print-dev-config.mjs paths.nodeBinary`.
 
-The full type is `DevConfig` in `utilities/dev-config.ts`.
+The full type is `DevConfig` in `utilities/dev-config.ts`. `paths.hiddenDirsRepositoryDir` is optional: `dev task symlink-hidden-dirs` defaults it to a `hidden-dirs` directory next to `paths.managedRepositories`.
 
 ### Environment variables
 

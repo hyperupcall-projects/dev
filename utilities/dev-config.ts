@@ -21,6 +21,8 @@ export type DevConfig = {
 		clonedRepositories: string
 		managedRepositories: string
 		symlinkedRepositories: string
+		/** Where the hidden directories of the managed repositories are stored. */
+		hiddenDirsRepositoryDir?: string
 		codeDir: string
 		repositoriesJson: string
 		vscodeDataDirs: string

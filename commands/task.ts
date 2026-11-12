@@ -5,10 +5,9 @@ import { minimatch } from 'minimatch'
 import micromatch from 'micromatch'
 import yn from 'yn'
 
-import { forEachRepository, mergeJSONWithComments } from '#utilities/util.ts'
+import { forEachRepository, mergeJSONWithComments, prompt } from '#utilities/util.ts'
 import { octokit, pkgRoot } from '#common'
 
-import type { CommandScriptOptions } from '#types'
 import { execa } from 'execa'
 import type { PackageJson } from 'type-fest'
 import * as fs from 'node:fs'
@@ -20,43 +19,36 @@ import * as jsonc from 'jsonc-parser'
 import { parseJSON } from 'jsonc-eslint-parser'
 import { getDevConfig } from '#utilities/dev-config.ts'
 
-export async function run(options: CommandScriptOptions, positionals: string[]) {
-	const task = positionals[0]
+type TaskConfig = {
+	organizationsDir: string
+	ignoredOrganizations: string[]
+	hiddenDirsRepositoryDir: string
+}
 
-	const helpText = `script <taskName>
-TASKS:
-
-check-license-headers
-symlink-hidden-dirs
-validate-hyperupcall-archives
-create-vscode-launchers
-toggletools
-`
-	if (options.help) {
-		console.info(helpText)
-	}
-	if (!task) {
-		process.stdout.write(helpText)
-		process.exit(1)
-	}
-
-	if (task === 'check-license-headers') {
-		await checkLicenseHeaders(positionals.slice(1))
-	} else if (task === 'symlink-hidden-dirs') {
-		await symlinkHiddenDirs(positionals.slice(1))
-	} else if (task === 'validate-hyperupcall-archives') {
-		await validateHyperupcallArchives(positionals.slice(1))
-	} else if (task === 'create-vscode-launchers') {
-		await createVSCodeLaunchers(positionals.slice(1))
-	} else if (task === 'toggletools') {
-		await toggleTools(positionals.slice(1))
-	} else {
-		process.stdout.write('Error: Failed to pass task name\n')
-		process.exit(1)
+async function getTaskConfig(): Promise<TaskConfig> {
+	const devConfig = await getDevConfig()
+	return {
+		organizationsDir: devConfig.paths.managedRepositories,
+		ignoredOrganizations: [
+			'ecc-cs-club',
+			'quasipanacea',
+			'semantic-hotkeys',
+			'hyperupcall-archives',
+			'hyperupcall-templates',
+			'hyperupcall-forks',
+			'fix-js',
+			'big-blocks',
+			'swallowjs',
+			'SchemaStore/json-validator',
+		],
+		hiddenDirsRepositoryDir:
+			devConfig.paths.hiddenDirsRepositoryDir ??
+			path.join(path.dirname(devConfig.paths.managedRepositories), 'hidden-dirs'),
 	}
 }
 
-export async function checkLicenseHeaders(positionals: string[]) {
+export async function runCheckLicenseHeaders() {
+	const config = await getTaskConfig()
 	await forEachRepository(
 		config.organizationsDir,
 		{ ignores: config.ignoredOrganizations },
@@ -172,7 +164,8 @@ export async function checkLicenseHeaders(positionals: string[]) {
 	}
 }
 
-export async function symlinkHiddenDirs(positionals: string[]) {
+export async function runSymlinkHiddenDirs() {
+	const config = await getTaskConfig()
 	await forEachRepository(
 		config.organizationsDir,
 		async function run({ orgDir, orgEntry, repoDir, repoEntry }) {
@@ -230,17 +223,20 @@ export async function symlinkHiddenDirs(positionals: string[]) {
 				oldHiddenDirStat.isDirectory()
 			) {
 				const input = await prompt(`Move? ${newHiddenDirPretty} (y/n): `)
-				if (yn(input)) {
-					fs.mkdirSync(path.dirname(newHiddenDir), {
-						recursive: true,
-						mode: 0o755,
-					})
-					fs.renameSync(oldHiddenDir, newHiddenDir)
-					await restat()
+				if (!yn(input)) {
+					// Keep the hidden directory where it is.
+					return
 				}
+
+				fs.mkdirSync(path.dirname(newHiddenDir), {
+					recursive: true,
+					mode: 0o755,
+				})
+				fs.renameSync(oldHiddenDir, newHiddenDir)
+				await restat()
 			}
 
-			fs.rmSync(oldHiddenDir, { force: true })
+			fs.rmSync(oldHiddenDir, { force: true, recursive: true })
 			if (newHiddenDirStat) {
 				fs.symlinkSync(newHiddenDir, oldHiddenDir)
 			}
@@ -248,7 +244,7 @@ export async function symlinkHiddenDirs(positionals: string[]) {
 	)
 }
 
-async function validateHyperupcallArchives(positionals: string[]) {
+export async function runValidateHyperupcallArchives() {
 	for await (const { data: repositories } of octokit.paginate.iterator(
 		octokit.rest.repos.listForOrg,
 		{
@@ -269,7 +265,7 @@ async function validateHyperupcallArchives(positionals: string[]) {
 	}
 }
 
-async function createVSCodeLaunchers(positionals: string[]) {
+export async function runCreateVSCodeLaunchers() {
 	const extensions: { dirname: string; packageJson: PackageJson }[] = await (
 		await fetch(
 			`https://raw.githubusercontent.com/hyperupcall-projects/vscode-hyperupcall-packs/refs/heads/main/extension-list.json`,
@@ -574,7 +570,7 @@ Icon=${iconFile}`,
 	}
 }
 
-async function toggleTools(positionals: string[]) {
+export async function runToggleTools() {
 	{
 		const settingsPath = '.vscode/settings.json'
 		if (!fs.existsSync(settingsPath)) {
