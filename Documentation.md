@@ -3,7 +3,7 @@
 `dev` is a personal development tool. It can:
 
 - create new projects from templates (`dev new`)
-- lint a project and fix the configuration it finds wrong (`dev lint`)
+- lint a project and fix the configuration it finds wrong (`dev metalint`)
 - bump a project's version, then commit and tag it (`dev version`)
 - manage many repositories, changelogs and maintenance tasks (`dev repos`, `dev changelog`, `dev task`)
 - run a local web dashboard (`dev start-dev-server`)
@@ -27,7 +27,7 @@ Every command except `start-dev-server` accepts this option:
 | -------------- | --------------------------------------------------------------------------- |
 | `--dir <path>` | Run as if `dev` had been started in `<path>`. It changes the working directory first. |
 
-`dev new` and `dev lint` also take the target directory as their first positional argument, which is not the same as `--dir`: `dev lint ./project` lints `./project`, while `dev lint --dir ./project` changes into `./project` first.
+`dev new` and `dev metalint` also take the target directory as their first positional argument, which is not the same as `--dir`: `dev metalint ./project` lints `./project`, while `dev metalint --dir ./project` changes into `./project` first.
 
 `dev help` lists all commands.
 
@@ -72,7 +72,7 @@ Templates you can pick from `dev new`:
 
 `config/templates/` also contains template directories for `c`, `html`, `java`, `php`, `python` and `webext`. Not every template listed above has a directory yet.
 
-### `dev lint [dir] [--yes] [--strict]`
+### `dev metalint [dir] [--yes] [--strict]`
 
 Checks the current project (or `dir`) against a set of **lint rules**. For each problem it finds, it offers to fix it.
 
@@ -84,7 +84,7 @@ Checks the current project (or `dir`) against a set of **lint rules**. For each 
 | `--only`    | Parsed but has no effect yet.                                     |
 | `--exclude` | Parsed but has no effect yet.                                     |
 
-What `dev lint` does:
+What `dev metalint` does:
 
 1. **Finds the project type**:
    - `only-directory`: there is no `.git`.
@@ -191,11 +191,11 @@ Code: `utilities/ecosystems.ts`. An ecosystem defines four things: how to detect
 
 ## The `dev.toml` file
 
-`dev.toml` is an **optional, per-project** config file. It goes in the project's **root directory**, which is the directory `dev` runs in, set by `--dir` or by the positional `dir` argument of `dev lint`.
+`dev.toml` is an **optional, per-project** config file. It goes in the project's **root directory**, which is the directory `dev` runs in, set by `--dir` or by the positional `dir` argument of `dev metalint`.
 
 - The file is parsed as TOML with [`smol-toml`](https://github.com/squirrelchat/smol-toml).
 - If the file is missing, defaults are used. If it exists but isn't valid TOML, the command fails with an error.
-- Two commands read it: **`dev lint`** and **`dev version`**.
+- Two commands read it: **`dev metalint`** and **`dev version`**.
 - The name must be `dev.toml`. The `directory/no-files` lint rule reports the old name `project.toml` and offers to rename it to `dev.toml`.
 
 ### Schema
@@ -213,7 +213,7 @@ Both keys are optional. Other keys are ignored.
 
 ### `[rules]`
 
-Used by `dev lint`. Turns off individual lint checks.
+Used by `dev metalint`. Turns off individual lint checks.
 
 ```toml
 [rules]

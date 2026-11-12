@@ -2,7 +2,7 @@
 import { Builtins, Cli, Command, Option, UsageError } from 'clipanion'
 
 import { run as runNew } from '../commands/new.ts'
-import { run as runFix } from '../commands/lint.ts'
+import { run as runFix } from '../commands/metalint.ts'
 import { run as runVersion } from '../commands/version.ts'
 
 import {
@@ -83,10 +83,10 @@ cli.register(
 	},
 )
 cli.register(
-	class LintCommand extends DevCommand {
-		static override paths = [[`lint`]]
+	class MetalintCommand extends DevCommand {
+		static override paths = [[`metalint`]]
 		static override usage = Command.Usage({
-			description: `Lint and fix issues with code`,
+			description: `Lint and fix issues with repository config and metadata`,
 		})
 
 		dir = Option.String({ required: false })
