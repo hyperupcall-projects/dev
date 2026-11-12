@@ -136,6 +136,17 @@ Manages repositories across GitHub accounts and organizations. Requires the priv
 
 Pulls changelog information for the current git repository using the GitHub API.
 
+### `dev changelog validate [--diff]`
+
+Checks that `CHANGELOG.md` matches the changelog generated from the repository's GitHub releases.
+
+It generates the changelog exactly like `dev changelog pull` does, then compares it with the `CHANGELOG.md` file. The exit code is:
+
+- `0` if they match.
+- `1` if they differ, or if the check could not be performed (not a git repository, no `CHANGELOG.md` file, GitHub API error).
+
+Pass `--diff` to also print a unified diff between the current `CHANGELOG.md` and the generated one. Removed lines are red and added lines are green.
+
 ### `dev task <task>`
 
 Runs a maintenance task across your repositories:

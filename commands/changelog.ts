@@ -1,12 +1,22 @@
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import process from 'node:process'
+import { styleText } from 'node:util'
 import { execa } from 'execa'
+import * as diff from 'diff'
 
 import { fileExists, octokit } from '#common'
-import type { CommandScriptOptions } from '#types'
+import type { CommandChangelogValidateOptions, CommandScriptOptions } from '#types'
 
-export async function runPull(_options: CommandScriptOptions) {
+type Release = Awaited<ReturnType<typeof octokit.rest.repos.listReleases>>['data'][number]
+
+
+const changelogFileName = 'CHANGELOG.md'
+
+async function getRepositoryInfo(): Promise<{
+	owner: string
+	repo: string
+}> {
 	if (!(await fileExists('.git'))) {
 		console.error('Not a git repository (no .git directory)')
 		process.exit(1)
@@ -55,25 +65,68 @@ export async function runPull(_options: CommandScriptOptions) {
 		process.exit(1)
 	}
 
-	const match = remoteUrl.match(/[:/](?<owner>.*?)\/(?<name>.*?)(?:\.git)?$/u)
-	if (!match?.groups) {
+	const match = parseGitHubRepository(remoteUrl)
+	if (!match) {
 		console.error(`Could not parse GitHub owner and repo from remote URL: ${remoteUrl}`)
 		process.exit(1)
 	}
 
-	const owner = match.groups.owner
-	const repo = match.groups.name
+	return match
+}
 
+function parseGitHubRepository(
+	remoteUrl: string,
+): { owner: string; repo: string } | undefined {
+	const url = remoteUrl.trim()
+
+	// SSH: git@github.com:owner/repo.git
+	const scpMatch = url.match(/^[^/\s]+@[^:/\s]+:(?<path>.+)$/u)
+	// URL: https://github.com/owner/repo.git
+	const urlMatch = url.match(/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\/[^/]+\/(?<path>.+)$/u)
+
+	const repositoryPath = scpMatch?.groups?.path ?? urlMatch?.groups?.path
+	if (!repositoryPath) {
+		return undefined
+	}
+
+	const segments = repositoryPath
+		.replace(/\.git$/u, '')
+		.split('/')
+		.filter((segment) => segment !== '')
+	if (segments.length < 2) {
+		return undefined
+	}
+
+	return {
+		owner: segments[0],
+		repo: segments[1],
+	}
+}
+
+async function fetchReleases({ owner, repo }: {
+	owner: string
+	repo: string
+}): Promise<Release[]> {
 	// Fetch releases (paginate)
-	const releases: any[] = []
+	const releases: Release[] = []
 	let page = 1
 	while (true) {
-		const res = await octokit.rest.repos.listReleases({
-			owner,
-			repo,
-			per_page: 100,
-			page,
-		})
+		let res: Awaited<ReturnType<typeof octokit.rest.repos.listReleases>>
+		try {
+			res = await octokit.rest.repos.listReleases({
+				owner,
+				repo,
+				per_page: 100,
+				page,
+			})
+		} catch (error) {
+			console.error(
+				`Could not fetch the releases of ${owner}/${repo} from GitHub: ${
+					(error as Error).message
+				}`,
+			)
+			process.exit(1)
+		}
 		releases.push(...res.data)
 		if (res.data.length < 100) break
 		page += 1
@@ -86,6 +139,13 @@ export async function runPull(_options: CommandScriptOptions) {
 		return bd - ad
 	})
 
+	return releases
+}
+
+function generateChangelog(releases: Release[], { owner, repo }: {
+	owner: string
+	repo: string
+}): string {
 	let out = '# Changelog\n\n'
 	if (releases.length === 0) {
 		out += '_No releases found._\n'
@@ -108,7 +168,57 @@ export async function runPull(_options: CommandScriptOptions) {
 		}
 	}
 
-	const targetPath = path.join(process.cwd(), 'CHANGELOG.md')
+	return out
+}
+
+function formatDiff(current: string, generated: string): string {
+	const patch = diff.createTwoFilesPatch(
+		changelogFileName,
+		`${changelogFileName} (generated from GitHub releases)`,
+		current,
+		generated,
+		'current',
+		'generated',
+		{ context: 3 },
+	)
+
+	return patch
+		.replaceAll(/\n\+(?!\+\+)/g, '\n' + styleText('green', '+'))
+		.replaceAll(/\n-(?!--)/g, '\n' + styleText('red', '-'))
+}
+
+export async function runPull(_options: CommandScriptOptions) {
+	const repositoryInfo = await getRepositoryInfo()
+	const releases = await fetchReleases(repositoryInfo)
+	const out = generateChangelog(releases, repositoryInfo)
+
+	const targetPath = path.join(process.cwd(), changelogFileName)
 	await fs.writeFile(targetPath, out, 'utf-8')
 	console.info(`Wrote ${targetPath}`)
+}
+
+export async function runValidate(options: CommandChangelogValidateOptions) {
+	const repositoryInfo = await getRepositoryInfo()
+	const releases = await fetchReleases(repositoryInfo)
+	const generated = generateChangelog(releases, repositoryInfo)
+
+	const targetPath = path.join(process.cwd(), changelogFileName)
+	let current: string
+	try {
+		current = await fs.readFile(targetPath, 'utf-8')
+	} catch {
+		console.error(`Could not read ${targetPath}`)
+		process.exit(1)
+	}
+
+	if (current === generated) {
+		console.info(`${changelogFileName} matches the GitHub releases`)
+		return
+	}
+
+	console.error(`${changelogFileName} does not match the GitHub releases`)
+	if (options.diff) {
+		console.info(formatDiff(current, generated))
+	}
+	process.exit(1)
 }

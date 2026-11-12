@@ -11,7 +11,10 @@ import {
 	runRepositoriesTui,
 	runSyncRepositories,
 } from '../commands/repos.ts'
-import { runPull as runChangelogPull } from '../commands/changelog.ts'
+import {
+	runPull as runChangelogPull,
+	runValidate as runChangelogValidate,
+} from '../commands/changelog.ts'
 import {
 	runCheckLicenseHeaders,
 	runCreateVSCodeLaunchers,
@@ -175,6 +178,21 @@ cli.register(
 		async execute() {
 			this.maybeChangeDir()
 			await runChangelogPull({})
+		}
+	},
+)
+cli.register(
+	class ChangelogValidateCommand extends DevCommand {
+		static override paths = [[`changelog`, `validate`]]
+		static override usage = Command.Usage({
+			description: `Check if CHANGELOG.md matches the repository's GitHub releases`,
+		})
+
+		diff = Option.Boolean('--diff')
+
+		async execute() {
+			this.maybeChangeDir()
+			await runChangelogValidate({ diff: this.diff })
 		}
 	},
 )

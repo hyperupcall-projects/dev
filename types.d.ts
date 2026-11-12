@@ -36,6 +36,10 @@ export type CommandReposRunOptions = {
 
 export type CommandScriptOptions = Record<PropertyKey, never>
 
+export type CommandChangelogValidateOptions = {
+	diff?: boolean
+}
+
 export type CommandVersionOptions = {
 	force?: boolean
 }
