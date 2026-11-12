@@ -36,6 +36,11 @@ export type CommandReposRunOptions = {
 
 export type CommandScriptOptions = Record<PropertyKey, never>
 
+export type CommandFormatOptions = {
+	formatter?: string
+	dir?: string
+}
+
 export type CommandChangelogValidateOptions = {
 	diff?: boolean
 }
@@ -52,6 +57,7 @@ export type CommandStartServerOptions = {
 export type Config = {
 	rules?: Record<string, 'off'>
 	updateVersionDirectories?: string[]
+	format?: Record<string, string>
 }
 export type Project =
 	| {

@@ -2,9 +2,7 @@
 // SPDX-FileCopyrightText: Copyright 2023 Edwin Kofler
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
-import { fileTypeFromFile } from 'file-type'
 import { globby } from 'globby'
-import mimeTypes from 'mime-types'
 import shebangCommand from 'shebang-command'
 
 const FILENAME_TO_FILEID: Record<string, string> = {
@@ -20,7 +18,6 @@ const FILENAME_TO_FILEID: Record<string, string> = {
 	'.gitmodules': 'gitmodules',
 	'.npmignore': 'gitignore',
 	'.prettierignore': 'gitignore',
-	bakefile: 'makefile',
 	cmakelists: 'cmake',
 	'cmakelists.txt': 'cmake',
 	containerfile: 'dockerfile',
@@ -48,85 +45,154 @@ const INTERPRETER_TO_FILEID: Record<string, string> = {
 }
 
 const EXTENSION_TO_FILEID: Record<string, string> = {
-	bash: 'shell',
+	// archive
+	'7z': 'archive',
+	boz: 'archive',
+	bz2: 'archive',
+	gz: 'archive',
+	rar: 'archive',
+	tar: 'archive',
+	xz: 'archive',
+	zip: 'archive',
+	// binary
+	wasm: 'binary',
+	// c
+	c: 'c',
+	dic: 'c',
+	h: 'c',
+	// cpp
 	cc: 'cpp',
-	cfg: 'ini',
-	conf: 'ini',
 	cpp: 'cpp',
-	cts: 'typescript',
 	cxx: 'cpp',
-	desktop: 'ini',
-	env: 'dotenv',
-	go: 'go',
 	hh: 'cpp',
 	hpp: 'cpp',
 	hxx: 'cpp',
+	// css
+	css: 'css',
+	// dotenv
+	env: 'dotenv',
+	// executable
+	bat: 'executable',
+	com: 'executable',
+	dll: 'executable',
+	exe: 'executable',
+	msi: 'executable',
+	// gif
+	gif: 'gif',
+	// go
+	go: 'go',
+	// html
+	htm: 'html',
+	html: 'html',
+	shtml: 'html',
+	// ico
+	ico: 'ico',
+	// ini
+	cfg: 'ini',
+	conf: 'ini',
+	desktop: 'ini',
 	ini: 'ini',
+	service: 'ini',
+	// java
+	java: 'java',
+	// javascript
+	cjs: 'javascript',
+	js: 'javascript',
+	jsx: 'javascript',
+	mjs: 'javascript',
+	// jpeg
+	jpe: 'jpeg',
+	jpeg: 'jpeg',
+	jpg: 'jpeg',
+	// json
+	json: 'json',
+	map: 'json',
+	// jsonc
 	jsonc: 'jsonc',
-	ksh: 'shell',
-	mts: 'typescript',
+	// markdown
+	markdown: 'markdown',
+	md: 'markdown',
+	// pdf
+	pdf: 'pdf',
+	// php
+	php: 'php',
+	// png
+	png: 'png',
+	// plaintext
+	def: 'plaintext',
+	in: 'plaintext',
+	list: 'plaintext',
+	log: 'plaintext',
+	text: 'plaintext',
+	txt: 'plaintext',
+	// python
 	py: 'python',
 	pyw: 'python',
+	// rust
 	rs: 'rust',
-	service: 'ini',
+	// shell
+	bash: 'shell',
+	ksh: 'shell',
+	sh: 'shell',
+	zsh: 'shell',
+	// svg
+	svg: 'svg',
+	svgz: 'svg',
+	// toml
+	toml: 'toml',
+	// typescript
+	cts: 'typescript',
+	mts: 'typescript',
 	ts: 'typescript',
 	tsx: 'typescript',
-	zsh: 'shell',
+	// webp
+	webp: 'webp',
+	// xml
+	rng: 'xml',
+	xsl: 'xml',
+	xsd: 'xml',
+	xml: 'xml',
+	xslt: 'xml',
+	// yaml
+	yaml: 'yaml',
+	yml: 'yaml',
 }
 
-const MIME_TO_FILEID: Record<string, string> = {
-	'application/gzip': 'archive',
-	'application/json': 'json',
-	'application/node': 'javascript',
-	'application/pdf': 'pdf',
-	'application/toml': 'toml',
-	'application/wasm': 'binary',
-	'application/x-7z-compressed': 'archive',
-	'application/x-bzip2': 'archive',
-	'application/x-elf': 'executable',
-	'application/x-httpd-php': 'php',
-	'application/x-mach-binary': 'executable',
-	'application/x-msdownload': 'executable',
-	'application/x-rar-compressed': 'archive',
-	'application/x-sh': 'shell',
-	'application/x-tar': 'archive',
-	'application/x-xz': 'archive',
-	'application/xml': 'xml',
-	'application/xslt+xml': 'xml',
-	'application/zip': 'archive',
-	'application/zstd': 'archive',
-	'image/gif': 'gif',
-	'image/jpeg': 'jpeg',
-	'image/png': 'png',
-	'image/svg+xml': 'svg',
-	'image/vnd.microsoft.icon': 'ico',
-	'image/webp': 'webp',
-	'text/css': 'css',
-	'text/html': 'html',
-	'text/javascript': 'javascript',
-	'text/jsx': 'javascript',
-	'text/markdown': 'markdown',
-	'text/plain': 'plaintext',
-	'text/x-c': 'c',
-	'text/x-java-source': 'java',
-	'text/yaml': 'yaml',
+export type DetectFiletypesOptions = {
+	rootDir: string
+	/**
+	 * Also follow symlinked files and directories. Defaults to `false`, which keeps
+	 * symlinks out of the result (and out of `dev metalint`'s filetype list).
+	 */
+	followSymbolicLinks?: boolean
+	/**
+	 * Skip files that `.gitignore` files exclude. Defaults to `true`.
+	 *
+	 * Note that this also applies `.gitignore` files from parent directories, up to
+	 * the enclosing git repository's root, so a gitignored directory can end up
+	 * with no files at all.
+	 */
+	gitignore?: boolean
+	/** Extra ignore patterns, on top of the ones always ignored. */
+	ignore?: string[]
 }
 
 export async function detectFiletypes({
 	rootDir,
-}: {
-	rootDir: string
-}): Promise<string[]> {
+	followSymbolicLinks = false,
+	gitignore = true,
+	ignore = [],
+}: DetectFiletypesOptions): Promise<Record<string, string[]>> {
 	const filepaths = await globby('**', {
 		cwd: rootDir,
 		absolute: true,
 		dot: true,
-		gitignore: true,
-		followSymbolicLinks: false,
-		ignore: ['**/.git/**'],
+		gitignore,
+		followSymbolicLinks,
+		ignore: ['**/.git/**', '**/target/**', ...ignore],
 	})
 
-	const detected = new Set<string>()
+	const detected: Record<string, string[]> = {}
 	for (const filepath of filepaths) {
 		const basename = path.basename(filepath).toLowerCase()
 		const prefix = /^(dockerfile|makefile|\.env)\./u.exec(basename)?.[1]
@@ -140,15 +206,15 @@ export async function detectFiletypes({
 			?.split(' ')[0]
 			?.replace(/[0-9.]+$/u, '')
 
-		detected.add(
+		const filetype =
 			FILENAME_TO_FILEID[prefix ?? basename] ??
-				INTERPRETER_TO_FILEID[interpreter ?? ''] ??
-				EXTENSION_TO_FILEID[path.extname(basename).slice(1)] ??
-				MIME_TO_FILEID[mimeTypes.lookup(basename) || ''] ??
-				MIME_TO_FILEID[(await fileTypeFromFile(filepath))?.mime ?? ''] ??
-				(sample.length === 0 ? 'empty' : sample.includes(0) ? 'binary' : 'plaintext'),
-		)
+			INTERPRETER_TO_FILEID[interpreter ?? ''] ??
+			EXTENSION_TO_FILEID[path.extname(basename).slice(1)] ??
+			(sample.length === 0 ? 'empty' : '_other')
+
+		detected[filetype] ??= []
+		detected[filetype].push(filepath)
 	}
 
-	return [...detected].sort()
+	return detected
 }

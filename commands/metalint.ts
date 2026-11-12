@@ -120,7 +120,8 @@ export async function run(options: CommandFixOptions) {
 	// Collect rule files that match the ecosystem.
 	await collect(`400-ecosystem/_/*`)
 	const ecosystemIds = await detectEcosystem({ rootDir: process.cwd() }) // TODO
-	const filetypeIds = await detectFiletypes({ rootDir: process.cwd() }) // TODO
+	const filetypes = await detectFiletypes({ rootDir: process.cwd() }) // TODO
+	const filetypeIds = Object.keys(filetypes)
 	for (const ecosystemId of ecosystemIds) {
 		for (const pattern of await lintEcosystem(ecosystemId)) {
 			await collect(pattern)

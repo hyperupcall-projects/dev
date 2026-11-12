@@ -7,6 +7,7 @@ import { hideBin } from 'yargs/helpers'
 
 import { run as runNew } from '../commands/new.ts'
 import { run as runFix } from '../commands/metalint.ts'
+import { run as runFormat } from '../commands/format.ts'
 import { run as runVersion } from '../commands/version.ts'
 
 import {
@@ -125,6 +126,21 @@ const cli = yargs(hideBin(process.argv))
 				match: argv.match as string[] | undefined,
 				only: argv.only as string[] | undefined,
 				exclude: argv.exclude as string[] | undefined,
+			})
+		},
+	)
+	.command(
+		'format [formatter]',
+		'Format the project with the configured formatters',
+		(y) =>
+			y.positional('formatter', {
+				type: 'string',
+				description: 'Formatter to run',
+			}),
+		async (argv) => {
+			maybeChangeDir(argv.dir)
+			await runFormat({
+				formatter: argv.formatter as string | undefined,
 			})
 		},
 	)

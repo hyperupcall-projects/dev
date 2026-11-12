@@ -4,11 +4,12 @@
 
 - create new projects from templates (`dev new`)
 - lint a project and fix the configuration it finds wrong (`dev metalint`)
+- format a project with the configured formatters (`dev format`)
 - bump a project's version, then commit and tag it (`dev version`)
 - manage many repositories, changelogs and maintenance tasks (`dev repos`, `dev changelog`, `dev task`)
 - run a local web dashboard (`dev start-dev-server`)
 
-You can change how a project is linted and versioned by adding a **`dev.toml`** file at the project's root. See [The `dev.toml` file](#the-devtoml-file).
+You can change how a project is linted, formatted and versioned by adding a **`dev.toml`** file at the project's root. See [The `dev.toml` file](#the-devtoml-file).
 
 ---
 
@@ -105,6 +106,26 @@ What `dev metalint` does:
    If two rule files have the same base name (ignoring the numeric prefix), only the one collected later is kept. More specific rules therefore replace general ones.
 5. **Runs each rule file** and prints `PASS`, `SKIP`, `FAIL` or `QUES` (a problem was found and it asks whether to fix it). A problem with no fix function counts as `FAIL`. Any `FAIL` makes the command exit with code 1.
 
+### `dev format [formatter]`
+
+Formats the project with the configured formatters.
+
+With no `formatter`, it detects the project's files, then asks which formatter(s) to run. Pass a formatter name to run it directly:
+
+```sh
+dev format yamlfmt
+```
+
+Right now there is one formatter:
+
+| Formatter | Files              | Default command                                |
+| --------- | ------------------ | ---------------------------------------------- |
+| `yamlfmt` | Detected as `yaml` | `yamlfmt -conf <dev's config/.yamlfmt.yaml>`   |
+
+The files are detected once, before any formatter runs, and their absolute paths are appended to the command. Everything on disk counts, including files and directories excluded by `.gitignore` and symlinked files; only `node_modules/` and `.data/` (and `.git/`, `target/`) are skipped. A formatter with no matching files prints `SKIP`.
+
+Each formatter's command can be overridden in `dev.toml` (see [`[format]`](#format)). Use `{config_file}` to refer to the formatter's config file.
+
 ### `dev version [--force]`
 
 Bumps the project's version, then creates a release commit and tag.
@@ -195,7 +216,7 @@ Code: `utilities/ecosystems.ts`. An ecosystem defines four things: how to detect
 
 - The file is parsed as TOML with [`smol-toml`](https://github.com/squirrelchat/smol-toml).
 - If the file is missing, defaults are used. If it exists but isn't valid TOML, the command fails with an error.
-- Two commands read it: **`dev metalint`** and **`dev version`**.
+- Three commands read it: **`dev metalint`**, **`dev version`**, and **`dev format`**.
 - The name must be `dev.toml`. The `directory/no-files` lint rule reports the old name `project.toml` and offers to rename it to `dev.toml`.
 
 ### Schema
@@ -206,10 +227,11 @@ The type is `Config` in `types.d.ts`:
 type Config = {
 	rules?: Record<string, 'off'>
 	updateVersionDirectories?: string[]
+	format?: Record<string, string>
 }
 ```
 
-Both keys are optional. Other keys are ignored.
+All keys are optional. Other keys are ignored.
 
 ### `[rules]`
 
@@ -279,6 +301,17 @@ Use this in monorepos, or when a project bundles a package from a different ecos
 - If a listed directory matches no ecosystem, nothing in it changes.
 - If the key is missing, only the project root is updated.
 
+### `[format]`
+
+Used by `dev format`. Overrides the command that runs for a formatter. The key is the formatter name; the value is its command line. The detected files are appended to it.
+
+```toml
+[format]
+yamlfmt = 'yamlfmt -conf {config_file}'
+```
+
+`{config_file}` is replaced with the real path of the formatter's config file. For `yamlfmt`, that is the dev package's `config/.yamlfmt.yaml`. Omit the placeholder to run the formatter without a config file. Formatter names that `dev format` doesn't know are ignored.
+
 ### Full example
 
 ```toml
@@ -288,6 +321,9 @@ updateVersionDirectories = ["editors/vscode"]
 [rules]
 'version-control/project-name/local-remote-name-mismatch' = "off"
 'remote-url/remote-metadata/default-branch-main' = "off"
+
+[format]
+yamlfmt = 'yamlfmt -conf {config_file}'
 ```
 
 ---
