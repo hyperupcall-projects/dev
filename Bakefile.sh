@@ -24,10 +24,6 @@ task.bootstrap() {
 
 task.init() {
 	pnpm install
-
-	if [ ! -f ./.git/info/lefthook.checksum ]; then
-		lefthook install
-	fi
 }
 
 task.build() {
