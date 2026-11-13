@@ -41,6 +41,11 @@ export type CommandFormatOptions = {
 	dir?: string
 }
 
+export type CommandLintOptions = {
+	linter?: string
+	dir?: string
+}
+
 export type CommandChangelogValidateOptions = {
 	diff?: boolean
 }
@@ -58,6 +63,7 @@ export type Config = {
 	rules?: Record<string, 'off'>
 	updateVersionDirectories?: string[]
 	format?: Record<string, string>
+	lint?: Record<string, string>
 }
 export type Project =
 	| {

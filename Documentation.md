@@ -4,6 +4,7 @@
 
 - create new projects from templates (`dev new`)
 - lint a project and fix the configuration it finds wrong (`dev metalint`)
+- lint a project with the configured linters (`dev lint`)
 - format a project with the configured formatters (`dev format`)
 - bump a project's version, then commit and tag it (`dev version`)
 - manage many repositories, changelogs and maintenance tasks (`dev repos`, `dev changelog`, `dev task`)
@@ -105,6 +106,26 @@ What `dev metalint` does:
 
    If two rule files have the same base name (ignoring the numeric prefix), only the one collected later is kept. More specific rules therefore replace general ones.
 5. **Runs each rule file** and prints `PASS`, `SKIP`, `FAIL` or `QUES` (a problem was found and it asks whether to fix it). A problem with no fix function counts as `FAIL`. Any `FAIL` makes the command exit with code 1.
+
+### `dev lint [linter]`
+
+Lints the project with the configured linters.
+
+With no `linter`, it detects the project's files, then asks which linter(s) to run. Pass a linter name to run it directly:
+
+```sh
+dev lint yamllint
+```
+
+Right now there is one linter:
+
+| Linter     | Files              | Default command                                |
+| ---------- | ------------------ | ---------------------------------------------- |
+| `yamllint` | Detected as `yaml` | `yamllint -c <dev's config/.yamllint.yaml>`    |
+
+The files are detected once, before any linter runs, and their absolute paths are appended to the command. Everything on disk counts, including files and directories excluded by `.gitignore` and symlinked files; only `node_modules/` and `.data/` (and `.git/`, `target/`) are skipped. A linter with no matching files prints `SKIP`. A non-zero exit code from a linter makes `dev lint` exit with code 1.
+
+Each linter's command can be overridden in `dev.toml` (see [`[lint]`](#lint)). Use `{config_file}` to refer to the linter's config file.
 
 ### `dev format [formatter]`
 
@@ -216,7 +237,7 @@ Code: `utilities/ecosystems.ts`. An ecosystem defines four things: how to detect
 
 - The file is parsed as TOML with [`smol-toml`](https://github.com/squirrelchat/smol-toml).
 - If the file is missing, defaults are used. If it exists but isn't valid TOML, the command fails with an error.
-- Three commands read it: **`dev metalint`**, **`dev version`**, and **`dev format`**.
+- Four commands read it: **`dev metalint`**, **`dev version`**, **`dev format`**, and **`dev lint`**.
 - The name must be `dev.toml`. The `directory/no-files` lint rule reports the old name `project.toml` and offers to rename it to `dev.toml`.
 
 ### Schema
@@ -228,6 +249,7 @@ type Config = {
 	rules?: Record<string, 'off'>
 	updateVersionDirectories?: string[]
 	format?: Record<string, string>
+	lint?: Record<string, string>
 }
 ```
 
@@ -312,6 +334,17 @@ yamlfmt = 'yamlfmt -conf {config_file}'
 
 `{config_file}` is replaced with the real path of the formatter's config file. For `yamlfmt`, that is the dev package's `config/.yamlfmt.yaml`. Omit the placeholder to run the formatter without a config file. Formatter names that `dev format` doesn't know are ignored.
 
+### `[lint]`
+
+Used by `dev lint`. Overrides the command that runs for a linter. The key is the linter name; the value is its command line. The detected files are appended to it.
+
+```toml
+[lint]
+yamllint = 'yamllint -c {config_file}'
+```
+
+`{config_file}` is replaced with the real path of the linter's config file. For `yamllint`, that is the dev package's `config/.yamllint.yaml`. Omit the placeholder to run the linter without a config file. Linter names that `dev lint` doesn't know are ignored.
+
 ### Full example
 
 ```toml
@@ -324,6 +357,9 @@ updateVersionDirectories = ["editors/vscode"]
 
 [format]
 yamlfmt = 'yamlfmt -conf {config_file}'
+
+[lint]
+yamllint = 'yamllint -c {config_file}'
 ```
 
 ---

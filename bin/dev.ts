@@ -8,6 +8,7 @@ import { hideBin } from 'yargs/helpers'
 import { run as runNew } from '../commands/new.ts'
 import { run as runFix } from '../commands/metalint.ts'
 import { run as runFormat } from '../commands/format.ts'
+import { run as runLint } from '../commands/lint.ts'
 import { run as runVersion } from '../commands/version.ts'
 
 import {
@@ -141,6 +142,21 @@ const cli = yargs(hideBin(process.argv))
 			maybeChangeDir(argv.dir)
 			await runFormat({
 				formatter: argv.formatter as string | undefined,
+			})
+		},
+	)
+	.command(
+		'lint [linter]',
+		'Lint the project with the configured linters',
+		(y) =>
+			y.positional('linter', {
+				type: 'string',
+				description: 'Linter to run',
+			}),
+		async (argv) => {
+			maybeChangeDir(argv.dir)
+			await runLint({
+				linter: argv.linter as string | undefined,
 			})
 		},
 	)
