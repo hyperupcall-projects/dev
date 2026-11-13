@@ -11,13 +11,26 @@ export const issues: Issues = async function* issues({ project }) {
 
 	const cargoTomlText = await fs.readFile('Cargo.toml', 'utf-8')
 
-	for (const { pattern, message } of [
-		{ pattern: /\[package\]/, message: '[package] section is required' },
-		{ pattern: /^name\s*=/m, message: 'package.name is required' },
-		{ pattern: /^edition\s*=/m, message: 'package.edition is required' },
+	for (const { id, pattern, message } of [
+		{
+			id: 'must-have-package-section',
+			pattern: /\[package\]/,
+			message: '[package] section is required',
+		},
+		{
+			id: 'must-have-package-name',
+			pattern: /^name\s*=/m,
+			message: 'package.name is required',
+		},
+		{
+			id: 'must-have-package-edition',
+			pattern: /^edition\s*=/m,
+			message: 'package.edition is required',
+		},
 	]) {
 		if (!pattern.test(cargoTomlText)) {
 			yield {
+				id,
 				message: dedent`
 					-> Cargo.toml is missing required field: ${message}
 				`,
@@ -33,6 +46,7 @@ export const issues: Issues = async function* issues({ project }) {
 		)
 
 		yield {
+			id: 'must-use-recommended-edition',
 			message: dedent`
 				-> Cargo.toml should use edition = "2021" (current stable Rust edition)
 			`,
@@ -46,6 +60,7 @@ export const issues: Issues = async function* issues({ project }) {
 	const hasPublish = /^publish\s*=/m.test(cargoTomlText)
 	if (!hasPublish) {
 		yield {
+			id: 'must-specify-publish',
 			message: dedent`
 				-> Cargo.toml should explicitly set 'publish = false' or 'publish = true'
 				   to make publishing intent clear
@@ -61,6 +76,7 @@ export const issues: Issues = async function* issues({ project }) {
 
 		if (!hasLicense && !hasLicenseFile) {
 			yield {
+				id: 'publishable-crate-must-have-license',
 				message: dedent`
 					-> Cargo.toml should specify 'license' or 'license-file' for publishable crates
 				`,
@@ -70,6 +86,7 @@ export const issues: Issues = async function* issues({ project }) {
 		const hasRepository = /^repository\s*=/m.test(cargoTomlText)
 		if (!hasRepository) {
 			yield {
+				id: 'publishable-crate-must-have-repository',
 				message: dedent`
 					-> Cargo.toml should specify 'repository' for publishable crates
 				`,

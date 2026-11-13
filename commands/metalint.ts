@@ -221,7 +221,7 @@ async function fixFromFile(
 		for await (const issue of issues) {
 			if (issue.skip) {
 				console.info(
-					`[${styleText('yellow', 'SKIP')}] ${fixId}${issue.id ? '/' + issue.id : ''}: ${issue.skip}`,
+					`[${styleText('yellow', 'SKIP')}] ${fixId}/${issue.id}: ${issue.skip}`,
 				)
 				return
 			}
@@ -231,14 +231,9 @@ async function fixFromFile(
 				continue
 			}
 
-			if (issue.id) {
-				if (`${fixId}/${issue.id}` in (config.rules ?? {})) {
-					const rule = (config.rules ?? {})[`${fixId}/${issue.id}`]
-					if (rule === 'off') {
-						console.info(`[${styleText('yellow', 'SKIP')}] ${fixId}/${issue.id}`)
-						continue
-					}
-				}
+			if (config.rules?.[`${fixId}/${issue.id}`] === 'off') {
+				console.info(`[${styleText('yellow', 'SKIP')}] ${fixId}/${issue.id}`)
+				continue
 			}
 
 			console.info(`[QUES] ${fixId}`)

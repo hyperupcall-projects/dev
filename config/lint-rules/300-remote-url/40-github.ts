@@ -19,6 +19,7 @@ export const issues: Issues = async function* issues({ project }) {
 
 	if (yamlFiles.length > 0) {
 		yield {
+			id: 'workflow-must-have-yaml-extension',
 			message: [
 				`Expected GitHub workflow files to use ".yaml" extension`,
 				`But, found ${yamlFiles} file with ".yml" extension`,

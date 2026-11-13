@@ -11,6 +11,7 @@ export const issues: Issues = async function* issues() {
 	// TODO
 	if (exitCode !== 0) {
 		yield {
+			id: 'must-succeed',
 			message: ['Publint should succeed'],
 		}
 	}

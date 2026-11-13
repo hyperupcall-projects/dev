@@ -44,12 +44,14 @@ export async function* filesMustHaveName(
 				const correctFileExists = await fileExists(goodFile)
 				if (correctFileExists) {
 					yield {
+						id: `${goodFile}-must-have-name`,
 						message: dedent`
 							-> Expected file "${badFile}" to not exist because "${goodFile}" already exists
 							-> But, found both files exist`,
 					}
 				} else {
 					yield {
+						id: `${goodFile}-must-have-name`,
 						message: dedent`
 							-> Expected file to be named "${goodFile}"
 							-> But, found file named "${badFile}"`,
@@ -166,7 +168,9 @@ export async function* filesMustHaveShape(
 	}
 }
 
-export async function* packageJsonMustNotHaveDependencies(substr: string) {
+export async function* packageJsonMustNotHaveDependencies(
+	substr: string,
+): AsyncGenerator<Issue> {
 	const packageJson = JSON.parse(await fs.readFile('package.json', 'utf-8'))
 	for (const dependencyKey of [
 		'dependencies',

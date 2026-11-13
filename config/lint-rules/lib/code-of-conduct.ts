@@ -18,6 +18,7 @@ export const issues: Issues = async function* issues() {
 
 	if (files.length > 0) {
 		yield {
+			id: 'must-not-exist',
 			message: [
 				'Expected to find no code of conduct files',
 				'But, found at least one',

@@ -9,6 +9,8 @@ import type { Issues } from '#types'
 export const issues: Issues = async function* issues({ project }) {
 	if (project.type !== 'only-directory') {
 		yield {
+			id: 'only-directory',
+			message: 'Project must have type of "only-directory"',
 			skip: 'Project must have type of "only-directory"',
 		}
 	}
@@ -18,6 +20,7 @@ export const issues: Issues = async function* issues({ project }) {
 	})
 	if (files.length > 0) {
 		yield {
+			id: 'must-not-have-license-files',
 			message: [
 				'Expected to find no license files',
 				`But, ${files.length} license files were found`,

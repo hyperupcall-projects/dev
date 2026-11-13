@@ -67,6 +67,7 @@ export const issues: Issues = async function* issues({ project }) {
 				.replaceAll(/\n-(?!\-)/g, '\n' + styleText('red', '-'))
 
 			yield {
+				id: 'must-have-correct-shape',
 				message: dedent.withOptions({ alignValues: true })`
 					-> Expected file "${configFile}" to have the correct shape:
 					${'='.repeat(80)}

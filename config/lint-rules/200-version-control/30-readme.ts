@@ -25,6 +25,7 @@ export const issues: Issues = async function* issues({ project }) {
 		})
 		if (files.length > 0) {
 			yield {
+				id: 'must-be-in-root-directory',
 				message: [
 					'Expected to find a single readme file at the root project directory',
 					'But, found readme files in the ".github" directory',

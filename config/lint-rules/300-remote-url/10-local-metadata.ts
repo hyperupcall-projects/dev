@@ -14,6 +14,7 @@ export const issues: Issues = async function* issues({ project }) {
 	// Check the repository owner and name.
 	if (data.full_name !== `${project.owner}/${project.name}`) {
 		yield {
+			id: 'must-match-remote-url',
 			message: [
 				'Expected GitHub repository to be in sync with local remote URL',
 				`But, they are out of sync`,

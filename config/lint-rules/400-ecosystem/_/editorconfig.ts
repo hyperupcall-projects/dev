@@ -15,6 +15,7 @@ export const issues: Issues = async function* issues() {
 
 	if (!(await fileExists(configFile))) {
 		yield {
+			id: 'must-exist',
 			message: [`Expected EditorConfig file "${configFile}" to exist`],
 			fix: () => fs.writeFile(configFile, configContent),
 		}
@@ -23,6 +24,7 @@ export const issues: Issues = async function* issues() {
 	const content = await fs.readFile(configFile, 'utf-8')
 	if (content.length === 0) {
 		yield {
+			id: 'must-not-be-empty',
 			message: [`Expected EditorConfig file "${configFile}" to not be empty`],
 			fix: () => fs.writeFile(configFile, configContent),
 		}

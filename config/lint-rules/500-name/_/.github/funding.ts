@@ -11,6 +11,7 @@ export const issues: Issues = async function* issues({ project }) {
 
 		if (!(await fileExists(fundingFile))) {
 			yield {
+				id: 'must-exist',
 				message: ['Expected funding file to exist'],
 				fix: () => fs.writeFile(fundingFile, fundingFileContents),
 			}

@@ -96,7 +96,7 @@ export type Issues = (arg0: {
 }) => AsyncGenerator<Issue>
 
 export type Issue = {
-	id?: string
+	id: string
 	message: string | string[]
 	fix?: (() => void) | (() => Promise<void>)
 	strict?: boolean

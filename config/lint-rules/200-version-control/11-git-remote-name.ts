@@ -15,6 +15,7 @@ export const issues: Issues = async function* issues({ project }) {
 		const approvedRemoteNames = ['me', 'upstream']
 		if (!approvedRemoteNames.includes(remoteName)) {
 			yield {
+				id: 'must-have-approved-name',
 				message: [
 					`Expected "${remoteName}" to be one of ${JSON.stringify(approvedRemoteNames)}`,
 				],

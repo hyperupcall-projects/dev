@@ -17,6 +17,7 @@ export const issues: Issues = async function* issues() {
 		const content = await fs.readFile(file, 'utf-8')
 		if (content.startsWith('\n')) {
 			yield {
+				id: 'must-not-start-with-newline',
 				message: ['Expected code of conduct to not start with a newline'],
 			}
 		}

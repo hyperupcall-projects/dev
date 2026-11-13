@@ -287,9 +287,9 @@ All `NN-` numeric prefixes are removed. Examples:
 
 Only the **direct parent directory** is part of the ID. For example, rules in `400-ecosystem/_/` get IDs starting with `_/`, and `500-name/_/.github/readme.ts` gets IDs starting with `.github/readme`.
 
-**Only issues that have an `id` can be turned off.** Issues without an `id` can't be turned off from `dev.toml`. You can still decline their fix at the prompt.
+Every issue has a required `id`, so every lint check can be turned off from `dev.toml`.
 
-#### Rule IDs you can turn off
+#### Examples of rule IDs you can turn off
 
 | Key                                                                  | What it checks                                         |
 | -------------------------------------------------------------------- | ------------------------------------------------------ |
@@ -397,7 +397,7 @@ import type { Issues } from '#types'
 
 export const issues: Issues = async function* issues({ project }) {
 	yield {
-		id: 'some-check',            // optional; needed so it can be turned off in dev.toml
+		id: 'some-check',            // required; used to identify the rule when troubleshooting and in the config file
 		message: ['What is wrong', 'Why'],
 		fix: async () => { /* ... */ }, // optional; without it the check counts as FAIL
 		strict: false,               // if true, it only runs with --strict

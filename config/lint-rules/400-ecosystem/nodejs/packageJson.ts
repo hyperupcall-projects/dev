@@ -10,6 +10,7 @@ export const issues: Issues = async function* issues({ project }) {
 	let packageJson: PackageJson = JSON.parse(packageJsonText)
 	if (typeof packageJson?.private !== 'boolean') {
 		yield {
+			id: 'must-specify-private',
 			message: ['"private" field must be specified in package.json'],
 			fix,
 		}
@@ -67,6 +68,7 @@ export const issues: Issues = async function* issues({ project }) {
 		(Array.isArray(packageJson.keywords) ? packageJson.keywords.length === 0 : false)
 	) {
 		yield {
+			id: 'public-package-must-have-keywords',
 			message: ['Must not have empty keywords if public'],
 		}
 	}

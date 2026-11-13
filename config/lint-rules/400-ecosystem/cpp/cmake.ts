@@ -13,6 +13,7 @@ export const issues: Issues = async function* issues() {
 
 	if (!/^[ \t]*cmake_minimum_required[ \t]*\([ \t]*VERSION[ \t]+/i.test(content)) {
 		yield {
+			id: 'must-specify-minimum-version',
 			message: [
 				`Expected file "${CmakeListsText}" to include cmake_minimum_required(VERSION ...)`,
 				'But, it could not be found',
@@ -22,6 +23,7 @@ export const issues: Issues = async function* issues() {
 
 	if (!/^[ \t]*project[ \t]*\(/im.test(content)) {
 		yield {
+			id: 'must-specify-project',
 			message: [
 				`Expected file "${CmakeListsText}" to include project(...)`,
 				'But, it could not be found',
@@ -35,6 +37,7 @@ export const issues: Issues = async function* issues() {
 		)
 	) {
 		yield {
+			id: 'must-export-compile-commands',
 			message: [
 				`Expected file "${CmakeListsText}" to include set(CMAKE_EXPORT_COMPILE_COMMANDS ON)`,
 				'But, found no CMAKE_EXPORT_COMPILE_COMMANDS setting',
@@ -46,6 +49,7 @@ export const issues: Issues = async function* issues() {
 		!/^[ \t]*set[ \t]*\([ \t]*CMAKE_COLOR_DIAGNOSTICS[ \t]+ON[ \t]*\)/im.test(content)
 	) {
 		yield {
+			id: 'must-enable-color-diagnostics',
 			message: [
 				`Expected file "${CmakeListsText}" to include set(CMAKE_COLOR_DIAGNOSTICS ON)`,
 				'But, found no CMAKE_COLOR_DIAGNOSTICS setting',

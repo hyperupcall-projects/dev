@@ -8,6 +8,7 @@ export const issues: Issues = async function* issues() {
 		const file = 'deno.json'
 		if (await fileExists(file)) {
 			yield {
+				id: 'must-be-named-deno-jsonc',
 				message: [
 					`Expected file "${file}" to not exist`,
 					'But, found the file',

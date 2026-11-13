@@ -11,6 +11,7 @@ export const issues: Issues = async function* issues() {
 
 	if (!packageJson.packageManager) {
 		yield {
+			id: 'must-specify-package-manager',
 			message: [
 				'Expected "packageManager" field to be specified in package.json',
 				'But, no "packageManager" field was found',
@@ -35,6 +36,7 @@ export const issues: Issues = async function* issues() {
 		!pnpmworkspaceYaml?.publicHoistPattern.includes('prettier')
 	) {
 		yield {
+			id: 'must-have-publicHoistPattern',
 			message: [
 				'Expected pnpm-workspace.yaml to contain publicHoistPattern with prettier',
 				'But, the required publicHoistPattern configuration was not found',

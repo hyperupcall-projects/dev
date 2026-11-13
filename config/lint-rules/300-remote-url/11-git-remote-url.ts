@@ -15,6 +15,7 @@ export const issues: Issues = async function* issues({ project }) {
 	const badRemotes = remotes.filter(([, remoteUrl]) => remoteUrl.endsWith('.git'))
 	if (badRemotes.length > 0) {
 		yield {
+			id: 'must-not-have-git-suffix',
 			message: [
 				...new Set(
 					badRemotes.map(
@@ -64,6 +65,7 @@ export const issues: Issues = async function* issues({ project }) {
 
 		if (badRemotes.length > 0) {
 			yield {
+				id: 'must-match-canonical-url',
 				message: [
 					...new Set(
 						badRemotes.map(

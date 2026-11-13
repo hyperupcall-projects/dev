@@ -26,6 +26,7 @@ export const issues: Issues = async function* issues({ project }) {
 	// Check the description.
 	if (!data.description || !data.description.trim()) {
 		yield {
+			id: 'must-have-description',
 			message: [
 				'Expected GitHub repository to have a description',
 				'But, no description was found',
@@ -39,6 +40,7 @@ export const issues: Issues = async function* issues({ project }) {
 
 	if (!data.description.endsWith('.') && !data.description.endsWith('!')) {
 		yield {
+			id: 'description-must-end-with-punctuation',
 			message: [
 				'Expected GitHub repository description to end with either a period or exclamation mark',
 				'But, no period or exclamation mark was found at the end of the description',
@@ -49,6 +51,7 @@ export const issues: Issues = async function* issues({ project }) {
 
 	if (data.description.length > maxDescriptionLength) {
 		yield {
+			id: 'description-must-have-valid-length',
 			message: [
 				`Expected GitHub repository description to have at most ${maxDescriptionLength} UTF-16 code units`,
 				`But, GitHub repository description has ${data.description.length} UTF-16 code units`,
@@ -171,6 +174,7 @@ export const issues: Issues = async function* issues({ project }) {
 				}
 			} else {
 				yield {
+					id: 'disable-projects-tab',
 					message: [
 						'Expected GitHub repository to have the "projects" tab disabled',
 						'But, the "projects" tab is enabled and the repository has defined at least one project',
@@ -218,6 +222,7 @@ export const issues: Issues = async function* issues({ project }) {
 
 			if (shouldDisableWikiTab) {
 				yield {
+					id: 'disable-wiki-tab',
 					message: [
 						'Expected GitHub repository to have the "wiki" tab disabled',
 						'But, the "wiki" tab is enabled and the wiki repository does not exist',
@@ -231,6 +236,7 @@ export const issues: Issues = async function* issues({ project }) {
 				}
 			} else {
 				yield {
+					id: 'disable-wiki-tab',
 					message: [
 						'Expected GitHub repository to have the "wiki" tab disabled',
 						'But, the "wiki" tab is enabled and the wiki repository does exist (and may have content)',
@@ -241,6 +247,7 @@ export const issues: Issues = async function* issues({ project }) {
 
 		if (data.has_discussions) {
 			yield {
+				id: 'disable-discussions-tab',
 				message: [
 					'Expected GitHub repository to have the "discussions" tab disabled',
 					'But, the "discussions" tab is enabled',

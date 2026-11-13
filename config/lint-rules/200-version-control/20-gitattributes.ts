@@ -22,6 +22,7 @@ export const issues: Issues = async function* issues({ project }) {
 	for (const string of badStrings) {
 		if (content.includes(string)) {
 			yield {
+				id: 'must-not-have-fox-tools-comments',
 				message: [`Expected to find no line that contains "${string}"`],
 				fix: async () => {
 					const newLines = content.split('\n').filter((line) => !line.includes(string))
@@ -33,6 +34,7 @@ export const issues: Issues = async function* issues({ project }) {
 
 	if ((await fileExists('bake')) && !content.includes('bake linguist-generated')) {
 		yield {
+			id: 'bake-must-be-linguist-generated',
 			message: [
 				`Expected to find a line that contains "bake linguist-generated"`,
 				`The file "bake" exists.`,
