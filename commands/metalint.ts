@@ -19,7 +19,7 @@ import { detectFiletypes } from '#utilities/filetype.ts'
 import type { CommandFixOptions, Config, Issue, Project } from '#types'
 import _ from 'lodash'
 import process from 'node:process'
-import { mergeJSONWithComments } from '#utilities/util.ts'
+import { mergeJSONWithComments, mergeTOML } from '#utilities/util.ts'
 
 export async function run(options: CommandFixOptions) {
 	if (options.dir) {
@@ -28,6 +28,7 @@ export async function run(options: CommandFixOptions) {
 
 	const project = await getProject()
 
+	// TODO
 	let config: Config = {
 		rules: {
 			...(project.type === 'with-remote-url' &&
@@ -253,16 +254,21 @@ async function fixFromFile(
 				break
 			}
 
-			let shouldRunFix
+			let action: 'fix' | 'ignore-once' | 'ignore' | symbol
 			if (options.yes) {
-				shouldRunFix = true
+				action = 'fix'
 			} else {
-				shouldRunFix = await clack.confirm({
-					message: 'Would you like to fix this issue?',
-					initialValue: true,
+				action = await clack.select({
+					message: 'What would you like to do?',
+					initialValue: 'fix',
+					options: [
+						{ value: 'fix', label: 'Fix issue' },
+						{ value: 'ignore-once', label: 'Ignore issue once' },
+						{ value: 'ignore', label: 'Ignore issue' },
+					],
 				})
 
-				if (clack.isCancel(shouldRunFix)) {
+				if (clack.isCancel(action)) {
 					printWithTips(`[${styleText('red', 'FAIL')}] ${fixId}`, [
 						'Failed because the user exited the prompt',
 					])
@@ -270,11 +276,17 @@ async function fixFromFile(
 				}
 			}
 
-			if (shouldRunFix) {
+			if (action === 'fix') {
 				await issue.fix()
 			} else {
+				if (action === 'ignore') {
+					const ruleId = `${fixId}/${issue.id}`
+					await ignoreIssue(project.rootDir, ruleId)
+					config.rules ??= {}
+					config.rules[ruleId] = 'off'
+				}
 				console.info(`[${styleText('yellow', 'SKIP')}] ${fixId}`)
-				return
+				continue
 			}
 		}
 
@@ -289,6 +301,25 @@ async function fixFromFile(
 		])
 		console.error(err)
 		process.exit(1)
+	}
+}
+
+async function ignoreIssue(rootDir: string, ruleId: string) {
+	const configPath = path.join(rootDir, 'dev.toml')
+	const override = toml.stringify({ rules: { [ruleId]: 'off' } })
+	if (!(await fileExists(configPath))) {
+		await fs.writeFile(configPath, override)
+		return
+	}
+
+	const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'dev-toml-'))
+	try {
+		const overridePath = path.join(tmpDir, 'override.toml')
+		await fs.writeFile(overridePath, override)
+		const output = await mergeTOML(configPath, overridePath)
+		await fs.writeFile(configPath, output)
+	} finally {
+		await fs.rm(tmpDir, { recursive: true, force: true })
 	}
 }
 
