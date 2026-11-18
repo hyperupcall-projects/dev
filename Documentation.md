@@ -153,7 +153,7 @@ Bumps the project's version, then creates a release commit and tag.
 
 1. Stops if the git working tree has uncommitted changes. Pass `--force` to continue anyway.
 2. Reads the newest `v*` tag. If there are none, it asks for a starting version (default `0.1.0`).
-3. Asks for the new version: patch, minor, major, or a custom semver. A custom version must be higher than the current one.
+3. Lists every file with a version to update, and asks for the new version. Press `h`/`l` or the left and right arrow keys to switch between patch, minor, major, and a custom semver. The list shows each file's current and final version as you switch or type. A custom version must be higher than the current one.
 4. Writes the new version into the version files of every ecosystem detected at the root (see the table below).
 5. Does the same for every directory listed in `updateVersionDirectories` in `dev.toml`.
 6. Runs `git add` on the changed files, commits with message `vX.Y.Z` (an empty commit if nothing changed), and creates an annotated tag `vX.Y.Z`.

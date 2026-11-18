@@ -1,17 +1,23 @@
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import process from 'node:process'
+import * as readline from 'node:readline'
+import { stripVTControlCharacters, styleText } from 'node:util'
 import * as clack from '@clack/prompts'
+import ansiEscapes from 'ansi-escapes'
 import { execa } from 'execa'
 import semver from 'semver'
 import toml from 'smol-toml'
 
-import { detectEcosystem, incrementVersionEcosystem } from '#utilities/ecosystems.ts'
+import {
+	detectEcosystem,
+	incrementVersionEcosystem,
+	type VersionUpdate,
+} from '#utilities/ecosystems.ts'
 import type { CommandVersionOptions, Config } from '#types'
 
 export async function run(options: CommandVersionOptions) {
 	const rootDir = process.cwd()
-	const ecosystemIds = await detectEcosystem({ rootDir })
 	const { stdout: statusOutput } = await execa('git', ['status', '--porcelain'])
 	if (statusOutput.trim() !== '' && !options.force) {
 		console.error(
@@ -28,29 +34,41 @@ export async function run(options: CommandVersionOptions) {
 			process.exit(1)
 		}
 
-		console.log(`Current version: ${latestTag}`)
-		const finalVersion = await askForNewVersion(currentVersion)
+		const rootDirs = ['.', ...(await getUpdateVersionDirectories(rootDir))]
 
-		const modifiedFiles = new Set<string>()
-		for (const ecosystemId of ecosystemIds) {
-			for (const modifiedFile of await incrementVersionEcosystem(
-				ecosystemId,
-				rootDir,
-				finalVersion,
-			)) {
-				modifiedFiles.add(modifiedFile)
+		// The new version isn't chosen yet. The suffix keeps this placeholder different
+		// from any version already in a file, so that every file with a version is found.
+		const pendingUpdates: VersionUpdate[] = []
+		for (const dir of rootDirs) {
+			const dirpath = path.resolve(rootDir, dir)
+			for (const ecosystemId of await detectEcosystem({ rootDir: dirpath })) {
+				for (const update of await incrementVersionEcosystem(
+					ecosystemId,
+					dirpath,
+					`${currentVersion}-preview`,
+					true,
+				)) {
+					pendingUpdates.push({
+						...update,
+						relativePath: path.join(dir, update.relativePath),
+					})
+				}
 			}
 		}
 
-		for (const directory of await getUpdateVersionDirectories(rootDir)) {
+		const finalVersion = await askForNewVersion(currentVersion, pendingUpdates)
+
+		const modifiedFiles = new Set<string>()
+		for (const directory of rootDirs) {
 			const dirPath = path.resolve(rootDir, directory)
 			for (const ecosystemId of await detectEcosystem({ rootDir: dirPath })) {
-				for (const modifiedFile of await incrementVersionEcosystem(
+				for (const update of await incrementVersionEcosystem(
 					ecosystemId,
 					dirPath,
 					finalVersion,
+					false,
 				)) {
-					modifiedFiles.add(path.join(directory, modifiedFile))
+					modifiedFiles.add(path.join(directory, update.relativePath))
 				}
 			}
 		}
@@ -116,55 +134,164 @@ async function getLatestTag() {
 	return tags[0]
 }
 
-async function askForNewVersion(currentVersion: string) {
-	const patchVersion = semver.inc(currentVersion, 'patch')!
-	const minorVersion = semver.inc(currentVersion, 'minor')!
-	const majorVersion = semver.inc(currentVersion, 'major')!
-
-	const newVersion = await clack.select({
-		message: 'What version would you like to update to?',
-		options: [
-			{ label: `Patch: v${patchVersion} (bug fixes)`, value: patchVersion },
-			{
-				label: `Minor: v${minorVersion} (new features)`,
-				value: minorVersion,
-			},
-			{
-				label: `Major: v${majorVersion} (breaking changes)`,
-				value: majorVersion,
-			},
-			{ label: 'Custom version', value: 'custom' },
-		],
-	})
-
-	if (clack.isCancel(newVersion)) {
-		process.exit(1)
+async function askForNewVersion(
+	currentVersion: string,
+	updates: VersionUpdate[],
+): Promise<string> {
+	if (!process.stdin.isTTY) {
+		throw new Error('Choosing a version requires an interactive terminal')
 	}
 
-	let finalVersion: string
-	if (newVersion === 'custom') {
-		const customVersion = await clack.text({
-			message: 'Enter custom version (without "v" prefix):',
-			validate: (value) => {
-				if (!value || !semver.valid(value)) {
-					return 'Please enter a valid semantic version (e.g., 1.2.3)'
-				}
-				if (semver.lte(value, currentVersion)) {
-					return `Version must be greater than current version ${currentVersion}`
-				}
-			},
+	const files = [
+		...new Map(updates.map((update) => [update.relativePath, update.oldVersion] as const)),
+	]
+	const pathWidth = Math.max(0, ...files.map(([relativePath]) => relativePath.length))
+	const versionWidth = Math.max(0, ...files.map(([, oldVersion]) => oldVersion.length))
+
+	const choices = [
+		{ label: 'Patch', version: semver.inc(currentVersion, 'patch')! },
+		{ label: 'Minor', version: semver.inc(currentVersion, 'minor')! },
+		{ label: 'Major', version: semver.inc(currentVersion, 'major')! },
+		{ label: 'Custom', version: '' },
+	]
+	const customIndex = choices.length - 1
+	let choiceIndex = 0
+	let customVersion = ''
+	let renderedRows = 0
+
+	const getCustomError = () => {
+		if (!semver.valid(customVersion)) {
+			return 'Please enter a valid semantic version (e.g., 1.2.3)'
+		}
+		if (semver.lte(customVersion, currentVersion)) {
+			return `Version must be greater than current version ${currentVersion}`
+		}
+	}
+
+	const getSelectedVersion = () => {
+		if (choiceIndex !== customIndex) {
+			return choices[choiceIndex]!.version
+		}
+		return getCustomError() ? undefined : semver.valid(customVersion)!
+	}
+
+	const formatFile = ([relativePath, oldVersion]: readonly [string, string], version?: string) => {
+		let newVersion = styleText('green', version ?? '?')
+		if (version === oldVersion) {
+			newVersion = styleText('dim', 'unchanged')
+		}
+		return `  ${relativePath.padEnd(pathWidth)}  ${oldVersion.padEnd(versionWidth)} → ${newVersion}`
+	}
+
+	const render = () => {
+		const tabs = choices.map(({ label, version }, index) => {
+			const selected = index === choiceIndex
+			const value = index === customIndex ? `${customVersion}${selected ? '▏' : ''}` : version
+			return styleText(selected ? ['inverse', 'bold'] : 'dim', ` ${label} ${value} `)
 		})
 
-		if (clack.isCancel(customVersion)) {
-			process.exit(1)
+		// Leaves room for the rest of the interface, so that redrawing never scrolls.
+		const maxFiles = Math.max(1, (process.stdout.rows ?? 24) - 8)
+		const shownFiles = files.length > maxFiles ? files.slice(0, maxFiles - 1) : files
+		const version = getSelectedVersion()
+		const fileLines = shownFiles.map((file) => formatFile(file, version))
+		if (shownFiles.length < files.length) {
+			fileLines.push(styleText('dim', `  … and ${files.length - shownFiles.length} more`))
+		}
+		if (files.length === 0) {
+			fileLines.push(styleText('dim', '  No files with a version to update'))
 		}
 
-		finalVersion = customVersion
-	} else {
-		finalVersion = newVersion as string
+		const lettersSwitch = choiceIndex !== customIndex || customVersion === ''
+		const lines = [
+			`${styleText('cyan', '◆')} Choose the new version ${styleText('dim', `(current: v${currentVersion})`)}`,
+			'',
+			`  ${tabs.join(' ')}`,
+			'',
+			...fileLines,
+			'',
+			choiceIndex === customIndex && customVersion !== ''
+				? styleText('yellow', `  ${getCustomError() ?? ''}`)
+				: '',
+			styleText(
+				'dim',
+				`  ${lettersSwitch ? 'h/l or ←/→' : '←/→'} switch • enter confirm • esc cancel`,
+			),
+		]
+
+		const columns = process.stdout.columns || 80
+		const clear = renderedRows > 0 ? ansiEscapes.cursorUp(renderedRows) : ''
+		process.stdout.write(`${clear}${ansiEscapes.eraseDown}${lines.join('\n')}\n`)
+		renderedRows = lines.reduce((rows, line) => {
+			return rows + Math.max(1, Math.ceil(stripVTControlCharacters(line).length / columns))
+		}, 0)
 	}
 
-	return finalVersion
+	return await new Promise((resolve) => {
+		const finish = (version?: string) => {
+			process.stdin.off('keypress', onKeypress)
+			process.stdin.setRawMode(false)
+			process.stdin.pause()
+			process.stdout.write(
+				`${ansiEscapes.cursorUp(renderedRows)}${ansiEscapes.eraseDown}${ansiEscapes.cursorShow}`,
+			)
+
+			if (version === undefined) {
+				process.exit(1)
+			}
+
+			console.log(`${styleText('green', '✓')} New version: v${version}`)
+			for (const file of files) {
+				console.log(formatFile(file, version))
+			}
+			resolve(version)
+		}
+
+		const onKeypress = (input: string | undefined, key: readline.Key) => {
+			if ((key.ctrl && key.name === 'c') || key.name === 'escape') {
+				finish()
+				return
+			}
+
+			if (key.name === 'return' || key.name === 'enter') {
+				const version = getSelectedVersion()
+				if (version !== undefined) {
+					finish(version)
+				}
+				return
+			}
+
+			// Prerelease versions can contain "h" and "l", so those letters only switch
+			// choices while no custom version is being typed.
+			const lettersSwitch = choiceIndex !== customIndex || customVersion === ''
+			if (key.name === 'left' || (lettersSwitch && input === 'h')) {
+				choiceIndex = (choiceIndex + choices.length - 1) % choices.length
+			} else if (key.name === 'right' || (lettersSwitch && input === 'l')) {
+				choiceIndex = (choiceIndex + 1) % choices.length
+			} else if (choiceIndex === customIndex && key.name === 'backspace') {
+				customVersion = customVersion.slice(0, -1)
+			} else if (
+				choiceIndex === customIndex &&
+				!key.ctrl &&
+				!key.meta &&
+				input !== undefined &&
+				/^[0-9A-Za-z.+-]$/.test(input)
+			) {
+				customVersion += input
+			} else {
+				return
+			}
+
+			render()
+		}
+
+		readline.emitKeypressEvents(process.stdin)
+		process.stdin.setRawMode(true)
+		process.stdin.resume()
+		process.stdin.on('keypress', onKeypress)
+		process.stdout.write(ansiEscapes.cursorHide)
+		render()
+	})
 }
 
 async function createVersionCommitAndTag(version: string) {

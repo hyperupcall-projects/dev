@@ -15,11 +15,22 @@ export type TemplateDefinition = {
 	name: string
 }
 
+export type VersionUpdate = {
+	relativePath: string
+	oldVersion: string
+	newVersion: string
+}
+
+type VersionReplacement = {
+	output: string
+	oldVersion: string
+}
+
 export type EcosystemDefinition = {
 	label: string
 	ecosystemInDir: (context: DetectionContext) => Promise<boolean>
 	lintFileGlobs: () => Promise<string[]>
-	updateVersion: (rootDir: string, version: string) => Promise<string[]>
+	updateVersion: (rootDir: string, version: string, dryRun: boolean) => Promise<VersionUpdate[]>
 	vscodePackId?: string
 	templates?: Record<string, TemplateDefinition>
 }
@@ -45,8 +56,8 @@ export const ecosystems = {
 		async lintFileGlobs() {
 			return ['400-ecosystem/nodejs/*']
 		},
-		async updateVersion(rootDir, version) {
-			return await updateJsonVersion(rootDir, 'package.json', version)
+		async updateVersion(rootDir, version, dryRun) {
+			return await updateJsonVersion(rootDir, 'package.json', version, dryRun)
 		},
 	},
 	'vscode-extension': {
@@ -72,8 +83,8 @@ export const ecosystems = {
 		async lintFileGlobs() {
 			return ['400-ecosystem/vscode-extension/*']
 		},
-		async updateVersion(rootDir, version) {
-			return await updateJsonVersion(rootDir, 'package.json', version)
+		async updateVersion(rootDir, version, dryRun) {
+			return await updateJsonVersion(rootDir, 'package.json', version, dryRun)
 		},
 	},
 	deno: {
@@ -93,13 +104,13 @@ export const ecosystems = {
 		async lintFileGlobs() {
 			return ['400-ecosystem/deno/*']
 		},
-		async updateVersion(rootDir, version) {
-			const modified: string[] = []
+		async updateVersion(rootDir, version, dryRun) {
+			const modified: VersionUpdate[] = []
 			for (const relative of [
 				'deno.json',
 				'deno.jsonc',
 			]) {
-				modified.push(...(await updateJsonVersion(rootDir, relative, version)))
+				modified.push(...(await updateJsonVersion(rootDir, relative, version, dryRun)))
 			}
 
 			return modified
@@ -118,8 +129,8 @@ export const ecosystems = {
 		async lintFileGlobs() {
 			return ['400-ecosystem/c/*']
 		},
-		async updateVersion(rootDir, version) {
-			return await updateCFamilyVersion(rootDir, version)
+		async updateVersion(rootDir, version, dryRun) {
+			return await updateCFamilyVersion(rootDir, version, dryRun)
 		},
 	},
 	python: {
@@ -133,17 +144,17 @@ export const ecosystems = {
 		async lintFileGlobs() {
 			return ['400-ecosystem/python/*']
 		},
-		async updateVersion(rootDir, version) {
+		async updateVersion(rootDir, version, dryRun) {
 			const pyproject = 'pyproject.toml'
 			const pyprojectPath = path.join(rootDir, pyproject)
 			if (await fileExists(pyprojectPath)) {
-				let changed = false
+				let oldVersion: string | undefined
 				for (const section of ['project', 'tool.poetry']) {
-					changed = (await mergeTomlVersion(pyprojectPath, section, version)) || changed
+					oldVersion = (await mergeTomlVersion(pyprojectPath, section, version, dryRun)) || oldVersion
 				}
 
-				if (changed) {
-					return [pyproject]
+				if (oldVersion) {
+					return [{ relativePath: pyproject, oldVersion, newVersion: version }]
 				}
 			}
 
@@ -151,10 +162,12 @@ export const ecosystems = {
 			const setupCfgPath = path.join(rootDir, setupCfg)
 			if (await fileExists(setupCfgPath)) {
 				const text = await fs.readFile(setupCfgPath, 'utf-8')
-				const output = replaceIniValue(text, 'metadata', 'version', version)
+				const { output, oldVersion } = replaceIniValue(text, 'metadata', 'version', version)
 				if (output !== text) {
-					await fs.writeFile(setupCfgPath, output)
-					return [setupCfg]
+					if (!dryRun) {
+						await fs.writeFile(setupCfgPath, output)
+					}
+					return [{ relativePath: setupCfg, oldVersion, newVersion: version }]
 				}
 			}
 
@@ -162,13 +175,13 @@ export const ecosystems = {
 			const setupPyPath = path.join(rootDir, setupPy)
 			if (await fileExists(setupPyPath)) {
 				const text = await fs.readFile(setupPyPath, 'utf-8')
-				const output = text.replace(
-					/(\bversion\s*=\s*)(['"])([^'"]*)\2/,
-					`$1$2${version}$2`,
-				)
+				const regex = /(\bversion\s*=\s*)(['"])([^'"]*)\2/
+				const output = text.replace(regex, `$1$2${version}$2`)
 				if (output !== text) {
-					await fs.writeFile(setupPyPath, output)
-					return [setupPy]
+					if (!dryRun) {
+						await fs.writeFile(setupPyPath, output)
+					}
+					return [{ relativePath: setupPy, oldVersion: regex.exec(text)![3]!, newVersion: version }]
 				}
 			}
 
@@ -195,8 +208,8 @@ export const ecosystems = {
 		async lintFileGlobs() {
 			return ['400-ecosystem/cpp/*']
 		},
-		async updateVersion(rootDir, version) {
-			return await updateCFamilyVersion(rootDir, version)
+		async updateVersion(rootDir, version, dryRun) {
+			return await updateCFamilyVersion(rootDir, version, dryRun)
 		},
 	},
 	bash: {
@@ -207,8 +220,8 @@ export const ecosystems = {
 		async lintFileGlobs() {
 			return ['400-ecosystem/bash/*']
 		},
-		async updateVersion(rootDir, version) {
-			return await updateTomlVersion(rootDir, 'basalt.toml', 'package', version)
+		async updateVersion(rootDir, version, dryRun) {
+			return await updateTomlVersion(rootDir, 'basalt.toml', 'package', version, dryRun)
 		},
 	},
 	'woof-plugin': {
@@ -222,7 +235,7 @@ export const ecosystems = {
 		async lintFileGlobs() {
 			return ['400-ecosystem/woof-plugin/*']
 		},
-		async updateVersion(rootDir, version) {
+		async updateVersion(rootDir, version, dryRun) {
 			const relative = 'manifest.ini'
 			const filepath = path.join(rootDir, relative)
 			if (!(await fileExists(filepath))) {
@@ -230,13 +243,15 @@ export const ecosystems = {
 			}
 
 			const text = await fs.readFile(filepath, 'utf-8')
-			const output = replaceIniTopLevelValue(text, 'version', version)
+			const { output, oldVersion } = replaceIniTopLevelValue(text, 'version', version)
 			if (output === text) {
 				return []
 			}
 
-			await fs.writeFile(filepath, output)
-			return [relative]
+			if (!dryRun) {
+				await fs.writeFile(filepath, output)
+			}
+			return [{ relativePath: relative, oldVersion, newVersion: version }]
 		},
 	},
 	'zed-extension': {
@@ -247,8 +262,8 @@ export const ecosystems = {
 		async lintFileGlobs() {
 			return ['400-ecosystem/zed-extension/*']
 		},
-		async updateVersion(rootDir, version) {
-			return await updateTomlVersion(rootDir, 'extension.toml', null, version)
+		async updateVersion(rootDir, version, dryRun) {
+			return await updateTomlVersion(rootDir, 'extension.toml', null, version, dryRun)
 		},
 	},
 	java: {
@@ -265,8 +280,8 @@ export const ecosystems = {
 		},
 		// Handles both Gradle and Maven so a later `java-gradle` / `java-maven` split
 		// can reuse the same updater.
-		async updateVersion(rootDir, version) {
-			const modified: string[] = []
+		async updateVersion(rootDir, version, dryRun) {
+			const modified: VersionUpdate[] = []
 
 			const gradleProperties = 'gradle.properties'
 			const gradlePropertiesPath = path.join(rootDir, gradleProperties)
@@ -279,8 +294,14 @@ export const ecosystems = {
 						text.slice(0, match.index) +
 						`${match[1]}${version}${match[3]}` +
 						text.slice(match.index + match[0].length)
-					await fs.writeFile(gradlePropertiesPath, output)
-					modified.push(gradleProperties)
+					if (!dryRun) {
+						await fs.writeFile(gradlePropertiesPath, output)
+					}
+					modified.push({
+						relativePath: gradleProperties,
+						oldVersion: match[2]!,
+						newVersion: version,
+					})
 				}
 			}
 
@@ -304,8 +325,10 @@ export const ecosystems = {
 						text.slice(0, match.index) +
 						`${match[1]}${match[2]}${version}${match[2]}${match[4]}` +
 						text.slice(match.index + match[0].length)
-					await fs.writeFile(filepath, output)
-					modified.push(relative)
+					if (!dryRun) {
+						await fs.writeFile(filepath, output)
+					}
+					modified.push({ relativePath: relative, oldVersion: match[3]!, newVersion: version })
 				}
 			}
 
@@ -313,10 +336,12 @@ export const ecosystems = {
 			const pomPath = path.join(rootDir, pom)
 			if (await fileExists(pomPath)) {
 				const text = await fs.readFile(pomPath, 'utf-8')
-				const output = replacePomVersion(text, version)
+				const { output, oldVersion } = replacePomVersion(text, version)
 				if (output !== text) {
-					await fs.writeFile(pomPath, output)
-					modified.push(pom)
+					if (!dryRun) {
+						await fs.writeFile(pomPath, output)
+					}
+					modified.push({ relativePath: pom, oldVersion, newVersion: version })
 				}
 			}
 
@@ -342,8 +367,8 @@ export const ecosystems = {
 		async lintFileGlobs() {
 			return ['400-ecosystem/rust/*']
 		},
-		async updateVersion(rootDir, version) {
-			return await updateCargoVersion(rootDir, version)
+		async updateVersion(rootDir, version, dryRun) {
+			return await updateCargoVersion(rootDir, version, dryRun)
 		},
 	},
 	webext: {
@@ -371,8 +396,8 @@ export const ecosystems = {
 		async lintFileGlobs() {
 			return ['400-ecosystem/webext/*']
 		},
-		async updateVersion(rootDir, version) {
-			return await updateJsonVersion(rootDir, 'manifest.json', version)
+		async updateVersion(rootDir, version, dryRun) {
+			return await updateJsonVersion(rootDir, 'manifest.json', version, dryRun)
 		},
 	},
 	go: {
@@ -386,7 +411,7 @@ export const ecosystems = {
 		async lintFileGlobs() {
 			return ['400-ecosystem/go/*']
 		},
-		async updateVersion(rootDir, version) {
+		async updateVersion(rootDir, version, dryRun) {
 			// Go module versions come from Git tags. If the project keeps an explicit
 			// VERSION file, keep that in sync as well.
 			const relative = 'VERSION'
@@ -401,8 +426,10 @@ export const ecosystems = {
 				return []
 			}
 
-			await fs.writeFile(filepath, output)
-			return [relative]
+			if (!dryRun) {
+				await fs.writeFile(filepath, output)
+			}
+			return [{ relativePath: relative, oldVersion: text.trim(), newVersion: version }]
 		},
 		templates: {
 			'hello-world': {
@@ -452,13 +479,14 @@ export async function incrementVersionEcosystem(
 	id: EcosystemId,
 	rootDir: string,
 	version: string,
-): Promise<string[]> {
+	dryRun: boolean,
+): Promise<VersionUpdate[]> {
 	const definition = getConfigEcosystem(id)
 	if (!definition.updateVersion) {
 		return []
 	}
 
-	return await definition.updateVersion(rootDir, version)
+	return await definition.updateVersion(rootDir, version, dryRun)
 }
 
 async function fileExists(filepath: string): Promise<boolean> {
@@ -491,20 +519,24 @@ async function updateJsonVersion(
 	rootDir: string,
 	relative: string,
 	version: string,
-): Promise<string[]> {
+	dryRun: boolean,
+): Promise<VersionUpdate[]> {
 	const filepath = path.join(rootDir, relative)
 	if (!(await fileExists(filepath))) {
 		return []
 	}
 
 	const text = await fs.readFile(filepath, 'utf-8')
-	const output = text.replace(/"version"\s*:\s*"[^"]*"/, `"version": "${version}"`)
+	const regex = /"version"\s*:\s*"([^"]*)"/
+	const output = text.replace(regex, `"version": "${version}"`)
 	if (output === text) {
 		return []
 	}
 
-	await fs.writeFile(filepath, output)
-	return [relative]
+	if (!dryRun) {
+		await fs.writeFile(filepath, output)
+	}
+	return [{ relativePath: relative, oldVersion: regex.exec(text)![1]!, newVersion: version }]
 }
 
 async function updateTomlVersion(
@@ -512,13 +544,15 @@ async function updateTomlVersion(
 	relative: string,
 	section: string | null,
 	version: string,
-): Promise<string[]> {
+	dryRun: boolean,
+): Promise<VersionUpdate[]> {
 	const filepath = path.join(rootDir, relative)
 	if (!(await fileExists(filepath))) {
 		return []
 	}
 
-	return (await mergeTomlVersion(filepath, section, version)) ? [relative] : []
+	const oldVersion = await mergeTomlVersion(filepath, section, version, dryRun)
+	return oldVersion ? [{ relativePath: relative, oldVersion, newVersion: version }] : []
 }
 
 type CargoManifest = {
@@ -539,14 +573,18 @@ const cargoDependencyTables = ['dependencies', 'dev-dependencies', 'build-depend
 // version requirements of path dependencies between members (both in
 // `[workspace.dependencies]` and in each member's dependency tables), and the
 // entries of the members in the shared Cargo.lock.
-async function updateCargoVersion(rootDir: string, version: string): Promise<string[]> {
+async function updateCargoVersion(
+	rootDir: string,
+	version: string,
+	dryRun: boolean,
+): Promise<VersionUpdate[]> {
 	const rootManifestPath = path.join(rootDir, 'Cargo.toml')
 	if (!(await fileExists(rootManifestPath))) {
 		return []
 	}
 	const rootManifest = toml.parse(await fs.readFile(rootManifestPath, 'utf-8')) as CargoManifest
 
-	const modified = new Set<string>()
+	const modified = new Map<string, VersionUpdate>()
 	// Package name -> version before the update, for every package whose version was bumped.
 	const bumped = new Map<string, string>()
 
@@ -556,8 +594,12 @@ async function updateCargoVersion(rootDir: string, version: string): Promise<str
 		isLiteralVersion(workspaceVersion) &&
 		workspaceVersion !== version
 	if (workspaceVersionBumped) {
-		if (await mergeTomlVersion(rootManifestPath, 'workspace.package', version)) {
-			modified.add('Cargo.toml')
+		if (await mergeTomlVersion(rootManifestPath, 'workspace.package', version, dryRun)) {
+			modified.set('Cargo.toml', {
+				relativePath: 'Cargo.toml',
+				oldVersion: workspaceVersion,
+				newVersion: version,
+			})
 		}
 	}
 
@@ -585,8 +627,12 @@ async function updateCargoVersion(rootDir: string, version: string): Promise<str
 			if (!isLiteralVersion(pkg.version) || pkg.version === version) {
 				continue
 			}
-			if (await mergeTomlVersion(manifestPath, 'package', version)) {
-				modified.add(relative)
+			if (await mergeTomlVersion(manifestPath, 'package', version, dryRun)) {
+				modified.set(relative, {
+					relativePath: relative,
+					oldVersion: pkg.version,
+					newVersion: version,
+				})
 				bumped.set(pkg.name, pkg.version)
 			}
 		} else if (isCargoWorkspaceInherited(pkg.version) && workspaceVersionBumped) {
@@ -595,14 +641,25 @@ async function updateCargoVersion(rootDir: string, version: string): Promise<str
 	}
 
 	if (bumped.size === 0) {
-		return [...modified]
+		return [...modified.values()]
 	}
+
+	// Files that only reference a bumped package have no version of their own to report.
+	const bumpedFrom = bumped.values().next().value!
 
 	// Update version requirements of path dependencies that point to bumped members.
 	if (rootManifest.workspace?.dependencies) {
 		const override = cargoDependencyOverride(rootManifest.workspace.dependencies, bumped, version)
-		if (override && (await mergeTomlOverride(rootManifestPath, { workspace: { dependencies: override } }))) {
-			modified.add('Cargo.toml')
+		if (
+			override &&
+			(await mergeTomlOverride(rootManifestPath, { workspace: { dependencies: override } }, dryRun)) &&
+			!modified.has('Cargo.toml')
+		) {
+			modified.set('Cargo.toml', {
+				relativePath: 'Cargo.toml',
+				oldVersion: bumpedFrom,
+				newVersion: version,
+			})
 		}
 	}
 	for (const [memberDir, manifest] of memberManifests) {
@@ -629,17 +686,22 @@ async function updateCargoVersion(rootDir: string, version: string): Promise<str
 		const relative = path.join(memberDir, 'Cargo.toml')
 		if (
 			Object.keys(override).length > 0 &&
-			(await mergeTomlOverride(path.join(rootDir, relative), override))
+			(await mergeTomlOverride(path.join(rootDir, relative), override, dryRun)) &&
+			!modified.has(relative)
 		) {
-			modified.add(relative)
+			modified.set(relative, { relativePath: relative, oldVersion: bumpedFrom, newVersion: version })
 		}
 	}
 
-	if (await updateCargoLockVersion(rootDir, bumped, version)) {
-		modified.add('Cargo.lock')
+	if (await updateCargoLockVersion(rootDir, bumped, version, dryRun)) {
+		modified.set('Cargo.lock', {
+			relativePath: 'Cargo.lock',
+			oldVersion: bumpedFrom,
+			newVersion: version,
+		})
 	}
 
-	return [...modified]
+	return [...modified.values()]
 }
 
 function isCargoWorkspaceInherited(value: unknown): boolean {
@@ -723,7 +785,11 @@ function cargoDependencyOverride(
 	return Object.keys(override).length > 0 ? override : undefined
 }
 
-async function mergeTomlOverride(filepath: string, override: Record<string, any>): Promise<boolean> {
+async function mergeTomlOverride(
+	filepath: string,
+	override: Record<string, any>,
+	dryRun: boolean,
+): Promise<boolean> {
 	const text = await fs.readFile(filepath, 'utf-8')
 	const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'dev-toml-'))
 	try {
@@ -733,7 +799,9 @@ async function mergeTomlOverride(filepath: string, override: Record<string, any>
 		if (output === text) {
 			return false
 		}
-		await fs.writeFile(filepath, output)
+		if (!dryRun) {
+			await fs.writeFile(filepath, output)
+		}
 		return true
 	} finally {
 		await fs.rm(tmpDir, { recursive: true, force: true })
@@ -746,6 +814,7 @@ async function updateCargoLockVersion(
 	rootDir: string,
 	bumped: Map<string, string>,
 	version: string,
+	dryRun: boolean,
 ): Promise<boolean> {
 	const lockPath = path.join(rootDir, 'Cargo.lock')
 	if (!(await fileExists(lockPath))) {
@@ -805,7 +874,9 @@ async function updateCargoLockVersion(
 	try {
 		const overridePath = path.join(tmpDir, 'override.toml')
 		await fs.writeFile(overridePath, overrideText)
-		await fs.writeFile(lockPath, await mergeTOML(lockPath, overridePath))
+		if (!dryRun) {
+			await fs.writeFile(lockPath, await mergeTOML(lockPath, overridePath))
+		}
 		return true
 	} finally {
 		await fs.rm(tmpDir, { recursive: true, force: true })
@@ -815,8 +886,12 @@ async function updateCargoLockVersion(
 // Shared by C and C++. Probes CMake, autoconf, Meson, and Make instead of
 // assuming one build system, so `c-cmake` / `c-autoconf` / `c-meson` / `c-make`
 // can reuse it.
-async function updateCFamilyVersion(rootDir: string, version: string): Promise<string[]> {
-	const candidates: [string, (text: string) => string][] = [
+async function updateCFamilyVersion(
+	rootDir: string,
+	version: string,
+	dryRun: boolean,
+): Promise<VersionUpdate[]> {
+	const candidates: [string, (text: string) => VersionReplacement][] = [
 		['CMakeLists.txt', (text) => replaceCmakeVersion(text, version)],
 		['configure.ac', (text) => replaceAutoconfVersion(text, version)],
 		['configure.in', (text) => replaceAutoconfVersion(text, version)],
@@ -833,10 +908,12 @@ async function updateCFamilyVersion(rootDir: string, version: string): Promise<s
 		}
 
 		const text = await fs.readFile(filepath, 'utf-8')
-		const output = transform(text)
+		const { output, oldVersion } = transform(text)
 		if (output !== text) {
-			await fs.writeFile(filepath, output)
-			return [relative]
+			if (!dryRun) {
+				await fs.writeFile(filepath, output)
+			}
+			return [{ relativePath: relative, oldVersion, newVersion: version }]
 		}
 	}
 
@@ -849,7 +926,8 @@ async function mergeTomlVersion(
 	filepath: string,
 	section: string | null,
 	version: string,
-): Promise<boolean> {
+	dryRun: boolean,
+): Promise<string | undefined> {
 	const text = await fs.readFile(filepath, 'utf-8')
 	const keys = section === null ? [] : section.split('.')
 	let table: any = toml.parse(text)
@@ -857,10 +935,10 @@ async function mergeTomlVersion(
 		table = table?.[key]
 	}
 	if (typeof table?.version !== 'string' || !isLiteralVersion(table.version)) {
-		return false
+		return undefined
 	}
 	if (table.version === version) {
-		return false
+		return undefined
 	}
 
 	const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'dev-toml-'))
@@ -870,10 +948,12 @@ async function mergeTomlVersion(
 		await fs.writeFile(overridePath, `${header}version = ${JSON.stringify(version)}\n`)
 		const output = await mergeTOML(filepath, overridePath)
 		if (output === text) {
-			return false
+			return undefined
 		}
-		await fs.writeFile(filepath, output)
-		return true
+		if (!dryRun) {
+			await fs.writeFile(filepath, output)
+		}
+		return table.version
 	} finally {
 		await fs.rm(tmpDir, { recursive: true, force: true })
 	}
@@ -884,7 +964,7 @@ function replaceIniValue(
 	section: string,
 	key: string,
 	value: string,
-): string {
+): VersionReplacement {
 	const newline = text.includes('\r\n') ? '\r\n' : '\n'
 	const lines = text.split(/\r?\n/)
 	let inSection = false
@@ -906,14 +986,14 @@ function replaceIniValue(
 		).exec(line)
 		if (match && isLiteralVersion(match[2]!)) {
 			lines[index] = `${match[1]}${value}${match[3]}`
-			return lines.join(newline)
+			return { output: lines.join(newline), oldVersion: match[2]! }
 		}
 	}
 
-	return text
+	return { output: text, oldVersion: '' }
 }
 
-function replaceIniTopLevelValue(text: string, key: string, value: string): string {
+function replaceIniTopLevelValue(text: string, key: string, value: string): VersionReplacement {
 	const newline = text.includes('\r\n') ? '\r\n' : '\n'
 	const lines = text.split(/\r?\n/)
 
@@ -928,14 +1008,14 @@ function replaceIniTopLevelValue(text: string, key: string, value: string): stri
 		).exec(line)
 		if (match && isLiteralVersion(match[2]!)) {
 			lines[index] = `${match[1]}${value}${match[3]}`
-			return lines.join(newline)
+			return { output: lines.join(newline), oldVersion: match[2]! }
 		}
 	}
 
-	return text
+	return { output: text, oldVersion: '' }
 }
 
-function replaceCmakeVersion(text: string, version: string): string {
+function replaceCmakeVersion(text: string, version: string): VersionReplacement {
 	const project = /\bproject\s*\(([\s\S]*?)\)/.exec(text)
 	if (project) {
 		const block = project[1]!
@@ -946,11 +1026,13 @@ function replaceCmakeVersion(text: string, version: string): string {
 			if (isLiteralVersion(current)) {
 				const blockStart = project.index + project[0].indexOf(block)
 				const valueStart = blockStart + match.index
-				return (
-					text.slice(0, valueStart) +
-					match[0].replace(current, version) +
-					text.slice(valueStart + match[0].length)
-				)
+				return {
+					output:
+						text.slice(0, valueStart) +
+						match[0].replace(current, version) +
+						text.slice(valueStart + match[0].length),
+					oldVersion: current,
+				}
 			}
 
 			const variable = /^\$\{([A-Za-z_][A-Za-z0-9_]*)\}$/.exec(current)?.[1]
@@ -960,35 +1042,39 @@ function replaceCmakeVersion(text: string, version: string): string {
 					'm',
 				).exec(text)
 				if (setMatch && isLiteralVersion(setMatch[3]!)) {
-					return (
-						text.slice(0, setMatch.index) +
-						`${setMatch[1]}${setMatch[2]}${version}${setMatch[2]}` +
-						text.slice(setMatch.index + setMatch[0].length)
-					)
+					return {
+						output:
+							text.slice(0, setMatch.index) +
+							`${setMatch[1]}${setMatch[2]}${version}${setMatch[2]}` +
+							text.slice(setMatch.index + setMatch[0].length),
+						oldVersion: setMatch[3]!,
+					}
 				}
 			}
 		}
 	}
 
 	const setMatch =
-		/\bset\s*\(\s*(PROJECT_VERSION|[A-Za-z_][A-Za-z0-9_]*_VERSION)\s+(["']?)([^"'\s)]+)\2/.exec(
+		/(\bset\s*\(\s*(?:PROJECT_VERSION|[A-Za-z_][A-Za-z0-9_]*_VERSION)\s+)(["']?)([^"'\s)]+)\2/.exec(
 			text,
 		)
 	if (setMatch && isLiteralVersion(setMatch[3]!)) {
-		return (
-			text.slice(0, setMatch.index) +
-			`${setMatch[1]}${setMatch[2]}${version}${setMatch[2]}` +
-			text.slice(setMatch.index + setMatch[0].length)
-		)
+		return {
+			output:
+				text.slice(0, setMatch.index) +
+				`${setMatch[1]}${setMatch[2]}${version}${setMatch[2]}` +
+				text.slice(setMatch.index + setMatch[0].length),
+			oldVersion: setMatch[3]!,
+		}
 	}
 
-	return text
+	return { output: text, oldVersion: '' }
 }
 
-function replaceAutoconfVersion(text: string, version: string): string {
+function replaceAutoconfVersion(text: string, version: string): VersionReplacement {
 	const init = /\bAC_INIT\s*\(([\s\S]*?)\)/.exec(text)
 	if (!init) {
-		return text
+		return { output: text, oldVersion: '' }
 	}
 
 	const args = init[1]!
@@ -999,82 +1085,92 @@ function replaceAutoconfVersion(text: string, version: string): string {
 		const raw = bracketed[2]!
 		const current = raw.trim()
 		if (!isLiteralVersion(current)) {
-			return text
+			return { output: text, oldVersion: '' }
 		}
 
 		const leading = raw.length - raw.trimStart().length
 		const valueStart = argsStart + bracketed.index + bracketed[1]!.length + leading
-		return text.slice(0, valueStart) + version + text.slice(valueStart + current.length)
+		return {
+			output: text.slice(0, valueStart) + version + text.slice(valueStart + current.length),
+			oldVersion: current,
+		}
 	}
 
 	const quoted = /^([\s\S]*?,\s*)(['"])([^'"]*)\2/.exec(args)
 	if (!quoted) {
-		return text
+		return { output: text, oldVersion: '' }
 	}
 
 	const current = quoted[3]!
 	if (!isLiteralVersion(current)) {
-		return text
+		return { output: text, oldVersion: '' }
 	}
 
 	const valueStart = argsStart + quoted.index + quoted[1]!.length + 1
-	return text.slice(0, valueStart) + version + text.slice(valueStart + current.length)
+	return {
+		output: text.slice(0, valueStart) + version + text.slice(valueStart + current.length),
+		oldVersion: current,
+	}
 }
 
-function replaceMesonVersion(text: string, version: string): string {
+function replaceMesonVersion(text: string, version: string): VersionReplacement {
 	const project = /\bproject\s*\(([\s\S]*?)\)/.exec(text)
 	if (!project) {
-		return text
+		return { output: text, oldVersion: '' }
 	}
 
 	const block = project[1]!
 	const match = /\bversion\s*:\s*(['"])(.*?)\1/.exec(block)
 	if (!match) {
-		return text
+		return { output: text, oldVersion: '' }
 	}
 
 	const current = match[2]!
 	if (!isLiteralVersion(current)) {
-		return text
+		return { output: text, oldVersion: '' }
 	}
 
 	const blockStart = project.index + project[0].indexOf(block)
 	const valueStart = blockStart + match.index
-	return (
-		text.slice(0, valueStart) +
-		match[0].replace(current, version) +
-		text.slice(valueStart + match[0].length)
-	)
+	return {
+		output:
+			text.slice(0, valueStart) +
+			match[0].replace(current, version) +
+			text.slice(valueStart + match[0].length),
+		oldVersion: current,
+	}
 }
 
-function replaceMakefileVersion(text: string, version: string): string {
+function replaceMakefileVersion(text: string, version: string): VersionReplacement {
 	const match =
 		/^([ \t]*(?:VERSION|PACKAGE_VERSION)[ \t]*[:?+]?=[ \t]*)(['"]?)([^'"\s#]+)\2([ \t]*(?:#.*)?)$/m.exec(
 			text,
 		)
 	if (!match) {
-		return text
+		return { output: text, oldVersion: '' }
 	}
 
 	const current = match[3]!
 	if (!isLiteralVersion(current)) {
-		return text
+		return { output: text, oldVersion: '' }
 	}
 
-	return (
-		text.slice(0, match.index) +
-		`${match[1]}${match[2]}${version}${match[2]}${match[4]}` +
-		text.slice(match.index + match[0].length)
-	)
+	return {
+		output:
+			text.slice(0, match.index) +
+			`${match[1]}${match[2]}${version}${match[2]}${match[4]}` +
+			text.slice(match.index + match[0].length),
+		oldVersion: current,
+	}
 }
 
-function replacePomVersion(text: string, version: string): string {
+function replacePomVersion(text: string, version: string): VersionReplacement {
 	const parent = /<parent>[\s\S]*?<\/parent>/.exec(text)
 	const start = parent ? parent.index + parent[0].length : 0
 	const tail = text.slice(start)
 	const match = /<version>([ \t]*)([^<]*?)([ \t]*)<\/version>/.exec(tail)
 	if (!match) {
-		return text
+		return { output: text, oldVersion: '' }
 	}
 
 	const current = match[2]!.trim()
@@ -1083,23 +1179,27 @@ function replacePomVersion(text: string, version: string): string {
 		if (property === 'revision') {
 			const revision = /<revision>([ \t]*)([^<]*?)([ \t]*)<\/revision>/.exec(text)
 			if (revision) {
-				return (
-					text.slice(0, revision.index) +
-					`<revision>${revision[1]}${version}${revision[3]}</revision>` +
-					text.slice(revision.index + revision[0].length)
-				)
+				return {
+					output:
+						text.slice(0, revision.index) +
+						`<revision>${revision[1]}${version}${revision[3]}</revision>` +
+						text.slice(revision.index + revision[0].length),
+					oldVersion: revision[2]!,
+				}
 			}
 		}
 
-		return text
+		return { output: text, oldVersion: '' }
 	}
 
 	const matchStart = start + match.index
-	return (
-		text.slice(0, matchStart) +
-		`<version>${match[1]}${version}${match[3]}</version>` +
-		text.slice(matchStart + match[0].length)
-	)
+	return {
+		output:
+			text.slice(0, matchStart) +
+			`<version>${match[1]}${version}${match[3]}</version>` +
+			text.slice(matchStart + match[0].length),
+		oldVersion: current,
+	}
 }
 
 function isLiteralVersion(value: string): boolean {
