@@ -1,0 +1,18 @@
+{{- if and (not .IsHome) .File -}}
+{{- $api := default "http://localhost:6005/api/files/open" .Site.Params.OpenFileAPI -}}
+<details class="open-file" data-api="{{ $api }}">
+  <summary class="open-file__summary">
+    <svg class="book-icon" aria-hidden="true">{{ partial "docs/icon" "edit" }}</svg>
+    <span>Open file</span>
+  </summary>
+  <ul class="open-file__menu">
+    <li>
+      <button type="button" class="open-file__editor" data-editor="zed" data-path="{{ .File.Filename }}">Zed</button>
+    </li>
+    <li>
+      <button type="button" class="open-file__editor" data-editor="vscode" data-path="{{ .File.Filename }}">VSCode</button>
+    </li>
+  </ul>
+  <p class="open-file__status" hidden aria-live="polite"></p>
+</details>
+{{- end -}}

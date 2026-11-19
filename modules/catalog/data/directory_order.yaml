@@ -1,0 +1,15 @@
+# Section order for the home directory index (and preferred sidebar weight).
+# "Root" = root-level pages (Root Files). "Other" = top-level ~Other page if not under Root.
+# Missing section names are skipped.
+- Root
+- Self
+- Academic Disciplines
+- Crafts & Arts & Hobbies
+- Computing Areas
+- Computer Systems & Things
+- Software Development
+- Computing Languages & Environments
+- Computing Other
+- Computer Applications
+- Computer Programs
+- Other

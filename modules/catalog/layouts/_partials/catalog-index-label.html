@@ -1,0 +1,8 @@
+{{- /* Filename label for directory index; preserve ~Other after mount rename. */ -}}
+{{- if not .File -}}
+  {{- partial "docs/title" . -}}
+{{- else if eq .File.BaseFileName "other" -}}
+~Other
+{{- else -}}
+{{- .File.BaseFileName -}}
+{{- end -}}

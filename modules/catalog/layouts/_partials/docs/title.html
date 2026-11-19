@@ -1,0 +1,25 @@
+{{/*
+  Page name for menus / <title>: prefer explicit frontmatter, then first
+  markdown H1, then raw filename. Avoid Hugo's title-casing which turns
+  "3D Modeling" into "3 D Modeling". Strip HTML comments (e.g. omit from toc).
+*/}}
+{{ $title := "" }}
+
+{{ if isset .Params "linkTitle" }}
+  {{ $title = .LinkTitle }}
+{{ else if isset .Params "title" }}
+  {{ $title = .Params.title }}
+{{ else }}
+  {{ $matches := findRESubmatch `(?m)^#\s+(.+)$` .RawContent 1 }}
+  {{ if $matches }}
+    {{ $title = index (index $matches 0) 1 }}
+  {{ else if and .File .File.BaseFileName }}
+    {{ $title = .File.BaseFileName }}
+  {{ else }}
+    {{ $title = .Title }}
+  {{ end }}
+{{ end }}
+
+{{ $title = $title | replaceRE `<!--.*?-->` "" | strings.TrimSpace }}
+
+{{ return $title }}

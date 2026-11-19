@@ -1,0 +1,55 @@
+baseURL = "http://localhost:1313/"
+title = "Catalog"
+theme = "hugo-catalog"
+publishDir = "../../.data/catalog-output"
+resourceDir = "../../.data/catalog-resources"
+noBuildLock = true
+
+[params]
+  BookSection = "/"
+  BookSearch = true
+  BookComments = false
+  OpenFileAPI = "http://localhost:6005/api/files/open"
+
+[markup.goldmark.renderer]
+  unsafe = true
+
+[[cascade]]
+  type = "docs"
+  [cascade.target]
+    path = "/**"
+
+[module]
+  [[module.mounts]]
+    source = "content"
+    target = "content"
+  [[module.mounts]]
+    source = "@CATALOG_CONTENT_DIR@/Academic Disciplines"
+    target = "content/Academic Disciplines"
+  [[module.mounts]]
+    source = "@CATALOG_CONTENT_DIR@/Computer Applications"
+    target = "content/Computer Applications"
+  [[module.mounts]]
+    source = "@CATALOG_CONTENT_DIR@/Computer Programs"
+    target = "content/Computer Programs"
+  [[module.mounts]]
+    source = "@CATALOG_CONTENT_DIR@/Computer Systems & Things"
+    target = "content/Computer Systems & Things"
+  [[module.mounts]]
+    source = "@CATALOG_CONTENT_DIR@/Computing Areas"
+    target = "content/Computing Areas"
+  [[module.mounts]]
+    source = "@CATALOG_CONTENT_DIR@/Computing Languages & Environments"
+    target = "content/Computing Languages & Environments"
+  [[module.mounts]]
+    source = "@CATALOG_CONTENT_DIR@/Crafts & Arts & Hobbies"
+    target = "content/Crafts & Arts & Hobbies"
+  [[module.mounts]]
+    source = "@CATALOG_CONTENT_DIR@/Self"
+    target = "content/Self"
+  [[module.mounts]]
+    source = "@CATALOG_CONTENT_DIR@/Software Development"
+    target = "content/Software Development"
+  [[module.mounts]]
+    source = "@CATALOG_CONTENT_DIR@/~Other.md"
+    target = "content/other.md"

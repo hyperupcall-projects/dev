@@ -1,0 +1,3 @@
+.hugo_build.lock
+config/catalog.service
+config/hugo.generated.toml
