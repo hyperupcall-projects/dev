@@ -1,5 +1,5 @@
 {
-	"exclude": ["**/config/templates/**", "**/devserver/dist/**"],
+	"exclude": ["**/config/templates/**", "**/devserver/dist/**", "**/modules/catalog/**"],
 	"compilerOptions": {
 		"skipLibCheck": true,
 		"strict": true,

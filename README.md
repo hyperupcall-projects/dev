@@ -1,5 +1,3 @@
 # dev
 
-My development tool. It helps with creating new projects from a template, managing the configuration of those projects, and more!
-
-See [docs/index.md](./docs/index.md) for details.
+A place for my development and computer tools. See [the docs](./docs/index.md) for details.
