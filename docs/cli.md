@@ -1,4 +1,4 @@
-# dev — Documentation
+# CLI
 
 `dev` is a personal development tool. It can:
 
