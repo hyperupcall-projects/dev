@@ -184,14 +184,26 @@ async function askForNewVersion(
 	}
 
 	const render = () => {
+		const columns = process.stdout.columns || 80
 		const tabs = choices.map(({ label, version }, index) => {
 			const selected = index === choiceIndex
 			const value = index === customIndex ? `${customVersion}${selected ? '▏' : ''}` : version
 			return styleText(selected ? ['inverse', 'bold'] : 'dim', ` ${label} ${value} `)
 		})
 
+		// Wraps between tabs, so that a narrow terminal doesn't split a tab across lines.
+		const tabLines: string[] = []
+		for (const tab of tabs) {
+			const line = tabLines.at(-1)
+			if (line !== undefined && stripVTControlCharacters(`${line} ${tab}`).length <= columns) {
+				tabLines[tabLines.length - 1] = `${line} ${tab}`
+			} else {
+				tabLines.push(`  ${tab}`)
+			}
+		}
+
 		// Leaves room for the rest of the interface, so that redrawing never scrolls.
-		const maxFiles = Math.max(1, (process.stdout.rows ?? 24) - 8)
+		const maxFiles = Math.max(1, (process.stdout.rows ?? 24) - 7 - tabLines.length)
 		const shownFiles = files.length > maxFiles ? files.slice(0, maxFiles - 1) : files
 		const version = getSelectedVersion()
 		const fileLines = shownFiles.map((file) => formatFile(file, version))
@@ -199,14 +211,14 @@ async function askForNewVersion(
 			fileLines.push(styleText('dim', `  … and ${files.length - shownFiles.length} more`))
 		}
 		if (files.length === 0) {
-			fileLines.push(styleText('dim', '  No files with a version to update'))
+			fileLines.push(styleText('dim', '  No relevant files found.'))
 		}
 
 		const lettersSwitch = choiceIndex !== customIndex || customVersion === ''
 		const lines = [
-			`${styleText('cyan', '◆')} Choose the new version ${styleText('dim', `(current: v${currentVersion})`)}`,
+			`${styleText('cyan', '◆')} Choose new version`,
 			'',
-			`  ${tabs.join(' ')}`,
+			...tabLines,
 			'',
 			...fileLines,
 			'',
@@ -219,7 +231,6 @@ async function askForNewVersion(
 			),
 		]
 
-		const columns = process.stdout.columns || 80
 		const clear = renderedRows > 0 ? ansiEscapes.cursorUp(renderedRows) : ''
 		process.stdout.write(`${clear}${ansiEscapes.eraseDown}${lines.join('\n')}\n`)
 		renderedRows = lines.reduce((rows, line) => {
@@ -307,9 +318,6 @@ async function createVersionCommitAndTag(version: string) {
 		})
 
 		console.log(`✓ Created annotated tag: ${version}`)
-		console.log(`\nVersion ${version} has been successfully created!`)
-		console.log(`\nTo push the changes and tag to remote, run:`)
-		console.log(`  git push && git push --tags`)
 	} catch (error: any) {
 		console.error('Error creating commit and tag:', error.message)
 		process.exit(1)
