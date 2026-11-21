@@ -13,7 +13,6 @@ import {
 } from '#utilities/repositories.ts'
 import type { Octokit } from 'octokit'
 import { detectEcosystem, ecosystems } from '#utilities/ecosystems.ts'
-import type { CommandReposRunOptions } from '#types'
 import process from 'node:process'
 import { getDevConfig } from '#utilities/dev-config.ts'
 
@@ -226,7 +225,10 @@ export async function runSyncRepositories() {
 export async function runCommandInRepositories({
 	command,
 	args,
-}: CommandReposRunOptions) {
+}: {
+	command: string
+	args: string[]
+}) {
 	const config = await getRepositoriesConfig()
 	for (const orgEntry of await fs.readdir(config.organizationsDir, {
 		withFileTypes: true,

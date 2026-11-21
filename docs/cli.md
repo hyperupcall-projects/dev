@@ -119,33 +119,72 @@ dev lint yamllint
 
 Right now there is one linter:
 
-| Linter     | Files              | Default command                                |
+| Linter     | Files              | Command                                        |
 | ---------- | ------------------ | ---------------------------------------------- |
 | `yamllint` | Detected as `yaml` | `yamllint -c <dev's config/.yamllint.yaml>`    |
 
 The files are detected once, before any linter runs, and their absolute paths are appended to the command. Everything on disk counts, including files and directories excluded by `.gitignore` and symlinked files; only `node_modules/` and `.data/` (and `.git/`, `target/`) are skipped. A linter with no matching files prints `SKIP`. A non-zero exit code from a linter makes `dev lint` exit with code 1.
 
-Each linter's command can be overridden in `dev.toml` (see [`[lint]`](#lint)). Use `{config_file}` to refer to the linter's config file.
+Linter commands are defined in `utilities/config.ts`.
 
 ### `dev format [formatter]`
 
 Formats the project with the configured formatters.
 
-With no `formatter`, it detects the project's files, then asks which formatter(s) to run. Pass a formatter name to run it directly:
+With no `formatter`, it lists every detected filetype with its file count and configured formatter. Types such as `binary`, `plaintext`, and `_other` appear even when their formatter is `none`. Configured types are selected initially; use the keyboard to choose what to run or change a formatter:
+
+| Key | Action |
+| --- | ------ |
+| ↑ / ↓ | Move between filetypes |
+| Space | Toggle the highlighted type for this run |
+| `a` | Select or deselect all types with a configured formatter |
+| `p` | Save a formatter for this type in the project's `dev.toml` |
+| `g` | Save a global formatter for this type in `config/dev-global.toml` |
+| `f` | Show all file paths for the highlighted type |
+| Enter | Run the selected, configured formatters |
+| Esc / Ctrl+C | Cancel |
+
+Navigation stops at the first and last rows in both the filetype picker and file view. The file view scrolls with ↑ / ↓. Enter or Esc returns to the filetype picker; Ctrl+C cancels formatting.
+
+The formatter menu includes **None**. Project settings take precedence over global settings; choose **Use global default** in the project menu to remove an override. Changes are saved immediately, and cancelling formatting does not undo saved settings.
+
+Pass a formatter name to run it directly on all of its supported filetypes, overriding assignments and disabled filetypes:
 
 ```sh
 dev format yamlfmt
 ```
 
-Right now there is one formatter:
+Shared defaults come from [`config/dev-global.toml`](../config/dev-global.toml), with project overrides in `dev.toml`. A missing assignment or `false` means no formatter. Each selected filetype uses one formatter, and files assigned to the same formatter are grouped into one invocation. Config shape is validated using Ajv and an inline schema in [`utilities/formatters.ts`](../utilities/formatters.ts); configured formatters must support their assigned filetypes. The picker requires an interactive terminal; scripts can use `dev format <formatter>`.
 
-| Formatter | Files              | Default command                                |
-| --------- | ------------------ | ---------------------------------------------- |
-| `yamlfmt` | Detected as `yaml` | `yamlfmt -conf <dev's config/.yamlfmt.yaml>`   |
+Available formatters:
+
+| Formatter | Detected filetypes | Command |
+| --------- | ------------------ | --------------- |
+| `yamlfmt` | `yaml` | `yamlfmt -conf <dev's config/.yamlfmt.yaml>` |
+| `prettier` | `javascript`, `typescript`, `json`, `jsonc`, `css`, `html`, `markdown`, `yaml` | `prettier --write` |
+| `rustfmt` | `rust` | `rustfmt` |
+| `biome` | `javascript`, `typescript`, `json`, `jsonc`, `css` | `biome format --write` |
+| `dprint` | `javascript`, `typescript`, `json`, `jsonc`, `markdown`, `toml` | `dprint fmt` |
+| `clang-format` | `c`, `cpp` | `clang-format -i` |
+| `gofmt` | `go` | `gofmt -w` |
+| `zig` | `zig` (`.zig`, `.zon`) | `zig fmt` |
+| `shfmt` | `shell` | `shfmt -w` |
+| `taplo` | `toml` | `taplo fmt` |
+| `perltidy` | `perl` | `perltidy -b -bext=/` |
+| `rubyfmt` | `ruby` | `rubyfmt -i` |
+| `latexindent` | `latex` | `latexindent -w` |
+| `markdownlint-cli2` | `markdown` | `markdownlint-cli2 --fix` |
+| `mdformat` | `markdown` | `mdformat` |
+| `gersemi` | `cmake` (`CMakeLists.txt`, `.cmake`) | `gersemi --in-place` |
+| `ruff` | `python` | `ruff format` |
+
+The formatter executables must be installed and available on `PATH`. dprint also needs a project configuration with plugins for the filetypes you want to format. Tools use their own project configuration by default, except for the shared `yamlfmt` config shown above. `latexindent -w` also creates backup and log files.
 
 The files are detected once, before any formatter runs, and their absolute paths are appended to the command. Everything on disk counts, including files and directories excluded by `.gitignore` and symlinked files; only `node_modules/` and `.data/` (and `.git/`, `target/`) are skipped. A formatter with no matching files prints `SKIP`.
 
-Each formatter's command can be overridden in `dev.toml` (see [`[format]`](#format)). Use `{config_file}` to refer to the formatter's config file.
+Formatter assignments can be overridden in `dev.toml` (see [`[format]`](#format)). Formatter and linter commands always come from `utilities/config.ts`.
+
+Formatters and linters are defined in `utilities/config.ts`. Each has `filetypes: string[]` and `run: string[]`, containing the executable and its arguments. A tool receives the matching files from all its filetypes in one invocation, with duplicate paths removed. Config paths belong directly in `run`.
 
 ### `dev version [--force]`
 
@@ -236,7 +275,7 @@ Code: `utilities/ecosystems.ts`. An ecosystem defines four things: how to detect
 `dev.toml` is an **optional, per-project** config file. It goes in the project's **root directory**, which is the directory `dev` runs in, set by `--dir` or by the positional `dir` argument of `dev metalint`.
 
 - The file is parsed as TOML with [`smol-toml`](https://github.com/squirrelchat/smol-toml).
-- If the file is missing, defaults are used. If it exists but isn't valid TOML, the command fails with an error.
+- If the file is missing, defaults are used. For formatting, these defaults come from `config/dev-global.toml` in the dev repository. If a config file isn't valid TOML, the command fails with an error.
 - Four commands read it: **`dev metalint`**, **`dev version`**, **`dev format`**, and **`dev lint`**.
 - The name must be `dev.toml`. The `directory/no-files` lint rule reports the old name `project.toml` and offers to rename it to `dev.toml`.
 
@@ -248,12 +287,13 @@ The type is `Config` in `types.d.ts`:
 type Config = {
 	rules?: Record<string, 'off'>
 	updateVersionDirectories?: string[]
-	format?: Record<string, string>
-	lint?: Record<string, string>
+	format?: {
+		filetypes?: Record<string, string | false>
+	}
 }
 ```
 
-All keys are optional. Other keys are ignored.
+All keys are optional. Unknown top-level keys are ignored. `dev format` and `dev lint` validate the config shape with JSON Schema.
 
 ### `[rules]`
 
@@ -325,25 +365,20 @@ Use this in monorepos, or when a project bundles a package from a different ecos
 
 ### `[format]`
 
-Used by `dev format`. Overrides the command that runs for a formatter. The key is the formatter name; the value is its command line. The detected files are appended to it.
+Used by `dev format`. The tables in `config/dev-global.toml` provide shared defaults, and the same tables in a project's `dev.toml` override individual keys.
+
+`[format.filetypes]` assigns a formatter to each detected filetype. Use `false` to disable formatting for a type:
 
 ```toml
-[format]
-yamlfmt = 'yamlfmt -conf {config_file}'
+[format.filetypes]
+typescript = "biome"
+markdown = "mdformat"
+toml = false
 ```
 
-`{config_file}` is replaced with the real path of the formatter's config file. For `yamlfmt`, that is the dev package's `config/.yamlfmt.yaml`. Omit the placeholder to run the formatter without a config file. Formatter names that `dev format` doesn't know are ignored.
+Keys are filetype IDs from `utilities/filetype.ts`, such as `typescript`, `python`, and `cmake`. They are not extensions: `.ts` and `.tsx` both use `typescript`. Values must name a registered formatter that supports that filetype, or be `false`.
 
-### `[lint]`
-
-Used by `dev lint`. Overrides the command that runs for a linter. The key is the linter name; the value is its command line. The detected files are appended to it.
-
-```toml
-[lint]
-yamllint = 'yamllint -c {config_file}'
-```
-
-`{config_file}` is replaced with the real path of the linter's config file. For `yamllint`, that is the dev package's `config/.yamllint.yaml`. Omit the placeholder to run the linter without a config file. Linter names that `dev lint` doesn't know are ignored.
+Formatter and linter commands are hardcoded in `utilities/config.ts`. Command overrides such as `[format.commands]` and `[lint]` are rejected.
 
 ### Full example
 
@@ -355,11 +390,9 @@ updateVersionDirectories = ["editors/vscode"]
 'version-control/project-name/local-remote-name-mismatch' = "off"
 'remote-url/remote-metadata/default-branch-main' = "off"
 
-[format]
-yamlfmt = 'yamlfmt -conf {config_file}'
-
-[lint]
-yamllint = 'yamllint -c {config_file}'
+[format.filetypes]
+typescript = "biome"
+toml = false
 ```
 
 ---

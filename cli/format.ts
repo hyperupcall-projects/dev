@@ -1,147 +1,341 @@
 // SPDX-License-Identifier: MPL-2.0
 // SPDX-FileCopyrightText: Copyright 2023 Edwin Kofler
-import * as fs from 'node:fs/promises'
+import { Formatters } from '#utilities/config.ts'
 import * as path from 'node:path'
 import process from 'node:process'
 import { styleText } from 'node:util'
 import * as clack from '@clack/prompts'
-import { execa, parseCommandString } from 'execa'
-import toml from 'smol-toml'
+import { Table } from 'console-table-printer'
+import { execa } from 'execa'
 
-import { ignoreDirectoriesGlob, pkgRoot } from '#utilities/util.ts'
+import type { Formatter, Linter } from '#utilities/config.ts'
 import { detectFiletypes } from '#utilities/filetype.ts'
+import {
+	groupFilesByFormatter,
+	loadFormatConfig,
+	readToolConfig,
+} from '#utilities/formatters.ts'
+import { ignoreDirectoriesGlob } from '#utilities/util.ts'
+import { MultiSelectPrompt, SelectPrompt } from '@clack/core'
 
-import type { CommandFormatOptions, Config } from '#types'
+import type { Config, FormatConfig } from '#types'
+import { globalFormatConfigPath, saveFormatter } from '#utilities/formatters.ts'
 
-type Formatter = {
-	filetype: string
-	command: string
-	configFile: string
+export async function run(options: {
+	formatter?: string
+	dir?: string
+}) {
+	await runFormatOrLint(Formatters, 'format', options.formatter)
 }
 
-const FORMATTERS: Record<string, Formatter> = {
-	yamlfmt: {
-		filetype: 'yaml',
-		command: 'yamlfmt -conf {config_file}',
-		configFile: path.join(pkgRoot(), 'config/.yamlfmt.yaml'),
-	},
-}
-
-export async function run(options: CommandFormatOptions) {
+export async function runFormatOrLint(
+	tools: Record<string, Formatter | Linter>,
+	action: 'format' | 'lint',
+	toolId?: string,
+) {
 	const rootDir = process.cwd()
-	const overrides = await getFormatOverrides(rootDir)
-	// Format what is actually on disk, so files excluded by `.gitignore` (and the
-	// directory the user is in, if it is gitignored) and symlinked files are
-	// included. Only dependencies and dev's own data directories are skipped.
+	let config: Config
+	let format: Required<FormatConfig> | undefined
+	try {
+		config = await readToolConfig(path.join(rootDir, 'dev.toml'), true)
+		format =
+			action === 'format' ? await loadFormatConfig(config.format, tools) : undefined
+	} catch (err) {
+		console.error(`Cannot load ${action} configuration: ${(err as Error).message}`)
+		process.exitCode = 1
+		return
+	}
+	// Include gitignored and symlinked files, skipping dependencies and dev data.
 	const filesByFiletype = await detectFiletypes({
 		rootDir,
 		gitignore: false,
 		followSymbolicLinks: true,
 		ignore: ignoreDirectoriesGlob(),
 	})
-
-	let formatterIds: string[]
-	if (options.formatter) {
-		if (!(options.formatter in FORMATTERS)) {
-			console.error(
-				`Unknown formatter "${options.formatter}". Available formatters: ${new Intl.ListFormat(
-					'en',
-				).format(Object.keys(FORMATTERS))}`,
-			)
-			process.exitCode = 1
-			return
-		}
-		formatterIds = [options.formatter]
-	} else {
-		const selection = await promptForFormatters(filesByFiletype)
-		if (!selection) {
-			return
-		}
-		formatterIds = selection
-	}
-
-	for (const formatterId of formatterIds) {
-		const formatter = FORMATTERS[formatterId]
-		const files = filesByFiletype[formatter.filetype] ?? []
-		if (files.length === 0) {
-			console.info(
-				`[${styleText('yellow', 'SKIP')}] ${formatterId}: no ${formatter.filetype} files found`,
-			)
-			continue
-		}
-
-		const command = overrides[formatterId] ?? formatter.command
-		const [file, ...args] = parseCommandString(
-			command.replaceAll('{config_file}', formatter.configFile),
-		)
-		if (!file) {
-			console.error(`Formatter "${formatterId}" has an empty command`)
-			process.exitCode = 1
-			continue
-		}
-
-		console.info(
-			`[${styleText('blue', 'RUN')}] ${formatterId}: formatting ${files.length} ${formatter.filetype} file(s)`,
-		)
-		try {
-			await execa(file, [...args, ...files], { cwd: rootDir, stdio: 'inherit' })
-		} catch (err) {
-			console.error(
-				`[${styleText('red', 'FAIL')}] ${formatterId}: ${(err as Error).message}`,
-			)
-			process.exitCode = 1
-		}
-	}
-}
-
-async function promptForFormatters(
-	filesByFiletype: Record<string, string[]>,
-): Promise<string[] | undefined> {
-	const available = Object.entries(FORMATTERS).filter(
-		([, formatter]) => (filesByFiletype[formatter.filetype]?.length ?? 0) > 0,
+	let filesByTool = Object.fromEntries(
+		Object.entries(tools).map(([id, tool]) => [
+			id,
+			[...new Set(tool.filetypes.flatMap((type) => filesByFiletype[type] ?? []))],
+		]),
 	)
-	if (available.length === 0) {
-		console.info('No files found to format.')
-		return
+
+	let toolIds: string[]
+	if (toolId) {
+		if (!Object.hasOwn(tools, toolId)) {
+			console.error(
+				`Unknown tool "${toolId}". Available tools: ${new Intl.ListFormat('en').format(
+					Object.keys(tools),
+				)}`,
+			)
+			process.exitCode = 1
+			return
+		}
+		toolIds = [toolId]
+	} else {
+		if (format) {
+			let selected: string[] | undefined
+			try {
+				selected = await pickFormatFiletypes(
+					rootDir,
+					tools,
+					filesByFiletype,
+					format,
+					config,
+				)
+			} catch (err) {
+				console.error((err as Error).message)
+				process.exitCode = 1
+				return
+			}
+			if (!selected) {
+				return
+			}
+			filesByTool = groupFilesByFormatter(
+				Object.fromEntries(selected.map((type) => [type, filesByFiletype[type]])),
+				format.filetypes,
+			)
+		}
+		const available = Object.keys(tools).filter((id) => filesByTool[id]?.length > 0)
+		if (available.length === 0) {
+			console.info(
+				format
+					? 'No files selected with a configured formatter.'
+					: 'No files found to lint.',
+			)
+			return
+		}
+
+		if (format) {
+			toolIds = available
+		} else {
+			const all = Symbol('all')
+			const selection = await clack.multiselect<string | typeof all>({
+				message: 'Which would you like to run?',
+				options: [
+					{ value: all, label: 'All applicable' },
+					...available.map((id) => ({
+						value: id,
+						label: `${id} (${filesByTool[id].length} ${tools[id].filetypes.join(', ')} files)`,
+					})),
+				],
+				initialValues: available,
+				required: true,
+			})
+			if (clack.isCancel(selection)) {
+				clack.cancel('Cancelled.')
+				return
+			}
+			toolIds = selection.includes(all)
+				? available
+				: selection.filter((id): id is string => typeof id === 'string')
+		}
 	}
 
-	const selection = await clack.multiselect({
-		message: 'Which formatter(s) would you like to run?',
-		options: available.map(([formatterId, formatter]) => ({
-			value: formatterId,
-			label: formatterId,
-			hint: `${filesByFiletype[formatter.filetype].length} ${formatter.filetype} file(s)`,
-		})),
-		initialValues: available.map(([formatterId]) => formatterId),
-		required: true,
-	})
+	for (const id of toolIds) {
+		const tool = tools[id]
+		const files = filesByTool[id]
+		const filetypes = tool.filetypes.join(', ')
+		if (files.length === 0) {
+			console.info(`[${styleText('yellow', 'SKIP')}] ${id}: no ${filetypes} files found`)
+			continue
+		}
 
-	if (clack.isCancel(selection)) {
-		clack.cancel('Cancelled.')
-		return
+		const run = tool.run
+		if (!run[0]) {
+			console.error(`Tool "${id}" has an empty command`)
+			process.exitCode = 1
+			continue
+		}
+
+		console.info(`[${styleText('blue', 'RUN')}] ${id}: ${files.length} file(s)`)
+		try {
+			await execa({ cwd: rootDir, stdio: 'inherit' })`${run} ${files}`
+		} catch (err) {
+			console.error(`[${styleText('red', 'FAIL')}] ${id}: ${(err as Error).message}`)
+			process.exitCode = 1
+		}
 	}
-
-	return selection
 }
 
-async function getFormatOverrides(rootDir: string): Promise<Record<string, string>> {
-	let config: Config
-	try {
-		config = toml.parse(
-			await fs.readFile(path.join(rootDir, 'dev.toml'), 'utf-8'),
-		) as Config
-	} catch (err) {
-		if ((err as NodeJS.ErrnoException)?.code === 'ENOENT') {
-			return {}
+function stopCursorWrapping(
+	prompt: MultiSelectPrompt<{ value: string }> | SelectPrompt<{ value: string }>,
+) {
+	let cursor = prompt.cursor
+	// Clack's own cursor handler runs first; replace its wrap with a bounded move.
+	prompt.on('cursor', (direction) => {
+		if (direction === 'up' || direction === 'left') {
+			prompt.cursor = Math.max(0, cursor - 1)
+		} else if (direction === 'down' || direction === 'right') {
+			prompt.cursor = Math.min(prompt.options.length - 1, cursor + 1)
 		}
-		throw err
-	}
+		cursor = prompt.cursor
+		if (prompt instanceof SelectPrompt) prompt.value = prompt.options[cursor].value
+	})
+}
 
-	const overrides: Record<string, string> = {}
-	for (const [formatterId, command] of Object.entries(config.format ?? {})) {
-		if (typeof command === 'string' && command.trim() !== '') {
-			overrides[formatterId] = command
+export async function pickFormatFiletypes(
+	rootDir: string,
+	tools: Record<string, Formatter>,
+	files: Record<string, string[]>,
+	format: Required<FormatConfig>,
+	project: Config,
+	globalPath = globalFormatConfigPath,
+): Promise<string[] | undefined> {
+	const filetypes = Object.keys(files)
+		.filter((type) => files[type].length > 0)
+		.sort()
+	if (filetypes.length === 0) return []
+	const renderTable = (selection?: string[], cursor?: string) => {
+		const table = new Table({
+			shouldDisableColors: true,
+			columns: [
+				{ name: 'filetype', title: 'Filetype', alignment: 'left' },
+				{ name: 'files', title: 'Files', alignment: 'right' },
+				{ name: 'formatter', title: 'Formatter', alignment: 'left' },
+				{ name: 'scope', title: 'Scope', alignment: 'left' },
+			],
+		})
+		for (const type of filetypes) {
+			const marker = selection
+				? `${cursor === type ? '›' : ' '} ${selection.includes(type) ? '■' : '□'} `
+				: ''
+			table.addRow({
+				filetype: `${marker}${type}`,
+				files: files[type].length,
+				formatter: format.filetypes[type] || 'none',
+				scope: Object.hasOwn(project.format?.filetypes ?? {}, type)
+					? 'project'
+					: 'global',
+			})
+		}
+		return table.render()
+	}
+	if (!process.stdin.isTTY || !process.stdout.isTTY) {
+		console.info(renderTable())
+		throw new Error(
+			'Use an interactive terminal to select filetypes, or run dev format <formatter>.',
+		)
+	}
+	const projectPath = path.join(rootDir, 'dev.toml')
+	let selected = filetypes.filter((type) => typeof format.filetypes[type] === 'string')
+	let cursorAt = filetypes[0]
+	while (true) {
+		let action: string | undefined
+		const prompt = new MultiSelectPrompt({
+			options: filetypes.map((value) => ({ value })),
+			initialValues: selected,
+			cursorAt,
+			required: false,
+			render() {
+				if (this.state === 'cancel') return 'Formatting cancelled.'
+				if (this.state === 'submit') return action ? '' : 'Filetypes selected.'
+				// Keep the header and borders fixed while Clack scrolls the table rows.
+				const [top, headings, divider, ...rows] = renderTable(
+					this.value,
+					this.options[this.cursor].value,
+				).split('\n')
+				const bottom = rows.pop()!
+				return [
+					'Which filetypes would you like to format?',
+					top,
+					headings,
+					divider,
+					...clack.limitOptions({
+						options: rows,
+						cursor: this.cursor,
+						rowPadding: 11,
+						style: (line, active) => (active ? styleText('cyan', line) : line),
+					}),
+					bottom,
+					'↑/↓ move · space select · a all configured · enter run · esc cancel',
+					'p project formatter · g global formatter · f show files',
+				].join('\n')
+			},
+		})
+		stopCursorWrapping(prompt)
+		prompt.on('key', (key, info) => {
+			if (info.name === 'a') {
+				const configured = filetypes.filter(
+					(type) => typeof format.filetypes[type] === 'string',
+				)
+				// Clack already toggled its options, so check the prior selection.
+				prompt.value = configured.every((type) => selected.includes(type))
+					? []
+					: configured
+			}
+			selected = prompt.value ?? []
+			if (key === 'p' || key === 'g' || key === 'f') {
+				action = key
+				prompt.state = 'submit'
+			}
+		})
+		const result = await prompt.prompt()
+		if (clack.isCancel(result) || result === undefined) return
+		selected = result
+		cursorAt = filetypes[prompt.cursor]
+		if (!action) return selected
+		if (action === 'f') {
+			let cancelled = false
+			const viewer = new SelectPrompt({
+				options: files[cursorAt].map((file) => ({
+					value: path.relative(rootDir, file),
+				})),
+				render() {
+					if (this.state === 'cancel') return cancelled ? 'Formatting cancelled.' : ''
+					if (this.state === 'submit') return ''
+					return [
+						`${cursorAt} files (${this.options.length})`,
+						...clack.limitOptions({
+							options: this.options,
+							cursor: this.cursor,
+							rowPadding: 4,
+							style: ({ value }, active) =>
+								active ? styleText('cyan', `› ${value}`) : `  ${value}`,
+						}),
+						'↑/↓ scroll · enter / esc back · ctrl+c cancel',
+					].join('\n')
+				},
+			})
+			stopCursorWrapping(viewer)
+			viewer.on('key', (_, key) => {
+				if (key.ctrl && key.name === 'c') cancelled = true
+			})
+			await viewer.prompt()
+			if (cancelled) return
+			continue
+		}
+		const isProject = action === 'p'
+		const current = isProject
+			? project.format?.filetypes?.[cursorAt]
+			: (await readToolConfig(globalPath)).format?.filetypes?.[cursorAt]
+		const choice = await clack.select({
+			message: `Formatter for ${cursorAt} (${isProject ? 'project' : 'global'})`,
+			initialValue: isProject && current === undefined ? '$inherit' : current || '',
+			options: [
+				...(isProject ? [{ value: '$inherit', label: 'Use global default' }] : []),
+				{ value: '', label: 'None' },
+				...Object.keys(tools)
+					.filter((id) => tools[id].filetypes.includes(cursorAt))
+					.map((id) => ({ value: id, label: id })),
+			],
+		})
+		if (clack.isCancel(choice)) continue
+		await saveFormatter(
+			isProject ? projectPath : globalPath,
+			cursorAt,
+			choice === '$inherit' ? undefined : choice || false,
+		)
+		project = await readToolConfig(projectPath, true)
+		Object.assign(format, await loadFormatConfig(project.format, tools, globalPath))
+		selected = selected.filter((type) => type !== cursorAt)
+		if (typeof format.filetypes[cursorAt] === 'string') selected.push(cursorAt)
+		clack.log.success(
+			`Saved ${cursorAt} formatter in ${isProject ? 'dev.toml' : 'dev-global.toml'}.`,
+		)
+		if (!isProject && Object.hasOwn(project.format?.filetypes ?? {}, cursorAt)) {
+			clack.log.info(
+				'The project override still applies. Press p and choose Use global default to inherit it.',
+			)
 		}
 	}
-	return overrides
 }

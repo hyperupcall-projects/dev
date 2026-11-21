@@ -6,7 +6,6 @@ import { execa } from 'execa'
 import * as diff from 'diff'
 
 import { fileExists, octokit } from '#utilities/util.ts'
-import type { CommandChangelogValidateOptions, CommandScriptOptions } from '#types'
 
 type Release = Awaited<ReturnType<typeof octokit.rest.repos.listReleases>>['data'][number]
 
@@ -182,7 +181,7 @@ function formatDiff(current: string, generated: string): string {
 		.replaceAll(/\n-(?!--)/g, '\n' + styleText('red', '-'))
 }
 
-export async function runPull(_options: CommandScriptOptions) {
+export async function runPull(options: Record<PropertyKey, never>) {
 	const repositoryInfo = await getRepositoryInfo()
 	const releases = await fetchReleases(repositoryInfo)
 	const out = generateChangelog(releases, repositoryInfo)
@@ -192,7 +191,9 @@ export async function runPull(_options: CommandScriptOptions) {
 	console.info(`Wrote ${targetPath}`)
 }
 
-export async function runValidate(options: CommandChangelogValidateOptions) {
+export async function runValidate(options: {
+	diff?: boolean
+}) {
 	const repositoryInfo = await getRepositoryInfo()
 	const releases = await fetchReleases(repositoryInfo)
 	const generated = generateChangelog(releases, repositoryInfo)

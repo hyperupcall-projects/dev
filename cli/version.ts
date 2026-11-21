@@ -14,9 +14,11 @@ import {
 	ecosystems,
 	type VersionUpdate,
 } from '#utilities/ecosystems.ts'
-import type { CommandVersionOptions, Config } from '#types'
+import type { Config } from '#types'
 
-export async function run(options: CommandVersionOptions) {
+export async function run(options: {
+	force?: boolean
+}) {
 	const rootDir = process.cwd()
 	const { stdout: statusOutput } = await execa('git', ['status', '--porcelain'])
 	if (statusOutput.trim() !== '' && !options.force) {

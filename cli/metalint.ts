@@ -15,10 +15,19 @@ import { parseJSON } from 'jsonc-eslint-parser'
 import { detectEcosystem, ecosystems } from '#utilities/ecosystems.ts'
 import { detectFiletypes } from '#utilities/filetype.ts'
 
-import type { CommandFixOptions, Config, Issue, Project } from '#types'
+import type { Config, Issue, Project } from '#types'
 import _ from 'lodash'
 import process from 'node:process'
 import { mergeJSONWithComments, mergeTOML } from '#utilities/util.ts'
+
+type CommandFixOptions = {
+	dir?: string
+	yes?: boolean
+	match?: string[]
+	exclude?: string[]
+	only?: string[]
+	strict?: boolean
+}
 
 export async function run(options: CommandFixOptions) {
 	if (options.dir) {

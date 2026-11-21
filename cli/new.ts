@@ -3,10 +3,10 @@ import * as path from 'node:path'
 import process from 'node:process'
 
 import Handlebars from 'handlebars'
-import { fileExists, Fullname, ignoreDirectories } from '#utilities/util.ts'
+import { fileExists, ignoreDirectories } from '#utilities/util.ts'
+import { Fullname } from '#utilities/config.ts'
 import * as clack from '@clack/prompts'
 
-import type { CommandNewOptions } from '#types'
 import { existsSync } from 'node:fs'
 import {
 	ecosystems,
@@ -14,7 +14,14 @@ import {
 	type EcosystemId,
 } from '#utilities/ecosystems.ts'
 
-export async function run(options: CommandNewOptions) {
+export async function run(options: {
+	dir?: string
+	ecosystem?: string
+	templateName?: string
+	projectName?: string
+	force?: boolean
+	options?: string
+}) {
 	if (!options.dir) {
 		const inputValue = await clack.text({
 			message: 'Choose a directory',

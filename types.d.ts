@@ -3,67 +3,15 @@ declare global {
 	var ws: WebSocket
 }
 
-// Server.
-export type PageDataFn<T> = () => Promise<T>
-
-// Commands.
-export type CommandNewOptions = {
-	dir?: string
-	ecosystem?: string
-	templateName?: string
-	projectName?: string
-	force?: boolean
-	options?: string
-}
-
-export type CommandFixOptions = {
-	dir?: string
-	yes?: boolean
-	match?: string[]
-	exclude?: string[]
-	only?: string[]
-	strict?: boolean
-}
-
-export type CommandInstallOptions = Record<PropertyKey, never>
-
-export type CommandReposOptions = Record<PropertyKey, never>
-
-export type CommandReposRunOptions = {
-	command: string
-	args: string[]
-}
-
-export type CommandScriptOptions = Record<PropertyKey, never>
-
-export type CommandFormatOptions = {
-	formatter?: string
-	dir?: string
-}
-
-export type CommandLintOptions = {
-	linter?: string
-	dir?: string
-}
-
-export type CommandChangelogValidateOptions = {
-	diff?: boolean
-}
-
-export type CommandVersionOptions = {
-	force?: boolean
-}
-
-export type CommandStartServerOptions = {
-	prebundle?: boolean
+export type FormatConfig = {
+	filetypes?: Record<string, string | false>
 }
 
 // Fix.
 export type Config = {
 	rules?: Record<string, 'off'>
 	updateVersionDirectories?: string[]
-	format?: Record<string, string>
-	lint?: Record<string, string>
+	format?: FormatConfig
 }
 export type Project =
 	| {
@@ -104,6 +52,7 @@ export type Issue = {
 }
 
 // Install.
+// TODO
 type InstalledProjectData = {
 	isCloned: boolean
 	isInstalled: boolean

@@ -17,15 +17,18 @@
 		"typecheck": "tsc -p ."
 	},
 	"dependencies": {
+		"@clack/core": "1.6.0",
 		"@clack/prompts": "^1.9.0",
 		"@hono/node-server": "^2.1.9",
 		"@ltd/j-toml": "^1.38.0",
 		"@preact/signals": "^2.11.4",
 		"@rollup/plugin-node-resolve": "^16.0.3",
 		"@shopify/draggable": "^1.2.1",
+		"ajv": "6.15.0",
 		"ansi-escapes": "^7.3.0",
 		"bulma": "^1.0.4",
 		"chokidar": "^6.0.0",
+		"console-table-printer": "^2.16.1",
 		"debounce": "^4.0.0",
 		"dedent": "^1.7.2",
 		"detect-indent": "^7.0.2",

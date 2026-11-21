@@ -13,14 +13,12 @@ import { fileURLToPath } from 'node:url'
 const execFileAsync = promisify(execFile)
 
 export function ignoreDirectories() {
-	return ['node_modules', '__pycache__', '.data']
+	return ['node_modules', '__pycache__', 'target', '.data', '.git', '.hg', '.svn', '.venv', 'venv', '.ruff_cache', '.mypy_cache', '.pytest_cache', 'dist', 'build', '.next', '.nuxt', '.svelte-kit', '.astro', '.turbo', '.parcel-cache', '.cache', '.vite', 'dist', 'out', 'coverage']
 }
 
 export function ignoreDirectoriesGlob() {
 	return ignoreDirectories().map(dir => `**/${dir}/**`)
 }
-
-export const Fullname = 'Edwin Kofler'
 
 async function getGitHubToken(): Promise<string | undefined> {
 	const config = await getDevConfig().catch(() => undefined)

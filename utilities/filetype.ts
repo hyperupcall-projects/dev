@@ -6,28 +6,30 @@ import { globby } from 'globby'
 import shebangCommand from 'shebang-command'
 
 const FILENAME_TO_FILEID: Record<string, string> = {
-	'.clang-format': 'clang-format',
-	'.clang-tidy': 'clang-tidy',
-	'.dockerignore': 'gitignore',
+	'.clang-format': 'yaml',
+	'.clang-tidy': 'yaml',
+	'.clangd': 'yaml',
+	'.dockerignore': 'ignorefile',
 	'.editorconfig': 'editorconfig',
 	'.env': 'dotenv',
-	'.eslintignore': 'gitignore',
+	'.eslintignore': 'ignorefile',
 	'.gitattributes': 'gitattributes',
-	'.gitignore': 'gitignore',
+	'.gitignore': 'ignorefile',
 	'.gitkeep': 'empty',
 	'.gitmodules': 'gitmodules',
-	'.npmignore': 'gitignore',
-	'.prettierignore': 'gitignore',
+	'.npmignore': 'ignorefile',
+	'.prettierignore': 'ignorefile',
 	cmakelists: 'cmake',
 	'cmakelists.txt': 'cmake',
 	containerfile: 'dockerfile',
-	copying: 'license',
+	copying: 'plaintext',
 	dockerfile: 'dockerfile',
+	gemfile: 'ruby',
 	gnumakefile: 'makefile',
-	licence: 'license',
-	license: 'license',
+	license: 'plaintext',
 	makefile: 'makefile',
-	notice: 'license',
+	notice: 'plaintext',
+	rakefile: 'ruby',
 }
 
 const INTERPRETER_TO_FILEID: Record<string, string> = {
@@ -38,28 +40,32 @@ const INTERPRETER_TO_FILEID: Record<string, string> = {
 	ksh: 'shell',
 	node: 'javascript',
 	nodejs: 'javascript',
+	perl: 'perl',
 	php: 'php',
 	python: 'python',
+	ruby: 'ruby',
 	sh: 'shell',
 	zsh: 'shell',
 }
 
 const EXTENSION_TO_FILEID: Record<string, string> = {
 	// archive
-	'7z': 'archive',
-	boz: 'archive',
-	bz2: 'archive',
-	gz: 'archive',
-	rar: 'archive',
-	tar: 'archive',
-	xz: 'archive',
-	zip: 'archive',
+	'7z': 'binary',
+	boz: 'binary',
+	bz2: 'binary',
+	gz: 'binary',
+	rar: 'binary',
+	tar: 'binary',
+	xz: 'binary',
+	zip: 'binary',
 	// binary
 	wasm: 'binary',
 	// c
 	c: 'c',
 	dic: 'c',
 	h: 'c',
+	// cmake
+	cmake: 'cmake',
 	// cpp
 	cc: 'cpp',
 	cpp: 'cpp',
@@ -72,11 +78,11 @@ const EXTENSION_TO_FILEID: Record<string, string> = {
 	// dotenv
 	env: 'dotenv',
 	// executable
-	bat: 'executable',
-	com: 'executable',
-	dll: 'executable',
-	exe: 'executable',
-	msi: 'executable',
+	bat: 'binary',
+	com: 'binary',
+	dll: 'binary',
+	exe: 'binary',
+	msi: 'binary',
 	// gif
 	gif: 'gif',
 	// go
@@ -86,7 +92,7 @@ const EXTENSION_TO_FILEID: Record<string, string> = {
 	html: 'html',
 	shtml: 'html',
 	// ico
-	ico: 'ico',
+	ico: 'binary',
 	// ini
 	cfg: 'ini',
 	conf: 'ini',
@@ -101,23 +107,32 @@ const EXTENSION_TO_FILEID: Record<string, string> = {
 	jsx: 'javascript',
 	mjs: 'javascript',
 	// jpeg
-	jpe: 'jpeg',
-	jpeg: 'jpeg',
-	jpg: 'jpeg',
+	jpe: 'binary',
+	jpeg: 'binary',
+	jpg: 'binary',
 	// json
 	json: 'json',
 	map: 'json',
 	// jsonc
 	jsonc: 'jsonc',
+	// latex
+	cls: 'latex',
+	ltx: 'latex',
+	sty: 'latex',
+	tex: 'latex',
 	// markdown
 	markdown: 'markdown',
 	md: 'markdown',
 	// pdf
-	pdf: 'pdf',
+	pdf: 'binary',
+	// perl
+	pl: 'perl',
+	pm: 'perl',
+	t: 'perl',
 	// php
 	php: 'php',
 	// png
-	png: 'png',
+	png: 'binary',
 	// plaintext
 	def: 'plaintext',
 	in: 'plaintext',
@@ -127,7 +142,13 @@ const EXTENSION_TO_FILEID: Record<string, string> = {
 	txt: 'plaintext',
 	// python
 	py: 'python',
+	pyi: 'python',
 	pyw: 'python',
+	// ruby
+	gemspec: 'ruby',
+	rake: 'ruby',
+	rb: 'ruby',
+	ru: 'ruby',
 	// rust
 	rs: 'rust',
 	// shell
@@ -156,25 +177,9 @@ const EXTENSION_TO_FILEID: Record<string, string> = {
 	// yaml
 	yaml: 'yaml',
 	yml: 'yaml',
-}
-
-export type DetectFiletypesOptions = {
-	rootDir: string
-	/**
-	 * Also follow symlinked files and directories. Defaults to `false`, which keeps
-	 * symlinks out of the result (and out of `dev metalint`'s filetype list).
-	 */
-	followSymbolicLinks?: boolean
-	/**
-	 * Skip files that `.gitignore` files exclude. Defaults to `true`.
-	 *
-	 * Note that this also applies `.gitignore` files from parent directories, up to
-	 * the enclosing git repository's root, so a gitignored directory can end up
-	 * with no files at all.
-	 */
-	gitignore?: boolean
-	/** Extra ignore patterns, on top of the ones always ignored. */
-	ignore?: string[]
+	// zig
+	zig: 'zig',
+	zon: 'zig',
 }
 
 export async function detectFiletypes({
@@ -182,35 +187,53 @@ export async function detectFiletypes({
 	followSymbolicLinks = false,
 	gitignore = true,
 	ignore = [],
-}: DetectFiletypesOptions): Promise<Record<string, string[]>> {
+}: {
+	rootDir: string
+	followSymbolicLinks?: boolean
+	gitignore?: boolean
+	ignore?: string[]
+}): Promise<Record<string, string[]>> {
 	const filepaths = await globby('**', {
 		cwd: rootDir,
 		absolute: true,
 		dot: true,
 		gitignore,
 		followSymbolicLinks,
-		ignore: ['**/.git/**', '**/target/**', ...ignore],
+		ignore: ['**/.git/**', '**/target/**', ...ignore], // TODO
 	})
 
 	const detected: Record<string, string[]> = {}
 	for (const filepath of filepaths) {
 		const basename = path.basename(filepath).toLowerCase()
-		const prefix = /^(dockerfile|makefile|\.env)\./u.exec(basename)?.[1]
 
-		const handle = await fs.open(filepath, 'r')
-		const { buffer, bytesRead } = await handle
-			.read(Buffer.alloc(8192), 0, 8192, 0)
-			.finally(() => handle.close())
-		const sample = buffer.subarray(0, bytesRead)
-		const interpreter = shebangCommand(sample.toString('utf8'))
-			?.split(' ')[0]
-			?.replace(/[0-9.]+$/u, '')
+		let filetype = ''
+		if (!filetype) {
+			// TODO
+			const prefix = /^(dockerfile|makefile|\.env)\./u.exec(basename)?.[1]
+			filetype = FILENAME_TO_FILEID[prefix ?? basename]
+		}
+		if (!filetype) {
+			filetype = EXTENSION_TO_FILEID[path.extname(basename).slice(1)]
+		}
+		if (!filetype) {
+			const handle = await fs.open(filepath, 'r')
+			const { buffer, bytesRead } = await handle
+				.read(Buffer.alloc(8192), 0, 8192, 0)
+				.finally(() => handle.close())
+			const sample = buffer.subarray(0, bytesRead)
 
-		const filetype =
-			FILENAME_TO_FILEID[prefix ?? basename] ??
-			INTERPRETER_TO_FILEID[interpreter ?? ''] ??
-			EXTENSION_TO_FILEID[path.extname(basename).slice(1)] ??
-			(sample.length === 0 ? 'empty' : '_other')
+			if (sample.includes(0)) {
+				filetype = 'binary'
+			} else {
+				const interpreter = shebangCommand(sample.toString('utf8'))
+					?.split(' ')[0]
+					?.replace(/[0-9.]+$/u, '')
+				filetype = INTERPRETER_TO_FILEID[interpreter ?? '']
+			}
+		}
+		if (!filetype) {
+			filetype = '_other'
+		}
 
 		detected[filetype] ??= []
 		detected[filetype].push(filepath)
