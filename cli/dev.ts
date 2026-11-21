@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { execa } from 'execa'
+import { readFileSync } from 'node:fs'
 import path from 'node:path'
 import process from 'node:process'
 import yargs from 'yargs'
@@ -30,8 +31,6 @@ import {
 } from './task.ts'
 import { detectEcosystem } from '#utilities/ecosystems.ts'
 
-const version = '0.4.0' // TODO
-
 function maybeChangeDir(workingDir?: string) {
 	if (!workingDir) {
 		return
@@ -47,7 +46,9 @@ function maybeChangeDir(workingDir?: string) {
 
 const cli = yargs(hideBin(process.argv))
 	.scriptName('dev')
-	.version(version)
+	.version(JSON.parse(
+		readFileSync(new URL('../package.json', import.meta.url), 'utf-8')
+	).version)
 	.option('dir', {
 		type: 'string',
 		description: 'Run as if dev was started in this directory',
