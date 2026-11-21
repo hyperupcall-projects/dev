@@ -10,23 +10,19 @@ import type { CommandChangelogValidateOptions, CommandScriptOptions } from '#typ
 
 type Release = Awaited<ReturnType<typeof octokit.rest.repos.listReleases>>['data'][number]
 
-
-const changelogFileName = 'CHANGELOG.md'
+const ChangelogFile = 'CHANGELOG.md'
 
 async function getRepositoryInfo(): Promise<{
 	owner: string
 	repo: string
 }> {
 	if (!(await fileExists('.git'))) {
-		console.error('Not a git repository (no .git directory)')
+		console.error('Not a git repository')
 		process.exit(1)
 	}
 
-	const { stdout: branchName } = await execa('git', ['branch', '--show-current']).catch(
-		() => ({
-			stdout: '',
-		}),
-	)
+	const { stdout: branchName } = await execa('git', ['branch', '--show-current'])
+		.catch(() => ({ stdout: '' }))
 	// TODO
 	const remoteNameResult = await (async () => {
 		try {
@@ -107,7 +103,6 @@ async function fetchReleases({ owner, repo }: {
 	owner: string
 	repo: string
 }): Promise<Release[]> {
-	// Fetch releases (paginate)
 	const releases: Release[] = []
 	let page = 1
 	while (true) {
@@ -173,8 +168,8 @@ function generateChangelog(releases: Release[], { owner, repo }: {
 
 function formatDiff(current: string, generated: string): string {
 	const patch = diff.createTwoFilesPatch(
-		changelogFileName,
-		`${changelogFileName} (generated from GitHub releases)`,
+		ChangelogFile,
+		`${ChangelogFile} (generated from GitHub releases)`,
 		current,
 		generated,
 		'current',
@@ -192,7 +187,7 @@ export async function runPull(_options: CommandScriptOptions) {
 	const releases = await fetchReleases(repositoryInfo)
 	const out = generateChangelog(releases, repositoryInfo)
 
-	const targetPath = path.join(process.cwd(), changelogFileName)
+	const targetPath = path.join(process.cwd(), ChangelogFile)
 	await fs.writeFile(targetPath, out, 'utf-8')
 	console.info(`Wrote ${targetPath}`)
 }
@@ -202,7 +197,7 @@ export async function runValidate(options: CommandChangelogValidateOptions) {
 	const releases = await fetchReleases(repositoryInfo)
 	const generated = generateChangelog(releases, repositoryInfo)
 
-	const targetPath = path.join(process.cwd(), changelogFileName)
+	const targetPath = path.join(process.cwd(), ChangelogFile)
 	let current: string
 	try {
 		current = await fs.readFile(targetPath, 'utf-8')
@@ -212,11 +207,11 @@ export async function runValidate(options: CommandChangelogValidateOptions) {
 	}
 
 	if (current === generated) {
-		console.info(`${changelogFileName} matches the GitHub releases`)
+		console.info(`${ChangelogFile} matches the GitHub releases`)
 		return
 	}
 
-	console.error(`${changelogFileName} does not match the GitHub releases`)
+	console.error(`${ChangelogFile} does not match the GitHub releases`)
 	if (options.diff) {
 		console.info(formatDiff(current, generated))
 	}

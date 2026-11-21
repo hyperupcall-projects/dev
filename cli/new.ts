@@ -3,7 +3,7 @@ import * as path from 'node:path'
 import process from 'node:process'
 
 import Handlebars from 'handlebars'
-import { fileExists } from '#utilities/util.ts'
+import { fileExists, Fullname, ignoreDirectories } from '#utilities/util.ts'
 import * as clack from '@clack/prompts'
 
 import type { CommandNewOptions } from '#types'
@@ -24,7 +24,7 @@ export async function run(options: CommandNewOptions) {
 			process.exit(1)
 		}
 
-		options.dir = inputValue
+		options.dir = inputValue || '.'
 	}
 
 	if (!existsSync(options.dir)) {
@@ -140,7 +140,7 @@ export async function createProject(ctx: Context) {
 	async function walk(dir: string) {
 		for (const dirent of await fs.readdir(dir, { withFileTypes: true })) {
 			if (dirent.isDirectory()) {
-				if (['node_modules', '__pycache__'].includes(dirent.name)) {
+				if (ignoreDirectories().includes(dirent.name)) {
 					continue
 				}
 
@@ -152,10 +152,9 @@ export async function createProject(ctx: Context) {
 
 				try {
 					const template = await fs.readFile(inputFile, 'utf-8')
-					const runtimeTemplate = Handlebars.compile(template)
-					const outputContent = runtimeTemplate(
+					const outputContent = Handlebars.compile(template)(
 						{
-							key: 'value',
+							Fullname
 						},
 						{
 							helpers: {
@@ -168,12 +167,11 @@ export async function createProject(ctx: Context) {
 					await fs.mkdir(path.dirname(outputFile), { recursive: true })
 					await fs.writeFile(outputFile, outputContent)
 				} catch (err) {
-					console.error(`Failed to template file "${inputFile}"`)
-					// throw err
+					console.error(`Failed to write template file from input: ${inputFile}`)
 				}
 			}
 		}
 	}
 
-	console.info(`Bootstrapped "${ctx.templateName}"`)
+	console.info('Done!')
 }

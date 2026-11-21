@@ -1,6 +1,10 @@
 # dev
 
- It helps with creating new projects from a template, managing the configuration of those projects, and more!
+ It helps with developing software and managing my computer. You're able to:
+
+ - Create projects from a template
+ - Manage the configuration and tooling of projects
+ - Run one-off scripts
 
 At a high level, there are separate parts:
 

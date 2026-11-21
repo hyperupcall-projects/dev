@@ -8,7 +8,7 @@ import * as clack from '@clack/prompts'
 import { execa, parseCommandString } from 'execa'
 import toml from 'smol-toml'
 
-import { pkgRoot } from '#utilities/util.ts'
+import { ignoreDirectoriesGlob, pkgRoot } from '#utilities/util.ts'
 import { detectFiletypes } from '#utilities/filetype.ts'
 
 import type { CommandLintOptions, Config } from '#types'
@@ -27,9 +27,6 @@ const LINTERS: Record<string, Linter> = {
 	},
 }
 
-/** Directories whose files are never handed to a linter. */
-const LINT_IGNORE = ['**/node_modules/**', '**/.data/**']
-
 export async function run(options: CommandLintOptions) {
 	const rootDir = process.cwd()
 	const overrides = await getLintOverrides(rootDir)
@@ -37,7 +34,7 @@ export async function run(options: CommandLintOptions) {
 		rootDir,
 		gitignore: false,
 		followSymbolicLinks: true,
-		ignore: LINT_IGNORE,
+		ignore: ignoreDirectoriesGlob(),
 	})
 
 	let linterIds: string[]

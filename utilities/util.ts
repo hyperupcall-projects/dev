@@ -12,6 +12,16 @@ import { fileURLToPath } from 'node:url'
 
 const execFileAsync = promisify(execFile)
 
+export function ignoreDirectories() {
+	return ['node_modules', '__pycache__', '.data']
+}
+
+export function ignoreDirectoriesGlob() {
+	return ignoreDirectories().map(dir => `**/${dir}/**`)
+}
+
+export const Fullname = 'Edwin Kofler'
+
 async function getGitHubToken(): Promise<string | undefined> {
 	const config = await getDevConfig().catch(() => undefined)
 	if (config?.githubTokenFile) {

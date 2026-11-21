@@ -8,7 +8,7 @@ import * as clack from '@clack/prompts'
 import { execa, parseCommandString } from 'execa'
 import toml from 'smol-toml'
 
-import { pkgRoot } from '#utilities/util.ts'
+import { ignoreDirectoriesGlob, pkgRoot } from '#utilities/util.ts'
 import { detectFiletypes } from '#utilities/filetype.ts'
 
 import type { CommandFormatOptions, Config } from '#types'
@@ -27,9 +27,6 @@ const FORMATTERS: Record<string, Formatter> = {
 	},
 }
 
-/** Directories whose files are never handed to a formatter. */
-const FORMAT_IGNORE = ['**/node_modules/**', '**/.data/**']
-
 export async function run(options: CommandFormatOptions) {
 	const rootDir = process.cwd()
 	const overrides = await getFormatOverrides(rootDir)
@@ -40,7 +37,7 @@ export async function run(options: CommandFormatOptions) {
 		rootDir,
 		gitignore: false,
 		followSymbolicLinks: true,
-		ignore: FORMAT_IGNORE,
+		ignore: ignoreDirectoriesGlob(),
 	})
 
 	let formatterIds: string[]
