@@ -34,11 +34,8 @@ export async function run(options: {
 			'v*',
 			'--sort=-version:refname',
 		])
-		let [latestTag,] = tagsOutput.split('\n').filter((tag) => tag.trim() !== '')
-		if (!latestTag) {
-			latestTag = 'v0.0.0'
-		}
-		const currentVersion = latestTag.replace(/^v/, '')
+		const [latestTag,] = tagsOutput.split('\n').filter((tag) => tag.trim() !== '')
+		const currentVersion = latestTag?.replace(/^v/, '') ?? '0.0.0'
 		if (!semver.valid(currentVersion)) {
 			console.error(`Latest tag "${latestTag}" is not a valid semantic version`)
 			process.exit(1)
@@ -64,7 +61,7 @@ export async function run(options: {
 			}
 		}
 
-		let newVersion = await askForNewVersion(currentVersion, filesToUpdate)
+		let newVersion = await askForNewVersion(currentVersion, filesToUpdate, latestTag)
 
 		const modifiedFiles: string[] = []
 		for (const dir of rootDirs) {
@@ -120,6 +117,7 @@ async function getUpdateVersionDirectories(rootDir: string): Promise<string[]> {
 async function askForNewVersion(
 	currentVersion: string,
 	updates: VersionUpdate[],
+	latestTag?: string,
 ): Promise<string> {
 	if (!process.stdin.isTTY) {
 		throw new Error('Choosing a version requires an interactive terminal')
@@ -128,6 +126,16 @@ async function askForNewVersion(
 	const files = [
 		...new Map(updates.map((update) => [update.relativePath, update.oldVersion] as const)),
 	]
+	const mismatchedFiles = new Set(
+		latestTag
+			? files
+				.filter(([, oldVersion]) => !semver.valid(oldVersion) || !semver.eq(oldVersion, currentVersion))
+				.map(([relativePath]) => relativePath)
+			: [],
+	)
+	const warning = mismatchedFiles.size > 0
+		? styleText('yellow', `Manifest versions differ from latest Git tag of ${latestTag}`)
+		: undefined
 	const pathWidth = Math.max(0, ...files.map(([relativePath]) => relativePath.length))
 	const versionWidth = Math.max(0, ...files.map(([, oldVersion]) => oldVersion.length))
 
@@ -163,7 +171,11 @@ async function askForNewVersion(
 		if (version === oldVersion) {
 			newVersion = styleText('dim', 'unchanged')
 		}
-		return `${relativePath.padEnd(pathWidth)}  ${oldVersion.padEnd(versionWidth)} → ${newVersion}`
+		const oldVersionLabel = oldVersion.padEnd(versionWidth)
+		const currentVersionLabel = mismatchedFiles.has(relativePath)
+			? styleText('yellow', oldVersionLabel)
+			: oldVersionLabel
+		return `${relativePath.padEnd(pathWidth)}  ${currentVersionLabel} → ${newVersion}`
 	}
 
 	const render = () => {
@@ -185,8 +197,13 @@ async function askForNewVersion(
 			}
 		}
 
+		const customError = choiceIndex === customIndex && customVersion !== ''
+			? getCustomError()
+			: undefined
+		const message = customError ? styleText('yellow', customError) : warning
 		// Leaves room for the rest of the interface, so that redrawing never scrolls.
-		const maxFiles = Math.max(1, (process.stdout.rows ?? 24) - 5 - tabLines.length)
+		const messageRows = message ? Math.max(1, Math.ceil(stripVTControlCharacters(message).length / columns)) : 0
+		const maxFiles = Math.max(1, (process.stdout.rows ?? 24) - 5 - tabLines.length - messageRows)
 		const shownFiles = files.length > maxFiles ? files.slice(0, maxFiles - 1) : files
 		const version = getSelectedVersion()
 		const fileLines = shownFiles.map((file) => formatFile(file, version))
@@ -197,19 +214,15 @@ async function askForNewVersion(
 			fileLines.push(styleText('dim', 'No relevant files found.'))
 		}
 
-		const lettersSwitch = choiceIndex !== customIndex || customVersion === ''
-		const customError = choiceIndex === customIndex && customVersion !== ''
-			? getCustomError()
-			: undefined
 		const lines = [
 			...tabLines,
 			'',
 			...fileLines,
-			...(customError ? ['', styleText('yellow', customError)] : []),
+			...(message ? ['', message] : []),
 			'',
 			styleText(
 				'dim',
-				`${lettersSwitch ? 'h/l or ←/→' : '←/→'} switch • enter confirm • esc cancel`,
+				'alt+h/alt+l or ←/→ switch • enter confirm • esc/q quit',
 			),
 		]
 
@@ -237,11 +250,14 @@ async function askForNewVersion(
 			for (const file of files) {
 				console.log(formatFile(file, version))
 			}
+			if (warning) {
+				console.log(warning)
+			}
 			resolve(version)
 		}
 
 		const onKeypress = (input: string | undefined, key: readline.Key) => {
-			if ((key.ctrl && key.name === 'c') || key.name === 'escape') {
+			if ((key.ctrl && key.name === 'c') || key.name === 'escape' || input === 'q') {
 				finish()
 				return
 			}
@@ -254,12 +270,9 @@ async function askForNewVersion(
 				return
 			}
 
-			// Prerelease versions can contain "h" and "l", so those letters only switch
-			// choices while no custom version is being typed.
-			const lettersSwitch = choiceIndex !== customIndex || customVersion === ''
-			if (key.name === 'left' || (lettersSwitch && input === 'h')) {
+			if (key.name === 'left' || (key.meta && key.name === 'h')) {
 				choiceIndex = (choiceIndex + choices.length - 1) % choices.length
-			} else if (key.name === 'right' || (lettersSwitch && input === 'l')) {
+			} else if (key.name === 'right' || (key.meta && key.name === 'l')) {
 				choiceIndex = (choiceIndex + 1) % choices.length
 			} else if (choiceIndex === customIndex && key.name === 'backspace') {
 				customVersion = customVersion.slice(0, -1)
