@@ -5,7 +5,7 @@ import { styleText } from 'node:util'
 import { execa } from 'execa'
 import * as diff from 'diff'
 
-import { fileExists, octokit } from '#utilities/util.ts'
+import { fileExists, getGitRemoteName, octokit } from '#utilities/util.ts'
 
 type Release = Awaited<ReturnType<typeof octokit.rest.repos.listReleases>>['data'][number]
 
@@ -20,31 +20,7 @@ async function getRepositoryInfo(): Promise<{
 		process.exit(1)
 	}
 
-	const { stdout: branchName } = await execa('git', ['branch', '--show-current'])
-		.catch(() => ({ stdout: '' }))
-	// TODO
-	const remoteNameResult = await (async () => {
-		try {
-			if (branchName) {
-				return await execa('git', ['config', '--get', `branch.${branchName}.remote`])
-			} else {
-				return await execa('git', [
-					'config',
-					'--default',
-					'origin',
-					'--get',
-					'clone.defaultRemoteName',
-				])
-			}
-		} catch {
-			return { stdout: null }
-		}
-	})()
-
-	const remoteName =
-		remoteNameResult && typeof remoteNameResult.stdout === 'string'
-			? remoteNameResult.stdout.trim()
-			: ''
+	const remoteName = await getGitRemoteName()
 	if (!remoteName) {
 		console.error('Could not determine git remote name for this repository')
 		process.exit(1)
@@ -53,6 +29,7 @@ async function getRepositoryInfo(): Promise<{
 	const { stdout: remoteUrl } = await execa('git', [
 		'remote',
 		'get-url',
+		'--',
 		remoteName,
 	]).catch(() => ({ stdout: '' }))
 	if (!remoteUrl) {

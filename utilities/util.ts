@@ -38,6 +38,49 @@ export async function fileExists(filepath: string): Promise<boolean> {
 		.catch(() => false)
 }
 
+export async function getGitRemoteName(cwd = process.cwd()): Promise<string | undefined> {
+	const { stdout } = await execFileAsync('git', ['remote'], { cwd })
+	// Value of "." occurs when a branch tracks another local branch.
+	const remotes = stdout.split(/\r?\n/u).filter((name) => name && name !== '.')
+	if (remotes.length === 0) {
+		return undefined
+	}
+
+	const { stdout: branchName } = await execFileAsync(
+		'git',
+		['branch', '--show-current'],
+		{ cwd },
+	)
+	if (branchName) {
+		const branchRemote = await getConfig(`branch.${branchName.trim()}.remote`)
+		if (branchRemote && remotes.includes(branchRemote)) {
+			return branchRemote
+		}
+	}
+
+	const defaultRemote = await getConfig('clone.defaultRemoteName')
+	if (defaultRemote && remotes.includes(defaultRemote)) {
+		return defaultRemote
+	}
+
+	if (remotes.includes('origin')) {
+		return 'origin'
+	}
+
+	return remotes.length === 1 ? remotes[0] : undefined
+
+	async function getConfig(key: string): Promise<string | undefined> {
+		try {
+			const { stdout } = await execFileAsync('git', ['config', '--get', key], { cwd })
+			return stdout.trim() || undefined
+		} catch (error) {
+			// Exit status 1 means the key is unset.
+			if (error.code === 1) return undefined
+			throw error
+		}
+	}
+}
+
 export function pkgRoot(packageName?: string) {
 	if (!packageName) {
 		return path.dirname(import.meta.dirname)

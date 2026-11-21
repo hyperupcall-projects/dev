@@ -5,7 +5,7 @@ import * as fs from 'node:fs/promises'
 import * as clack from '@clack/prompts'
 import { styleText } from 'node:util'
 import os from 'node:os'
-import { fileExists, pkgRoot } from '#utilities/util.ts'
+import { fileExists, getGitRemoteName, pkgRoot } from '#utilities/util.ts'
 import toml from 'smol-toml'
 import { execa } from 'execa'
 import { globby } from 'globby'
@@ -341,30 +341,7 @@ async function getProject(): Promise<Project> {
 	}
 
 	const { stdout: branchName } = await execa('git', ['branch', '--show-current'])
-	const { stdout: remoteName } = await (async () => {
-		try {
-			if (branchName) {
-				return await execa('git', ['config', '--get', `branch.${branchName}.remote`])
-			} else {
-				// If HEAD does not point to a branch, it is in a detached state.
-				// This can occur with '@actions/checkout'. In such cases, we read
-				// it from the config key 'clone.defaultRemoteName'. If that is not
-				// set, then it is defaulted to 'origin'. See #172 for details.
-				return await execa('git', [
-					'config',
-					'--default',
-					'origin',
-					'--get',
-					'clone.defaultRemoteName',
-				])
-			}
-		} catch {
-			// If there is a git branch, but no configured remotes, then control flow reaches here.
-			return {
-				stdout: null,
-			}
-		}
-	})()
+	const remoteName = await getGitRemoteName()
 	if (!remoteName) {
 		return {
 			type: 'under-version-control',
@@ -373,7 +350,7 @@ async function getProject(): Promise<Project> {
 			branchName,
 		}
 	}
-	const { stdout: remoteUrl } = await execa('git', ['remote', 'get-url', remoteName])
+	const { stdout: remoteUrl } = await execa('git', ['remote', 'get-url', '--', remoteName])
 	const match = remoteUrl.match(/[:/](?<owner>.*?)\/(?<name>.*)$/u)
 	if (!match?.groups) {
 		printWithTips(
