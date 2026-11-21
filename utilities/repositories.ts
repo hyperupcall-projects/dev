@@ -413,19 +413,15 @@ export async function collectGitHubRepositories2(options: {
 			}
 		}
 		const joinedOrganizationsData = await Promise.all(
-			joinedOrganizations.map(async (organization) => {
-				// TODO: paging
-				return await octokit
-					.request('GET /orgs/{org}/repos', {
-						org: organization.login,
-						headers: {
-							'X-GitHub-Api-Version': '2022-11-28',
-						},
-					})
-					.then((res) => {
-						return res.data
-					})
-			}),
+			joinedOrganizations.map((organization) =>
+				octokit.paginate(octokit.rest.repos.listForOrg, {
+					org: organization.login,
+					per_page: 100,
+					headers: {
+						'X-GitHub-Api-Version': '2022-11-28',
+					},
+				}),
+			),
 		)
 		for (let i = 0; i < joinedOrganizations.length; ++i) {
 			const orgName = joinedOrganizations[i].login

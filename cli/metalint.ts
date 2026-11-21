@@ -21,7 +21,6 @@ import { mergeJSONWithComments, mergeTOML } from '#utilities/util.ts'
 
 type CommandFixOptions = {
 	config: Config
-	dir?: string
 	yes?: boolean
 	match?: string[]
 	exclude?: string[]
@@ -30,26 +29,8 @@ type CommandFixOptions = {
 }
 
 export async function run(options: CommandFixOptions) {
-	if (options.dir) {
-		process.chdir(options.dir)
-	}
-
 	const project = await getProject()
-
-	// TODO
-	const config: Config = {
-		...options.config,
-		rules: {
-			...(project.type === 'with-remote-url' &&
-			`${project.owner}/${project.name}` === 'awesome-lists/awesome-bash'
-				? {
-						'remote-url/remote-metadata/disable-projects-tab': 'off',
-						'remote-url/remote-metadata/default-branch-main': 'off',
-					}
-				: {}),
-			...options.config.rules,
-		},
-	}
+	const config: Config = options.config
 
 	// Fix editor settings.
 	if (await fileExists('.vscode/settings.json')) {
@@ -120,8 +101,8 @@ export async function run(options: CommandFixOptions) {
 
 	// Collect rule files that match the ecosystem.
 	await collect(`400-ecosystem/_/*`)
-	const ecosystemIds = await detectEcosystem({ rootDir: process.cwd() }) // TODO
-	const filetypes = await detectFiletypes({ rootDir: process.cwd() }) // TODO
+	const ecosystemIds = await detectEcosystem({ rootDir: process.cwd() })
+	const filetypes = await detectFiletypes({ rootDir: process.cwd() })
 	const filetypeIds = Object.keys(filetypes)
 	for (const ecosystemId of ecosystemIds) {
 		for (const pattern of await ecosystems[ecosystemId].lintFileGlobs()) {

@@ -8,7 +8,6 @@ import toml from 'smol-toml'
 import { fileExists } from '#utilities/util.ts'
 import { mergeTOML } from './util.ts'
 
-// TODO
 export type VersionUpdate = {
 	relativePath: string
 	oldVersion: string

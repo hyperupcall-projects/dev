@@ -4,8 +4,9 @@ import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import { globby } from 'globby'
 import shebangCommand from 'shebang-command'
+import { ignoreDirectoriesGlob } from './util.ts'
 
-const FILENAME_TO_FILEID: Record<string, string> = {
+const BASENAME_TO_ID: Record<string, string> = {
 	'.clang-format': 'yaml',
 	'.clang-tidy': 'yaml',
 	'.clangd': 'yaml',
@@ -32,23 +33,7 @@ const FILENAME_TO_FILEID: Record<string, string> = {
 	rakefile: 'ruby',
 }
 
-const INTERPRETER_TO_FILEID: Record<string, string> = {
-	bash: 'shell',
-	bun: 'typescript',
-	dash: 'shell',
-	deno: 'typescript',
-	ksh: 'shell',
-	node: 'javascript',
-	nodejs: 'javascript',
-	perl: 'perl',
-	php: 'php',
-	python: 'python',
-	ruby: 'ruby',
-	sh: 'shell',
-	zsh: 'shell',
-}
-
-const EXTENSION_TO_FILEID: Record<string, string> = {
+const EXT_TO_ID: Record<string, string> = {
 	// archive
 	'7z': 'binary',
 	boz: 'binary',
@@ -182,11 +167,32 @@ const EXTENSION_TO_FILEID: Record<string, string> = {
 	zon: 'zig',
 }
 
+const REGEX_TO_ID: [RegExp, string][] = [
+	[/^dockerfile\./u, 'dockerfile'],
+	[/^makefile\./u, 'makefile'],
+	[/^\.env\./u, 'dotenv'],
+]
+
+const SHEBANG_TO_ID: Record<string, string> = {
+	bash: 'shell',
+	bun: 'typescript',
+	dash: 'shell',
+	deno: 'typescript',
+	ksh: 'shell',
+	node: 'javascript',
+	nodejs: 'javascript',
+	perl: 'perl',
+	php: 'php',
+	python: 'python',
+	ruby: 'ruby',
+	sh: 'shell',
+	zsh: 'shell',
+}
+
 export async function detectFiletypes({
 	rootDir,
-	followSymbolicLinks = false,
+	followSymbolicLinks = true,
 	gitignore = true,
-	ignore = [],
 }: {
 	rootDir: string
 	followSymbolicLinks?: boolean
@@ -199,22 +205,17 @@ export async function detectFiletypes({
 		dot: true,
 		gitignore,
 		followSymbolicLinks,
-		ignore: ['**/.git/**', '**/target/**', ...ignore], // TODO
+		ignore: ignoreDirectoriesGlob()
 	})
 
 	const detected: Record<string, string[]> = {}
 	for (const filepath of filepaths) {
 		const basename = path.basename(filepath).toLowerCase()
 
-		let filetype = ''
-		if (!filetype) {
-			// TODO
-			const prefix = /^(dockerfile|makefile|\.env)\./u.exec(basename)?.[1]
-			filetype = FILENAME_TO_FILEID[prefix ?? basename]
-		}
-		if (!filetype) {
-			filetype = EXTENSION_TO_FILEID[path.extname(basename).slice(1)]
-		}
+		let filetype =
+			BASENAME_TO_ID[basename] ??
+			EXT_TO_ID[path.extname(basename).slice(1)] ??
+			REGEX_TO_ID.find(([pattern]) => pattern.test(basename))?.[1]
 		if (!filetype) {
 			const handle = await fs.open(filepath, 'r')
 			const { buffer, bytesRead } = await handle
@@ -228,13 +229,11 @@ export async function detectFiletypes({
 				const interpreter = shebangCommand(sample.toString('utf8'))
 					?.split(' ')[0]
 					?.replace(/[0-9.]+$/u, '')
-				filetype = INTERPRETER_TO_FILEID[interpreter ?? '']
+				filetype = SHEBANG_TO_ID[interpreter ?? '']
 			}
 		}
-		if (!filetype) {
-			filetype = '_other'
-		}
 
+		filetype ??= '_other'
 		detected[filetype] ??= []
 		detected[filetype].push(filepath)
 	}

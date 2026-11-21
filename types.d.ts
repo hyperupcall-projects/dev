@@ -50,22 +50,3 @@ export type Issue = {
 	strict?: boolean
 	skip?: string
 }
-
-// Install.
-// TODO
-type InstalledProjectData = {
-	isCloned: boolean
-	isInstalled: boolean
-	gitRef: string
-	latestGitRef: string
-	versions: string[]
-}
-
-export type InstalledProject = {
-	name: string
-	url: string
-	install: string
-	uninstall: string
-	installed: () => Promise<boolean>
-	data?: InstalledProjectData
-}

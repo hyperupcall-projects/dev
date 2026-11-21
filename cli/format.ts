@@ -15,8 +15,8 @@ import {
 	resolveFormatConfig,
 	saveFormatter,
 } from '#utilities/formatters.ts'
-import { ignoreDirectoriesGlob, loadConfigFile } from '#utilities/util.ts'
-import { globalConfigPath, loadConfig } from '#utilities/loadConfig.ts'
+import { ignoreDirectoriesGlob, loadConfigFile, pkgRoot } from '#utilities/util.ts'
+import { loadConfig } from '#utilities/util.ts'
 import { MultiSelectPrompt, SelectPrompt } from '@clack/core'
 
 import type { Config, FormatConfig } from '#types'
@@ -45,13 +45,7 @@ export async function runFormatOrLint(
 		process.exitCode = 1
 		return
 	}
-	// Include gitignored and symlinked files, skipping dependencies and dev data.
-	const filesByFiletype = await detectFiletypes({
-		rootDir,
-		gitignore: false,
-		followSymbolicLinks: true,
-		ignore: ignoreDirectoriesGlob(),
-	})
+	const filesByFiletype = await detectFiletypes({ rootDir })
 	let filesByTool = Object.fromEntries(
 		Object.entries(tools).map(([id, tool]) => [
 			id,
@@ -179,8 +173,8 @@ export async function pickFormatFiletypes(
 	files: Record<string, string[]>,
 	format: Required<FormatConfig>,
 	config: Config,
-	globalPath = globalConfigPath,
 ): Promise<string[] | undefined> {
+	const globalPath = path.join(pkgRoot(), 'config/dev-global.toml')
 	const projectPath = path.join(rootDir, 'dev.toml')
 	// Read the unmerged file to distinguish project assignments in the editor.
 	let project = await loadConfigFile(projectPath, true)

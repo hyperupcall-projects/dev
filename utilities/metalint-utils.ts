@@ -147,8 +147,6 @@ export async function* filesMustHaveShape(
 				fix: () =>
 					fs.writeFile(
 						file,
-						// TODO: Handle JSON.stringify in all places, so that if on jsonc file,
-						// and if it has all trailing commas say in object, it's not removed in the diff
 						JSON.stringify(expected, null, detectIndent(content).indent || '\t'),
 					),
 			}

@@ -92,7 +92,6 @@ export async function runFetchRepositoryData() {
 			'gamedevunite-at-smc/*',
 			'cs-club-smc/*',
 			'hyperupcall-archives/*',
-			'hyperupcall-forks/*', // TODO
 			'foxium-browser/*',
 			'hyperupcall-forks/*',
 			'asdf-contrib-hyperupcall/*',
@@ -192,15 +191,16 @@ export async function runRepositoriesTui() {
 			}
 
 			if (!packname) {
-				console.info(`An ecosystem could not be inferred...`)
-				process.exit(1) // TODO
+				console.error(`An ecosystem could not be inferred.`)
+				process.exit(1)
 			}
 
-			// TODO: put in function
+			const userDataDir = path.join((await getDevConfig()).paths.vscodeDataDirs, packname.replace(/^vscode-/, ''))
+			const extensionsDir = path.join((await getDevConfig()).paths.vscodeExtensions, packname.replace(/^vscode-/, ''))
 			await execa({
 				stdout: 'inherit',
 				stderr: 'inherit',
-			})`code --user-data-dir ${path.join((await getDevConfig()).paths.vscodeDataDirs, packname.replace(/^vscode-/, ''))} --extensions-dir ${path.join((await getDevConfig()).paths.vscodeExtensions, packname.replace(/^vscode-/, ''))} --new-window ${dir}`
+			})`code --user-data-dir ${userDataDir} --extensions-dir ${extensionsDir} --new-window ${dir}`
 			break
 		}
 		case 'vscode-insiders':
