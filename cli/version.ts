@@ -19,7 +19,6 @@ import type { Config } from '#types'
 export async function run(options: {
 	force?: boolean
 }) {
-	const rootDir = process.cwd()
 	const { stdout: statusOutput } = await execa('git', ['status', '--porcelain'])
 	if (statusOutput.trim() !== '' && !options.force) {
 		console.error(
@@ -46,13 +45,14 @@ export async function run(options: {
 		}
 
 		// TODO: Interface for config
-		const rootDirs = ['.', ...(await getUpdateVersionDirectories(rootDir))]
+		const rootDirs = ['.', ...(await getUpdateVersionDirectories(process.cwd()))]
 
 		const filesToUpdate: VersionUpdate[] = []
 		for (const dir of rootDirs) {
-			for (const ecosystemId of await detectEcosystem({ rootDir: path.resolve(rootDir, dir) })) {
+			const rootDir = path.resolve(process.cwd(), dir)
+			for (const ecosystemId of await detectEcosystem({ rootDir })) {
 				for (const { relativePath, oldVersion } of await ecosystems[ecosystemId].updateVersion(
-					ecosystemId,
+					rootDir,
 					'',
 					{ dryRun: true },
 				)) {
@@ -66,11 +66,12 @@ export async function run(options: {
 
 		let newVersion = await askForNewVersion(currentVersion, filesToUpdate)
 
-		let modifiedFiles: string[] = []
+		const modifiedFiles: string[] = []
 		for (const dir of rootDirs) {
-			for (const ecosystemId of await detectEcosystem({ rootDir: path.resolve(rootDir, dir) })) {
+			const rootDir = path.resolve(process.cwd(), dir)
+			for (const ecosystemId of await detectEcosystem({ rootDir })) {
 				for (const { relativePath } of await ecosystems[ecosystemId].updateVersion(
-					ecosystemId,
+					rootDir,
 					newVersion,
 					{ dryRun: false },
 				)) {
@@ -162,7 +163,7 @@ async function askForNewVersion(
 		if (version === oldVersion) {
 			newVersion = styleText('dim', 'unchanged')
 		}
-		return `  ${relativePath.padEnd(pathWidth)}  ${oldVersion.padEnd(versionWidth)} → ${newVersion}`
+		return `${relativePath.padEnd(pathWidth)}  ${oldVersion.padEnd(versionWidth)} → ${newVersion}`
 	}
 
 	const render = () => {
@@ -180,34 +181,35 @@ async function askForNewVersion(
 			if (line !== undefined && stripVTControlCharacters(`${line} ${tab}`).length <= columns) {
 				tabLines[tabLines.length - 1] = `${line} ${tab}`
 			} else {
-				tabLines.push(`  ${tab}`)
+				tabLines.push(tab)
 			}
 		}
 
 		// Leaves room for the rest of the interface, so that redrawing never scrolls.
-		const maxFiles = Math.max(1, (process.stdout.rows ?? 24) - 7 - tabLines.length)
+		const maxFiles = Math.max(1, (process.stdout.rows ?? 24) - 5 - tabLines.length)
 		const shownFiles = files.length > maxFiles ? files.slice(0, maxFiles - 1) : files
 		const version = getSelectedVersion()
 		const fileLines = shownFiles.map((file) => formatFile(file, version))
 		if (shownFiles.length < files.length) {
-			fileLines.push(styleText('dim', `  … and ${files.length - shownFiles.length} more`))
+			fileLines.push(styleText('dim', `… and ${files.length - shownFiles.length} more`))
 		}
 		if (files.length === 0) {
-			fileLines.push(styleText('dim', '  No relevant files found.'))
+			fileLines.push(styleText('dim', 'No relevant files found.'))
 		}
 
 		const lettersSwitch = choiceIndex !== customIndex || customVersion === ''
+		const customError = choiceIndex === customIndex && customVersion !== ''
+			? getCustomError()
+			: undefined
 		const lines = [
 			...tabLines,
 			'',
 			...fileLines,
+			...(customError ? ['', styleText('yellow', customError)] : []),
 			'',
-			choiceIndex === customIndex && customVersion !== ''
-				? styleText('yellow', `  ${getCustomError() ?? ''}`)
-				: '',
 			styleText(
 				'dim',
-				`  ${lettersSwitch ? 'h/l or ←/→' : '←/→'} switch • enter confirm • esc cancel`,
+				`${lettersSwitch ? 'h/l or ←/→' : '←/→'} switch • enter confirm • esc cancel`,
 			),
 		]
 

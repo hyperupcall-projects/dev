@@ -485,7 +485,7 @@ async function updateJsonVersion(
 	rootDir: string,
 	relativeJsonFile: string,
 	newVersion: string,
-	dryRun: { dryRun: boolean },
+	{ dryRun }: { dryRun: boolean },
 ): Promise<VersionUpdate[]> {
 	const filepath = path.join(rootDir, relativeJsonFile)
 	if (!(await fileExists(filepath))) {
@@ -750,7 +750,7 @@ function cargoDependencyOverride(
 async function mergeTomlOverride(
 	filepath: string,
 	override: Record<string, any>,
-	dryRun: { dryRun: boolean },
+	{ dryRun }: { dryRun: boolean },
 ): Promise<boolean> {
 	const text = await fs.readFile(filepath, 'utf-8')
 	const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'dev-toml-'))
@@ -851,7 +851,7 @@ async function updateCargoLockVersion(
 async function updateCFamilyVersion(
 	rootDir: string,
 	newVersion: string,
-	dryRun: { dryRun: boolean },
+	{ dryRun }: { dryRun: boolean },
 ): Promise<VersionUpdate[]> {
 	const candidates: [string, (text: string) => VersionReplacement][] = [
 		['CMakeLists.txt', (text) => replaceCmakeVersion(text, newVersion)],
