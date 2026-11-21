@@ -1,4 +1,3 @@
-import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
 import process from 'node:process'
 import * as readline from 'node:readline'
@@ -7,7 +6,6 @@ import * as clack from '@clack/prompts'
 import ansiEscapes from 'ansi-escapes'
 import { execa } from 'execa'
 import semver from 'semver'
-import toml from 'smol-toml'
 
 import {
 	detectEcosystem,
@@ -17,6 +15,7 @@ import {
 import type { Config } from '#types'
 
 export async function run(options: {
+	config: Config
 	force?: boolean
 }) {
 	const { stdout: statusOutput } = await execa('git', ['status', '--porcelain'])
@@ -41,8 +40,7 @@ export async function run(options: {
 			process.exit(1)
 		}
 
-		// TODO: Interface for config
-		const rootDirs = ['.', ...(await getUpdateVersionDirectories(process.cwd()))]
+		const rootDirs = ['.', ...(options.config.updateVersionDirectories ?? [])]
 
 		const filesToUpdate: VersionUpdate[] = []
 		for (const dir of rootDirs) {
@@ -97,20 +95,6 @@ export async function run(options: {
 			console.error('Error:', err.message)
 		}
 		process.exit(1)
-	}
-}
-
-async function getUpdateVersionDirectories(rootDir: string): Promise<string[]> {
-	try {
-		const config = toml.parse(
-			await fs.readFile(path.join(rootDir, 'dev.toml'), 'utf-8'),
-		) as Config
-		return config.updateVersionDirectories ?? []
-	} catch (err) {
-		if ((err as NodeJS.ErrnoException)?.code === 'ENOENT') {
-			return []
-		}
-		throw err
 	}
 }
 

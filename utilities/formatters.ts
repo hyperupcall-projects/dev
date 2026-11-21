@@ -1,71 +1,18 @@
 // SPDX-License-Identifier: MPL-2.0
 // SPDX-FileCopyrightText: Copyright 2026 Edwin Kofler
 import * as fs from 'node:fs/promises'
-import * as path from 'node:path'
-import Ajv from 'ajv'
 import toml from 'smol-toml'
 
-import type { Config, FormatConfig } from '#types'
+import type { FormatConfig } from '#types'
 import type { Formatter } from '#utilities/config.ts'
-import { pkgRoot } from '#utilities/util.ts'
+import { loadConfigFile } from '#utilities/util.ts'
 
-export const globalFormatConfigPath = path.join(pkgRoot(), 'config/dev-global.toml')
-const ajv = new Ajv({ allErrors: true })
-const validate = ajv.compile({
-	type: 'object',
-	properties: {
-		rules: {
-			type: 'object',
-			additionalProperties: { enum: ['off'] },
-		},
-		updateVersionDirectories: {
-			type: 'array',
-			items: { type: 'string' },
-		},
-		format: {
-			type: 'object',
-			additionalProperties: false,
-			properties: {
-				filetypes: {
-					type: 'object',
-					additionalProperties: {
-						anyOf: [{ type: 'string', minLength: 1 }, { const: false }],
-					},
-				},
-			},
-		},
-		lint: false,
-	},
-})
-
-export async function readToolConfig(
-	filepath: string,
-	optional = false,
-): Promise<Config> {
-	let source: string
-	try {
-		source = await fs.readFile(filepath, 'utf-8')
-	} catch (err) {
-		if (optional && (err as NodeJS.ErrnoException).code === 'ENOENT') return {}
-		throw err
-	}
-	const config = toml.parse(source)
-	if (!validate(config)) {
-		throw new Error(
-			`${filepath}: ${ajv.errorsText(validate.errors, { dataVar: 'config' })}`,
-		)
-	}
-	return config as Config
-}
-
-export async function loadFormatConfig(
-	projectFormat: FormatConfig | undefined,
+export function resolveFormatConfig(
+	format: FormatConfig | undefined,
 	tools: Record<string, Formatter>,
-	globalPath = globalFormatConfigPath,
-): Promise<Required<FormatConfig>> {
-	const defaults = (await readToolConfig(globalPath)).format
+): Required<FormatConfig> {
 	const config = {
-		filetypes: { ...defaults?.filetypes, ...projectFormat?.filetypes },
+		filetypes: { ...format?.filetypes },
 	}
 	for (const [filetype, formatter] of Object.entries(config.filetypes)) {
 		if (formatter !== false && !tools[formatter]?.filetypes.includes(filetype)) {
@@ -80,7 +27,7 @@ export async function saveFormatter(
 	filetype: string,
 	formatter: string | false | undefined,
 ) {
-	const config = await readToolConfig(filepath, true)
+	const config = await loadConfigFile(filepath, true)
 	config.format ??= {}
 	config.format.filetypes ??= {}
 	if (formatter === undefined) delete config.format.filetypes[filetype]

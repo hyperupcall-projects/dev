@@ -7,7 +7,7 @@ import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
 
 import { run as runNew } from './new.ts'
-import { run as runFix } from './metalint.ts'
+import { run as runMetalint } from './metalint.ts'
 import { run as runFormat } from './format.ts'
 import { run as runLint } from './lint.ts'
 import { run as runVersion } from './version.ts'
@@ -30,19 +30,10 @@ import {
 	runValidateHyperupcallArchives,
 } from './task.ts'
 import { detectEcosystem } from '#utilities/ecosystems.ts'
+import { loadConfig } from '#utilities/util.ts'
+import type { Config } from '#types'
 
-function maybeChangeDir(workingDir?: string) {
-	if (!workingDir) {
-		return
-	}
-
-	try {
-		process.chdir(workingDir)
-	} catch {
-		console.error(`Cannot change to directory: ${workingDir}`)
-		process.exit(1)
-	}
-}
+let config: Config
 
 const cli = yargs(hideBin(process.argv))
 	.scriptName('dev')
@@ -52,6 +43,17 @@ const cli = yargs(hideBin(process.argv))
 	.option('dir', {
 		type: 'string',
 		description: 'Run as if dev was started in this directory',
+	})
+	.middleware(async (argv) => {
+		if (argv.dir) {
+			try {
+				process.chdir(argv.dir)
+			} catch {
+				console.error(`Cannot change to directory: ${argv.dir}`)
+				process.exit(1)
+			}
+		}
+		config = await loadConfig({ rootDir: process.cwd() })
 	})
 	.command(
 		'new [targetDir] [ecosystem] [templateName] [projectName]',
@@ -83,7 +85,6 @@ const cli = yargs(hideBin(process.argv))
 					description: 'Comma-separated list of extra template options',
 				}),
 		async (argv) => {
-			maybeChangeDir(argv.dir)
 			await runNew({
 				dir: argv.targetDir as string | undefined,
 				ecosystem: argv.ecosystem as string | undefined,
@@ -95,14 +96,10 @@ const cli = yargs(hideBin(process.argv))
 		},
 	)
 	.command(
-		'metalint [targetDir]',
+		'metalint',
 		'Lint and fix issues with repository config and metadata',
 		(y) =>
 			y
-				.positional('targetDir', {
-					type: 'string',
-					description: 'Directory of the project to lint',
-				})
 				.option('yes', { type: 'boolean', description: 'Apply every fix without asking' })
 				.option('strict', {
 					type: 'boolean',
@@ -120,9 +117,8 @@ const cli = yargs(hideBin(process.argv))
 					description: 'Parsed but unused',
 				}),
 		async (argv) => {
-			maybeChangeDir(argv.dir)
-			await runFix({
-				dir: argv.targetDir as string | undefined,
+			await runMetalint({
+				config,
 				yes: argv.yes as boolean | undefined,
 				strict: argv.strict as boolean | undefined,
 				match: argv.match as string[] | undefined,
@@ -140,8 +136,8 @@ const cli = yargs(hideBin(process.argv))
 				description: 'Formatter to run',
 			}),
 		async (argv) => {
-			maybeChangeDir(argv.dir)
 			await runFormat({
+				config,
 				formatter: argv.formatter as string | undefined,
 			})
 		},
@@ -155,8 +151,8 @@ const cli = yargs(hideBin(process.argv))
 				description: 'Linter to run',
 			}),
 		async (argv) => {
-			maybeChangeDir(argv.dir)
 			await runLint({
+				config,
 				linter: argv.linter as string | undefined,
 			})
 		},
@@ -168,7 +164,6 @@ const cli = yargs(hideBin(process.argv))
 				'Fetch the list of repositories from GitHub',
 				() => {},
 				async (argv) => {
-					maybeChangeDir(argv.dir)
 					await runFetchRepositoryData()
 				},
 			)
@@ -177,7 +172,6 @@ const cli = yargs(hideBin(process.argv))
 				'Open a repository interactively',
 				() => {},
 				async (argv) => {
-					maybeChangeDir(argv.dir)
 					await runRepositoriesTui()
 				},
 			)
@@ -186,7 +180,6 @@ const cli = yargs(hideBin(process.argv))
 				'Synchronize the managed repositories',
 				() => {},
 				async (argv) => {
-					maybeChangeDir(argv.dir)
 					await runSyncRepositories()
 				},
 			)
@@ -195,7 +188,6 @@ const cli = yargs(hideBin(process.argv))
 				'Run a command in every managed repository (usage: dev repos run -- <command> [args...])',
 				(y) => y.parserConfiguration({ 'populate--': true }),
 				async (argv) => {
-					maybeChangeDir(argv.dir)
 					const [command, ...args] = (argv['--'] as string[] | undefined) ?? []
 
 					if (!command) {
@@ -216,7 +208,6 @@ const cli = yargs(hideBin(process.argv))
 				"Write CHANGELOG.md from the repository's GitHub releases",
 				() => {},
 				async (argv) => {
-					maybeChangeDir(argv.dir)
 					await runChangelogPull({})
 				},
 			)
@@ -229,7 +220,6 @@ const cli = yargs(hideBin(process.argv))
 						description: 'Print a unified diff of the changes',
 					}),
 				async (argv) => {
-					maybeChangeDir(argv.dir)
 					await runChangelogValidate({ diff: argv.diff as boolean | undefined })
 				},
 			)
@@ -245,7 +235,6 @@ const cli = yargs(hideBin(process.argv))
 					'Check the license headers of the managed repositories',
 					() => {},
 					async (argv) => {
-						maybeChangeDir(argv.dir)
 						await runCheckLicenseHeaders()
 					},
 				)
@@ -254,7 +243,6 @@ const cli = yargs(hideBin(process.argv))
 					'Move the hidden directories of the managed repositories to a central directory',
 					() => {},
 					async (argv) => {
-						maybeChangeDir(argv.dir)
 						await runSymlinkHiddenDirs()
 					},
 				)
@@ -263,7 +251,6 @@ const cli = yargs(hideBin(process.argv))
 					'Check that the hyperupcall-archives repositories are archived',
 					() => {},
 					async (argv) => {
-						maybeChangeDir(argv.dir)
 						await runValidateHyperupcallArchives()
 					},
 				)
@@ -272,7 +259,6 @@ const cli = yargs(hideBin(process.argv))
 					'Create the VSCode launchers of the ecosystem packs',
 					() => {},
 					async (argv) => {
-						maybeChangeDir(argv.dir)
 						await runCreateVSCodeLaunchers()
 					},
 				)
@@ -281,7 +267,6 @@ const cli = yargs(hideBin(process.argv))
 					'Toggle the editor tools of the current project',
 					() => {},
 					async (argv) => {
-						maybeChangeDir(argv.dir)
 						await runToggleTools()
 					},
 				),
@@ -319,8 +304,7 @@ toggle-tools
 				description: 'Continue even if the working tree has changes',
 			}),
 		async (argv) => {
-			maybeChangeDir(argv.dir)
-			await runVersion({ force: argv.force as boolean | undefined })
+			await runVersion({ config, force: argv.force as boolean | undefined })
 		},
 	)
 	.command(
@@ -332,7 +316,6 @@ toggle-tools
 				description: 'Directory to inspect',
 			}),
 		async (argv) => {
-			maybeChangeDir(argv.dir)
 			const ecosystemIds = await detectEcosystem({
 				rootDir: (argv.directory as string | undefined) ?? process.cwd(),
 			})

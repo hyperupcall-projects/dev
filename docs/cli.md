@@ -92,7 +92,7 @@ What `dev metalint` does:
    - `only-directory`: there is no `.git`.
    - `under-version-control`: there is a `.git`, but the current branch has no remote.
    - `with-remote-url`: there is a remote. The owner and name are read from the remote URL.
-2. **Loads `dev.toml`** from the project root, if there is one (see below).
+2. **Uses the config loaded at startup**, merging `config/dev-global.toml` with the target project's `dev.toml` (see below).
 3. **Updates editor settings**:
    - If `.vscode/settings.json` exists, it sets `window.title` to your default title with the ecosystem name added, then merges in `config/vscode-config.jsonc`.
    - If `.zed/settings.json` exists, it merges in `config/zed-config.jsonc`.
@@ -154,7 +154,7 @@ Pass a formatter name to run it directly on all of its supported filetypes, over
 dev format yamlfmt
 ```
 
-Shared defaults come from [`config/dev-global.toml`](../config/dev-global.toml), with project overrides in `dev.toml`. A missing assignment or `false` means no formatter. Each selected filetype uses one formatter, and files assigned to the same formatter are grouped into one invocation. Config shape is validated using Ajv and an inline schema in [`utilities/formatters.ts`](../utilities/formatters.ts); configured formatters must support their assigned filetypes. The picker requires an interactive terminal; scripts can use `dev format <formatter>`.
+Shared defaults come from [`config/dev-global.toml`](../config/dev-global.toml), with project overrides in `dev.toml`. A missing assignment or `false` means no formatter. Each selected filetype uses one formatter, and files assigned to the same formatter are grouped into one invocation. Config shape is validated using Ajv and an inline schema in [`utilities/util.ts`](../utilities/util.ts); configured formatters must support their assigned filetypes. The picker requires an interactive terminal; scripts can use `dev format <formatter>`.
 
 Available formatters:
 
@@ -275,8 +275,10 @@ Code: `utilities/ecosystems.ts`. An ecosystem defines four things: how to detect
 `dev.toml` is an **optional, per-project** config file. It goes in the project's **root directory**, which is the directory `dev` runs in, set by `--dir` or by the positional `dir` argument of `dev metalint`.
 
 - The file is parsed as TOML with [`smol-toml`](https://github.com/squirrelchat/smol-toml).
-- If the file is missing, defaults are used. For formatting, these defaults come from `config/dev-global.toml` in the dev repository. If a config file isn't valid TOML, the command fails with an error.
-- Four commands read it: **`dev metalint`**, **`dev version`**, **`dev format`**, and **`dev lint`**.
+- Before running a command, [`loadConfig`](../utilities/loadConfig.ts) loads `config/dev-global.toml` in the dev repository and the project's `dev.toml`, after applying `--dir`. For `dev metalint`, the positional target directory selects the project config.
+- Missing files contribute an empty object. Project tables override individual global keys, including `false` values; project arrays such as `updateVersionDirectories` replace global arrays, including when empty.
+- Both files are validated before merging. Invalid TOML or schema errors stop the command and identify the file. The resolved object is passed to **`dev metalint`**, **`dev version`**, **`dev format`**, and **`dev lint`**.
+- The shared parser, `loadConfigFile(filepath, validate = false)` in [`utilities/util.ts`](../utilities/util.ts), can also parse a file without schema validation. Startup loading enables validation.
 - The name must be `dev.toml`. The `directory/no-files` lint rule reports the old name `project.toml` and offers to rename it to `dev.toml`.
 
 ### Schema
@@ -293,7 +295,7 @@ type Config = {
 }
 ```
 
-All keys are optional. Unknown top-level keys are ignored. `dev format` and `dev lint` validate the config shape with JSON Schema.
+All keys are optional. Unknown top-level keys are ignored by commands. All commands validate the config shape with JSON Schema at startup.
 
 ### `[rules]`
 
@@ -306,8 +308,8 @@ Used by `dev metalint`. Turns off individual lint checks.
 ```
 
 - **Keys** are rule IDs in the form `<category>/<rule-name>/<issue-id>` (see below). Quote them, because they contain `/`.
-- **Values**: only `"off"` does anything. A turned-off check prints `SKIP`, and the next check runs. Any other value is ignored, and the check runs normally.
-- Your `[rules]` table is deep-merged (lodash `merge`) over the built-in defaults, so your values take priority. The only built-in default: for `awesome-lists/awesome-bash`, `remote-url/remote-metadata/disable-projects-tab` and `remote-url/remote-metadata/default-branch-main` are off.
+- **Values**: `"off"`. A turned-off check prints `SKIP`, and the next check runs. Other values fail schema validation.
+- Global rules override the built-in defaults, and project rules override global rules. The only built-in default: for `awesome-lists/awesome-bash`, `remote-url/remote-metadata/disable-projects-tab` and `remote-url/remote-metadata/default-branch-main` are off.
 
 #### How rule IDs are built
 

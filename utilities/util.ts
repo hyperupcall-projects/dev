@@ -7,10 +7,73 @@ import type { Dirent } from 'node:fs'
 import { promisify, styleText } from 'node:util'
 import { Octokit } from 'octokit'
 import * as jsonc from 'jsonc-parser'
+import Ajv from 'ajv'
+import toml from 'smol-toml'
+import type { Config } from '#types'
 import { getDevConfig } from '#utilities/dev-config.ts'
 import { fileURLToPath } from 'node:url'
+import _ from 'lodash'
 
 const execFileAsync = promisify(execFile)
+
+const ajv = new Ajv({ allErrors: true })
+const validateConfig = ajv.compile({
+	type: 'object',
+	properties: {
+		rules: {
+			type: 'object',
+			additionalProperties: { enum: ['off'] },
+		},
+		updateVersionDirectories: {
+			type: 'array',
+			items: { type: 'string' },
+		},
+		format: {
+			type: 'object',
+			additionalProperties: false,
+			properties: {
+				filetypes: {
+					type: 'object',
+					additionalProperties: {
+						anyOf: [{ type: 'string', minLength: 1 }, { const: false }],
+					},
+				},
+			},
+		},
+		lint: false,
+	},
+})
+
+export async function loadConfigFile(filepath: string, validate = false): Promise<Config> {
+	let text: string
+	try {
+		text = await fs.readFile(filepath, 'utf-8')
+	} catch (error) {
+		if ((error as NodeJS.ErrnoException).code === 'ENOENT') return {}
+		throw error
+	}
+
+	let config: Config
+	try {
+		config = toml.parse(text) as Config
+	} catch (error) {
+		throw new Error(`${filepath}: ${error.message}`, { cause: error })
+	}
+	if (validate && !validateConfig(config)) {
+		throw new Error(
+			`${filepath}: ${ajv.errorsText(validateConfig.errors, { dataVar: 'config' })}`,
+		)
+	}
+	return config
+}
+
+export async function loadConfig(rootDir: string, validate: boolean = true): Promise<Config> {
+	const global = await loadConfigFile(path.join(pkgRoot(), 'config/dev-global.toml'), validate)
+	const project = await loadConfigFile(path.resolve(rootDir, 'dev.toml'), validate)
+	return _.mergeWith({}, global, project, (_value, override) =>
+		Array.isArray(override) ? [...override] : undefined,
+	)
+}
 
 export function ignoreDirectories() {
 	return ['node_modules', '__pycache__', 'target', '.data', '.git', '.hg', '.svn', '.venv', 'venv', '.ruff_cache', '.mypy_cache', '.pytest_cache', 'dist', 'build', '.next', '.nuxt', '.svelte-kit', '.astro', '.turbo', '.parcel-cache', '.cache', '.vite', 'dist', 'out', 'coverage']

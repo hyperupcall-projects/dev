@@ -12,34 +12,34 @@ import type { Formatter, Linter } from '#utilities/config.ts'
 import { detectFiletypes } from '#utilities/filetype.ts'
 import {
 	groupFilesByFormatter,
-	loadFormatConfig,
-	readToolConfig,
+	resolveFormatConfig,
+	saveFormatter,
 } from '#utilities/formatters.ts'
-import { ignoreDirectoriesGlob } from '#utilities/util.ts'
+import { ignoreDirectoriesGlob, loadConfigFile } from '#utilities/util.ts'
+import { globalConfigPath, loadConfig } from '#utilities/loadConfig.ts'
 import { MultiSelectPrompt, SelectPrompt } from '@clack/core'
 
 import type { Config, FormatConfig } from '#types'
-import { globalFormatConfigPath, saveFormatter } from '#utilities/formatters.ts'
 
 export async function run(options: {
+	config: Config
 	formatter?: string
 	dir?: string
 }) {
-	await runFormatOrLint(Formatters, 'format', options.formatter)
+	await runFormatOrLint(Formatters, 'format', options.config, options.formatter)
 }
 
 export async function runFormatOrLint(
 	tools: Record<string, Formatter | Linter>,
 	action: 'format' | 'lint',
+	config: Config,
 	toolId?: string,
 ) {
 	const rootDir = process.cwd()
-	let config: Config
 	let format: Required<FormatConfig> | undefined
 	try {
-		config = await readToolConfig(path.join(rootDir, 'dev.toml'), true)
 		format =
-			action === 'format' ? await loadFormatConfig(config.format, tools) : undefined
+			action === 'format' ? resolveFormatConfig(config.format, tools) : undefined
 	} catch (err) {
 		console.error(`Cannot load ${action} configuration: ${(err as Error).message}`)
 		process.exitCode = 1
@@ -178,9 +178,12 @@ export async function pickFormatFiletypes(
 	tools: Record<string, Formatter>,
 	files: Record<string, string[]>,
 	format: Required<FormatConfig>,
-	project: Config,
-	globalPath = globalFormatConfigPath,
+	config: Config,
+	globalPath = globalConfigPath,
 ): Promise<string[] | undefined> {
+	const projectPath = path.join(rootDir, 'dev.toml')
+	// Read the unmerged file to distinguish project assignments in the editor.
+	let project = await loadConfigFile(projectPath, true)
 	const filetypes = Object.keys(files)
 		.filter((type) => files[type].length > 0)
 		.sort()
@@ -216,7 +219,6 @@ export async function pickFormatFiletypes(
 			'Use an interactive terminal to select filetypes, or run dev format <formatter>.',
 		)
 	}
-	const projectPath = path.join(rootDir, 'dev.toml')
 	let selected = filetypes.filter((type) => typeof format.filetypes[type] === 'string')
 	let cursorAt = filetypes[0]
 	while (true) {
@@ -307,7 +309,7 @@ export async function pickFormatFiletypes(
 		const isProject = action === 'p'
 		const current = isProject
 			? project.format?.filetypes?.[cursorAt]
-			: (await readToolConfig(globalPath)).format?.filetypes?.[cursorAt]
+			: (await loadConfigFile(globalPath, true)).format?.filetypes?.[cursorAt]
 		const choice = await clack.select({
 			message: `Formatter for ${cursorAt} (${isProject ? 'project' : 'global'})`,
 			initialValue: isProject && current === undefined ? '$inherit' : current || '',
@@ -325,8 +327,9 @@ export async function pickFormatFiletypes(
 			cursorAt,
 			choice === '$inherit' ? undefined : choice || false,
 		)
-		project = await readToolConfig(projectPath, true)
-		Object.assign(format, await loadFormatConfig(project.format, tools, globalPath))
+		project = await loadConfigFile(projectPath, true)
+		Object.assign(config, await loadConfig({ rootDir, globalPath }))
+		Object.assign(format, resolveFormatConfig(config.format, tools))
 		selected = selected.filter((type) => type !== cursorAt)
 		if (typeof format.filetypes[cursorAt] === 'string') selected.push(cursorAt)
 		clack.log.success(

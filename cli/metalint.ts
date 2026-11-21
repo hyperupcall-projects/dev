@@ -16,11 +16,11 @@ import { detectEcosystem, ecosystems } from '#utilities/ecosystems.ts'
 import { detectFiletypes } from '#utilities/filetype.ts'
 
 import type { Config, Issue, Project } from '#types'
-import _ from 'lodash'
 import process from 'node:process'
 import { mergeJSONWithComments, mergeTOML } from '#utilities/util.ts'
 
 type CommandFixOptions = {
+	config: Config
 	dir?: string
 	yes?: boolean
 	match?: string[]
@@ -37,7 +37,8 @@ export async function run(options: CommandFixOptions) {
 	const project = await getProject()
 
 	// TODO
-	let config: Config = {
+	const config: Config = {
+		...options.config,
 		rules: {
 			...(project.type === 'with-remote-url' &&
 			`${project.owner}/${project.name}` === 'awesome-lists/awesome-bash'
@@ -46,17 +47,8 @@ export async function run(options: CommandFixOptions) {
 						'remote-url/remote-metadata/default-branch-main': 'off',
 					}
 				: {}),
+			...options.config.rules,
 		},
-	}
-	try {
-		config = _.merge(
-			config,
-			toml.parse(await fs.readFile(path.join(project.rootDir, 'dev.toml'), 'utf-8')),
-		) as Config
-	} catch (err) {
-		if ((err as NodeJS.ErrnoException)?.code !== 'ENOENT') {
-			throw err
-		}
 	}
 
 	// Fix editor settings.
