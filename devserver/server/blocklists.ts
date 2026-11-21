@@ -78,6 +78,7 @@ export async function compileBlocklists(): Promise<{
 			env: (() => {
 				const env = {
 					...process.env,
+					NO_COLOR: undefined,
 					FORCE_COLOR: '1',
 					CLICOLOR_FORCE: '1',
 				}

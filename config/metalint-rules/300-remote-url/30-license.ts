@@ -1,0 +1,126 @@
+import * as fs from 'node:fs/promises'
+import path from 'node:path'
+import process from 'node:process'
+import spdxLicenseList from 'spdx-license-list/full.js'
+import * as clack from '@clack/prompts'
+import type { Issues } from '#types'
+import { styleText } from 'node:util'
+import { pkgRoot } from '#utilities/util.ts'
+import { globby } from 'globby'
+
+/**
+ * Check that the repository has at least one license.
+ *
+ * See more: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/licensing-a-repository
+ */
+
+export const issues: Issues = async function* issues({ project }) {
+	if (project.type !== 'with-remote-url') {
+		throw new Error(`Expected project to be associated with a remote forge`)
+	}
+
+	// Check that the number and names of licenses are correct
+	{
+		const files = await globby(['*license*'], { caseSensitiveMatch: false })
+		if (files.length === 0) {
+			yield {
+				id: 'must-have-license-file',
+				message: [
+					'Expected to find a license file',
+					'But, found no license file was found',
+				],
+				fix: async () => {
+					const selectedLicenseId = await clack.select({
+						message: 'Choose file:',
+						options: [
+							{ label: 'ISC License', value: 'ISC' },
+							{
+								label: 'BSD 3-Clause "New" or "Revised" License',
+								value: 'BSD-3-Clause',
+							},
+							{
+								label: 'Mozilla Public License 2.0',
+								value: 'MPL-2.0',
+							},
+							{ label: 'Apache License 2.0', value: 'Apache-2.0' },
+							{
+								label: 'GNU General Public License v2.0',
+								value: 'GPL-2.0-only',
+							},
+							{
+								label: 'GNU General Public License v3.0',
+								value: 'GPL-3.0-only',
+							},
+							{
+								label: 'GNU Lesser General Public License v2.1',
+								value: 'LGPL-2.1-only',
+							},
+							{
+								label: 'GNU Lesser General Public License v3.0',
+								value: 'LGPL-3.0-only',
+							},
+							{
+								label: 'GNU Affero General Public License v3.0',
+								value: 'AGPL-3.0-only',
+							},
+						],
+					})
+
+					if (clack.isCancel(selectedLicenseId)) {
+						process.exit(1)
+					}
+
+					const licenseData = spdxLicenseList[selectedLicenseId as string]
+					if (!licenseData) {
+						throw new Error(`License "${selectedLicenseId}" is not an SPDX license`)
+					}
+
+					await fs.writeFile('LICENSE', licenseData.licenseText, 'utf-8')
+				},
+			}
+		} else if (files.length === 1) {
+			if (files[0] !== 'LICENSE') {
+				yield {
+					id: 'must-have-license-file',
+					message: [
+						'For a single license file, expected the file to have a name of "LICENSE"',
+						`But, found license file with name of "${files[0]}"`,
+					],
+					fix: () => fs.rename(files[0], 'LICENSE'),
+				}
+			}
+		} else if (files.length > 1) {
+			if (files.some((file) => !file.startsWith('LICENSE-'))) {
+				yield {
+					id: 'must-have-license-file',
+					message: [
+						'For multiple license files, expected to find all of their names prefixed with "LICENSE-"',
+						'But, found at least one without that prefix',
+					],
+				}
+			}
+
+			// TODO: Check that each license file ends with a valid SPDX license identifier
+			// TODO: Check that there is a "# License" section in the README to explain the multiple licenses
+		}
+	}
+
+	// Check that the contents of the license files are correct
+	{
+		const files = await globby(['*license*'], { caseSensitiveMatch: false })
+		for (const file of files) {
+			const content = await fs.readFile(file, 'utf-8')
+			if (content.length === 0) {
+				yield {
+					id: 'must-have-correct-contents',
+					message: [
+						'Expected to find all license files with content',
+						`But, found license file "${file}" with no content`,
+					],
+				}
+			}
+
+			// TODO: Check that the content of each license file has the EXACT text of some SPDX license (if not, user should opt-out of this check)
+		}
+	}
+}

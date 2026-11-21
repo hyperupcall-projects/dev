@@ -1,6 +1,6 @@
 import * as fs from 'node:fs/promises'
 import * as path from 'node:path'
-import { octokit } from '#common'
+import { octokit } from '#utilities/util.ts'
 import { minimatch } from 'minimatch'
 import * as v from 'valibot'
 import { getDevConfig } from '#utilities/dev-config.ts'
@@ -232,7 +232,7 @@ export async function getCachedRepositoryDetails() {
 
 export async function getRepositoryDetails(fullName: string): Promise<RepoDetailsT> {
 	const cloneDir = (await getDevConfig()).paths.clonedRepositories
-	return {
+	return [{
 		fullName,
 		isCloned: await fs
 			.stat(path.join(cloneDir, fullName))
@@ -241,7 +241,7 @@ export async function getRepositoryDetails(fullName: string): Promise<RepoDetail
 				if (err.code === 'ENOENT') return false
 				throw err
 			}),
-	}
+	}]
 }
 
 export async function getAllRepositoryDetails(): Promise<RepoDetailsT[]> {

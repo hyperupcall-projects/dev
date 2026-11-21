@@ -15,7 +15,6 @@
 		"allowImportingTsExtensions": true,
 		"useUnknownInCatchVariables": false,
 		"paths": {
-			"#common": ["./config/common.ts"],
 			"#types": ["./types.d.ts"],
 			"#utilities/*": ["./utilities/*"]
 		}

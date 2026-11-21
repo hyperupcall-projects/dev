@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 /**
- * Print one resolved value from ~/.devhidden/configs/dev.config.js.
- * Usage: node utilities/print-dev-config.mjs <dotted.key>
- * Example: node utilities/print-dev-config.mjs paths.nodeBinary
+ * Prints a value from ~/.devhidden/configs/dev.config.js.
+ * Usage: node print-dev-config.mjs <key.subkey>
  */
 import fs from 'node:fs'
 import os from 'node:os'

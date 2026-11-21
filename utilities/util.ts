@@ -5,10 +5,38 @@ import path from 'node:path'
 import * as readline from 'node:readline/promises'
 import type { Dirent } from 'node:fs'
 import { promisify, styleText } from 'node:util'
+import { Octokit } from 'octokit'
 import * as jsonc from 'jsonc-parser'
 import { getDevConfig } from '#utilities/dev-config.ts'
+import { fileURLToPath } from 'node:url'
 
 const execFileAsync = promisify(execFile)
+
+async function getGitHubToken(): Promise<string | undefined> {
+	const config = await getDevConfig().catch(() => undefined)
+	if (config?.githubTokenFile) {
+		return (await fs.readFile(config.githubTokenFile, 'utf-8')).trim()
+	}
+	return undefined
+}
+
+export const octokit = new Octokit({ auth: await getGitHubToken() })
+
+
+export async function fileExists(filepath: string): Promise<boolean> {
+	return await fs
+		.stat(filepath)
+		.then(() => true)
+		.catch(() => false)
+}
+
+export function pkgRoot(packageName?: string) {
+	if (!packageName) {
+		return path.dirname(import.meta.dirname)
+	}
+
+	return path.dirname(fileURLToPath(import.meta.resolve(packageName)))
+}
 
 /** Ask the user a question on the terminal and return their answer. */
 export async function prompt(message: string): Promise<string> {

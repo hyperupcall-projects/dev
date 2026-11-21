@@ -4,12 +4,11 @@
 	"type": "module",
 	"private": true,
 	"imports": {
-		"#common": "./config/common.ts",
 		"#types": "./types.d.ts",
 		"#utilities/*": "./utilities/*"
 	},
 	"scripts": {
-		"cli": "~/.dotfiles/.data/binexec/node --enable-source-maps ./bin/dev.ts",
+		"cli": "~/.dotfiles/.data/binexec/node --enable-source-maps ./cli/dev.ts",
 		"dev": "cd devserver && ~/.dotfiles/.data/binexec/node --watch --enable-source-maps ./index.ts",
 		"format": "hyperupcall-scripts-nodejs format",
 		"lint": "hyperupcall-scripts-nodejs lint",
@@ -71,6 +70,7 @@
 		"@types/better-sqlite3": "^9.6.0",
 		"@types/ignore-walk": "^4.0.3",
 		"@types/lodash": "^4.17.27",
+		"@types/mdast": "^4.0.4",
 		"@types/micromatch": "^4.0.10",
 		"@types/node": "^26.6.6",
 		"@types/semver": "^7.8.0",

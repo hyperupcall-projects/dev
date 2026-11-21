@@ -220,7 +220,7 @@ function stripImports(text: string) {
 				return match
 			} else if (!importId.startsWith('.') && !importId.startsWith('#')) {
 				return '\n'
-			} else if (importId === '#common') {
+			} else if (importId === '#metalint-utils') {
 				return '\n'
 			} else {
 				return match

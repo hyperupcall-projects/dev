@@ -16,7 +16,7 @@ You can change how a project is linted, formatted and versioned by adding a **`d
 
 ## Running the tool
 
-The entry point is `bin/dev.ts`, a [yargs](https://yargs.js.org) CLI. It runs on Node.js directly, with no build step:
+The entry point is `cli/dev.ts`, a [yargs](https://yargs.js.org) CLI. It runs on Node.js directly, with no build step:
 
 ```sh
 node --run cli -- <command> [args]   # from this repository
@@ -96,7 +96,7 @@ What `dev metalint` does:
 3. **Updates editor settings**:
    - If `.vscode/settings.json` exists, it sets `window.title` to your default title with the ecosystem name added, then merges in `config/vscode-config.jsonc`.
    - If `.zed/settings.json` exists, it merges in `config/zed-config.jsonc`.
-4. **Collects rule files** from `config/lint-rules/`:
+4. **Collects rule files** from `config/metalint-rules/`:
    - `100-directory/*`: always.
    - `200-version-control/*`: if the project uses git.
    - `300-remote-url/*`: if the project has a remote.
@@ -271,7 +271,7 @@ Used by `dev metalint`. Turns off individual lint checks.
 
 #### How rule IDs are built
 
-For a rule file at `config/lint-rules/<…>/<parent-dir>/<NN-file>.ts` that reports an issue with `id: '<issue-id>'`:
+For a rule file at `config/metalint-rules/<…>/<parent-dir>/<NN-file>.ts` that reports an issue with `id: '<issue-id>'`:
 
 ```
 <parent-dir>/<file>/<issue-id>
@@ -305,7 +305,7 @@ Every issue has a required `id`, so every lint check can be turned off from `dev
 | `woof-plugin/woof/name-mismatch`                                     | Woof plugin name is consistent                         |
 | `woof-plugin/woof/description-mismatch`                              | Woof plugin description is consistent                  |
 
-To find more IDs, search `config/lint-rules/` for `id:`.
+To find more IDs, search `config/metalint-rules/` for `id:`.
 
 ### `updateVersionDirectories`
 
@@ -390,7 +390,7 @@ The full type is `DevConfig` in `utilities/dev-config.ts`. `paths.hiddenDirsRepo
 
 ### Writing a lint rule
 
-Create a `.ts` file under the right `config/lint-rules/` category. It must export `issues`, an async generator of type `Issues`:
+Create a `.ts` file under the right `config/metalint-rules/` category. It must export `issues`, an async generator of type `Issues`:
 
 ```ts
 import type { Issues } from '#types'
@@ -418,10 +418,10 @@ Add an entry to `ecosystems` in `utilities/ecosystems.ts` with `label`, `ecosyst
 
 | Path                     | Contents                                                   |
 | ------------------------ | ---------------------------------------------------------- |
-| `bin/dev.ts`             | CLI entry point and command definitions                    |
+| `cli/dev.ts`             | CLI entry point and command definitions                    |
 | `commands/`              | Code for each command                                      |
 | `utilities/`             | Ecosystem definitions, filetype detection, private config loader, TOML merge helper (`mergetoml.py`), repository helpers |
-| `config/lint-rules/`     | Lint rule files, grouped by category                       |
+| `config/metalint-rules/`     | Lint rule files, grouped by category                       |
 | `config/templates/`      | Project templates for `dev new`                            |
 | `config/*`               | Shared config files that rules copy into projects (EditorConfig, clang-format, yamllint, …) |
 | `devserver/`             | Web dashboard (Hono)                                       |
