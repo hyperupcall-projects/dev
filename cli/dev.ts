@@ -13,12 +13,6 @@ import { run as runLint } from './lint.ts'
 import { run as runVersion } from './version.ts'
 
 import {
-	runCommandInRepositories,
-	runFetchRepositoryData,
-	runRepositoriesTui,
-	runSyncRepositories,
-} from './repos.ts'
-import {
 	runPull as runChangelogPull,
 	runValidate as runChangelogValidate,
 } from './changelog.ts'
@@ -156,50 +150,6 @@ const cli = yargs(hideBin(process.argv))
 				linter: argv.linter as string | undefined,
 			})
 		},
-	)
-	.command('repos', 'Manage repositories across GitHub accounts and organizations', (y) =>
-		y
-			.command(
-				'fetch-repository-data',
-				'Fetch the list of repositories from GitHub',
-				() => {},
-				async (argv) => {
-					await runFetchRepositoryData()
-				},
-			)
-			.command(
-				'tui',
-				'Open a repository interactively',
-				() => {},
-				async (argv) => {
-					await runRepositoriesTui()
-				},
-			)
-			.command(
-				'sync',
-				'Synchronize the managed repositories',
-				() => {},
-				async (argv) => {
-					await runSyncRepositories()
-				},
-			)
-			.command(
-				'run',
-				'Run a command in every managed repository (usage: dev repos run -- <command> [args...])',
-				(y) => y.parserConfiguration({ 'populate--': true }),
-				async (argv) => {
-					const [command, ...args] = (argv['--'] as string[] | undefined) ?? []
-
-					if (!command) {
-						console.error('Usage: dev repos run -- <command> [args...]')
-						process.exitCode = 1
-						return
-					}
-
-					await runCommandInRepositories({ command, args })
-				},
-			)
-			.demandCommand(1),
 	)
 	.command('changelog', 'Manage changelogs', (y) =>
 		y
