@@ -47,7 +47,7 @@ const cli = yargs(hideBin(process.argv))
 				process.exit(1)
 			}
 		}
-		config = await loadConfig({ rootDir: process.cwd() })
+		config = await loadConfig(process.cwd())
 	})
 	.command(
 		'new [targetDir] [ecosystem] [templateName] [projectName]',

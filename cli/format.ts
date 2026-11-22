@@ -322,7 +322,7 @@ export async function pickFormatFiletypes(
 			choice === '$inherit' ? undefined : choice || false,
 		)
 		project = await loadConfigFile(projectPath, true)
-		Object.assign(config, await loadConfig({ rootDir, globalPath }))
+		Object.assign(config, await loadConfig(rootDir))
 		Object.assign(format, resolveFormatConfig(config.format, tools))
 		selected = selected.filter((type) => type !== cursorAt)
 		if (typeof format.filetypes[cursorAt] === 'string') selected.push(cursorAt)
