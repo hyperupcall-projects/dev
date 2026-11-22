@@ -1,3 +1,6 @@
 [submodule "modules/catalog/themes/hugo-catalog"]
 	path = modules/catalog/themes/hugo-catalog
 	url = git@github.com:hyperupcall-projects/hugo-catalog
+[submodule "vendor/templates"]
+	path = vendor/templates
+	url = git@github.com:hyperupcall-projects/templates
