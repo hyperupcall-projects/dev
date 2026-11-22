@@ -581,7 +581,6 @@ export async function runToggleTools() {
 		const ast = parseJSON(settingsText)
 
 		let toolFile = null
-		// TODO
 		if (settingsText.includes('"yaml.format.enable": true')) {
 			toolFile = path.join(pkgRoot(), 'config/vscode-tool-disable.jsonc')
 		} else {
@@ -606,7 +605,6 @@ export async function runToggleTools() {
 		const ast = parseJSON(settingsText)
 
 		let toolFile = null
-		// TODO
 		if (settingsText.includes('"format_on_save": "on"')) {
 			toolFile = path.join(pkgRoot(), 'config/zed-tool-disable.jsonc')
 		} else {

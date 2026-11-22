@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 import { findCodeOfConductFiles } from '#utilities/metalint-utils.ts'
 
-// TODO: What to do with this file?
-
 /**
  * Check if the repository does not have a code of conduct file. If the repository is on GitHub,
  * then the code of conduct file should be defined in the organization's ".github" repository. But,

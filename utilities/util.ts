@@ -144,6 +144,32 @@ export async function getGitRemoteName(cwd = process.cwd()): Promise<string | un
 	}
 }
 
+export function parseGitHubRepository(
+	remoteUrl: string,
+): { owner: string; repo: string } | undefined {
+	// Match SCP-style SSH or URL remotes, validating both path components in full.
+	const url = remoteUrl.trim().replace(/\.git\/?$/u, '')
+	const match = url.match(
+		/^(?:[^/\s]+@[^:/\s]+:|[a-zA-Z][a-zA-Z0-9+.-]*:\/\/[^/\s]+\/)(?<owner>[\w-]+)\/(?<repo>[\w.-]+)\/?$/u,
+	)
+	if (!match?.groups) {
+		return undefined
+	}
+
+	const { owner, repo } = match.groups
+	if (repo === '.' || repo === '..') {
+		return undefined
+	}
+
+	if (!owner.match(/^[\w-]+/) || !repo.match(/^[\w-]+/)) {
+		throw new Error(
+			`The "owner" or "name" of the GitHub repository contains invalid characters`,
+		)
+	}
+
+	return { owner, repo }
+}
+
 export function pkgRoot(packageName?: string) {
 	if (!packageName) {
 		return path.dirname(import.meta.dirname)

@@ -189,17 +189,11 @@ export const issues: Issues = async function* issues({ project }) {
 		}
 
 		if (data.has_wiki) {
-			// TODO
-			if (!project.owner.match(/^[\w-]+/) || !project.name.match(/^[\w-]+/)) {
-				throw new Error(
-					`The "owner" or "name" of the GitHub repository contains invalid characters`,
-				)
-			}
-
 			let shouldDisableWikiTab = false
 			try {
-				await util.promisify(child_process.exec)(
-					`git ls-remote "https://github.com/${project.owner}/${project.name}.wiki.git"`,
+				await util.promisify(child_process.execFile)(
+					'git',
+					['ls-remote', `https://github.com/${project.owner}/${project.name}.wiki.git`],
 					{
 						timeout: 3000,
 						env: {

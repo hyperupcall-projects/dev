@@ -1,5 +1,6 @@
 import {
 	filesMustHaveContent,
+	filesMustHaveName,
 	filesMustHaveShape,
 	getNpmLatestVersion,
 	packageJsonMustNotHaveDependencies,
@@ -10,7 +11,12 @@ export const issues: Issues = async function* issues() {
 	// Check that there is only one configuration file.
 	{
 		// https://prettier.io/docs/en/configuration.html
-		// TODO: filesMustHaveName
+		yield* filesMustHaveName({
+			'.prettierrc.yaml': ['.prettierrc.yml'],
+			'.prettierrc.ts': ['prettier.config.ts'],
+			'.prettierrc.mjs': ['prettier.config.mjs'],
+			'.prettierrc.cjs': ['prettier.config.cjs'],
+		})
 		yield* filesMustHaveContent('prettier', {
 			'.prettierrc': null,
 			'.prettierrc.json': null,

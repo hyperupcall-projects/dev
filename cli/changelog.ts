@@ -5,7 +5,12 @@ import { styleText } from 'node:util'
 import { execa } from 'execa'
 import * as diff from 'diff'
 
-import { fileExists, getGitRemoteName, octokit } from '#utilities/util.ts'
+import {
+	fileExists,
+	getGitRemoteName,
+	octokit,
+	parseGitHubRepository,
+} from '#utilities/util.ts'
 
 type Release = Awaited<ReturnType<typeof octokit.rest.repos.listReleases>>['data'][number]
 
@@ -44,35 +49,6 @@ async function getRepositoryInfo(): Promise<{
 	}
 
 	return match
-}
-
-function parseGitHubRepository(
-	remoteUrl: string,
-): { owner: string; repo: string } | undefined {
-	const url = remoteUrl.trim()
-
-	// SSH: git@github.com:owner/repo.git
-	const scpMatch = url.match(/^[^/\s]+@[^:/\s]+:(?<path>.+)$/u)
-	// URL: https://github.com/owner/repo.git
-	const urlMatch = url.match(/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\/[^/]+\/(?<path>.+)$/u)
-
-	const repositoryPath = scpMatch?.groups?.path ?? urlMatch?.groups?.path
-	if (!repositoryPath) {
-		return undefined
-	}
-
-	const segments = repositoryPath
-		.replace(/\.git$/u, '')
-		.split('/')
-		.filter((segment) => segment !== '')
-	if (segments.length < 2) {
-		return undefined
-	}
-
-	return {
-		owner: segments[0],
-		repo: segments[1],
-	}
 }
 
 async function fetchReleases({ owner, repo }: {

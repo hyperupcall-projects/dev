@@ -37,7 +37,6 @@ export const issues: Issues = async function* issues({ project }) {
 	}
 
 	{
-		// TODO: Batch this network call
 		const response = await fetch(`https://github.com/${project.owner}/${project.name}`, {
 			method: 'HEAD',
 		})

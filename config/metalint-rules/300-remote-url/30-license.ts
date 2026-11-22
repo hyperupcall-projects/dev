@@ -7,6 +7,7 @@ import type { Issues } from '#types'
 import { styleText } from 'node:util'
 import { pkgRoot } from '#utilities/util.ts'
 import { globby } from 'globby'
+import { remark } from 'remark'
 
 /**
  * Check that the repository has at least one license.
@@ -100,8 +101,43 @@ export const issues: Issues = async function* issues({ project }) {
 				}
 			}
 
-			// TODO: Check that each license file ends with a valid SPDX license identifier
-			// TODO: Check that there is a "# License" section in the README to explain the multiple licenses
+			for (const file of files) {
+				if (!file.startsWith('LICENSE-')) continue
+
+				const licenseId = file.slice('LICENSE-'.length)
+				if (!Object.hasOwn(spdxLicenseList, licenseId)) {
+					yield {
+						id: 'must-have-valid-spdx-identifier',
+						message: [
+							'For license files that include a SPDX identifier, expected each filename to end with a valid SPDX license identifier',
+							`But, license file "${file}" has an invalid identifier of "${licenseId}"`,
+						],
+					}
+				}
+			}
+
+			const readmeContent = await fs.readFile('README.md', 'utf-8').catch((err) => {
+				if (err.code === 'ENOENT') return ''
+				throw err
+			})
+			const hasLicenseSection = remark()
+				.parse(readmeContent)
+				.children.some(
+					(node) =>
+						node.type === 'heading' &&
+						node.children.length === 1 &&
+						node.children[0].type === 'text' &&
+						node.children[0].value === 'License',
+				)
+			if (!hasLicenseSection) {
+				yield {
+					id: 'must-have-readme-license-section',
+					message: [
+						'For multiple license files, expected README.md to have a "License" section explaining how the licenses apply',
+						'But, no "License" section was found',
+					],
+				}
+			}
 		}
 	}
 

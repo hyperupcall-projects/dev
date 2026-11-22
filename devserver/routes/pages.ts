@@ -9,7 +9,7 @@ import { workspacesView } from '../views/workspaces.ts'
 
 export const pages = new Hono()
 
-pages.get('/', (c) => c.redirect('/services'))
+pages.get('/', (c) => c.redirect('/projects'))
 
 pages.get('/services', async (c) => {
 	const { title, content, scripts } = await servicesView()

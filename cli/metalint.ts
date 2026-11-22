@@ -5,7 +5,12 @@ import * as fs from 'node:fs/promises'
 import * as clack from '@clack/prompts'
 import { styleText } from 'node:util'
 import os from 'node:os'
-import { fileExists, getGitRemoteName, pkgRoot } from '#utilities/util.ts'
+import {
+	fileExists,
+	getGitRemoteName,
+	parseGitHubRepository,
+	pkgRoot,
+} from '#utilities/util.ts'
 import toml from 'smol-toml'
 import { execa } from 'execa'
 import { globby } from 'globby'
@@ -324,8 +329,8 @@ async function getProject(): Promise<Project> {
 		}
 	}
 	const { stdout: remoteUrl } = await execa('git', ['remote', 'get-url', '--', remoteName])
-	const match = remoteUrl.match(/[:/](?<owner>.*?)\/(?<name>.*)$/u)
-	if (!match?.groups) {
+	const repository = parseGitHubRepository(remoteUrl)
+	if (!repository) {
 		printWithTips(
 			`Failed to extract repository name and owner for remote name "${remoteName}"`,
 			[`Remote name has URL of "${remoteUrl}"`],
@@ -336,11 +341,11 @@ async function getProject(): Promise<Project> {
 	return {
 		type: 'with-remote-url',
 		rootDir: process.cwd(),
-		name: match.groups.name,
+		name: repository.repo,
 		branchName,
 		remoteName,
 		remoteUrl,
-		owner: match.groups.owner,
+		owner: repository.owner,
 	}
 }
 
