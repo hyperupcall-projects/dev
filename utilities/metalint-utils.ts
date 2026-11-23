@@ -267,9 +267,11 @@ export async function writeTrees(trees: Record<string, string>[]) {
 export async function getNpmLatestVersion(packages: string[]): Promise<string[]> {
 	if (packages.length === 0) return []
 
-	const { stdout: workspaceDir } = await execa('pnpm', ['prefix', '--workspace-root'], {
-		reject: false,
-	})
+	const { stdout: workspaceDir } = await execa(
+		'pnpm',
+		['--pm-on-fail=ignore', 'prefix', '--workspace-root'],
+		{ reject: false },
+	)
 	const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'dev-npm-versions-'))
 	try {
 		// Unlike `view`, `outdated` resolves versions using minimumReleaseAge.
@@ -296,7 +298,7 @@ export async function getNpmLatestVersion(packages: string[]): Promise<string[]>
 		)
 
 		// pnpm exits with code 1 when it finds outdated dependencies.
-		const result = await execa('pnpm', ['outdated', '--json'], {
+		const result = await execa('pnpm', ['--pm-on-fail=ignore', 'outdated', '--json'], {
 			cwd: tmpDir,
 			// Read the original workspace settings with an isolated lockfile.
 			env: {
