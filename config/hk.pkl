@@ -1,0 +1,15 @@
+amends "package://github.com/jdx/hk/releases/download/v2.13.0/hk@2.13.0#/Config.pkl"
+import "package://github.com/jdx/hk/releases/download/v2.13.0/hk@2.13.0#/Builtins.pkl"
+
+local linters = new Mapping {
+    ["prettier"] = Builtins.prettier
+    ["eslint"] = Builtins.eslint
+    ["publint"] = new Step {
+        glob = "package.json"
+        // Does not include suggestion (info) messages.
+        check = "publint --level warning --strict"
+    }
+    ["tsc"] = Builtins.tsc
+}
+
+steps = linters
