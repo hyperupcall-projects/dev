@@ -43,7 +43,28 @@ export async function* filesMustHaveName(
 						message: dedent`
 							-> Expected file to be named "${goodFile}"
 							-> But, found file named "${badFile}"`,
-						fix: () => fs.rename(badFile, goodFile),
+						fix: async () => {
+							await fs.mkdir(path.dirname(goodFile), { recursive: true })
+							await fs.rename(badFile, goodFile)
+
+							// Recursively remove empty parent directories.
+							const root = process.cwd()
+							let directory = path.dirname(path.resolve(badFile))
+							while (
+								directory !== root &&
+								directory.startsWith(path.join(root, path.sep))
+							) {
+								try {
+									await fs.rmdir(directory)
+								} catch (error) {
+									if (error.code === 'ENOTEMPTY' || error.code === 'EEXIST') {
+										break
+									}
+									throw error
+								}
+								directory = path.dirname(directory)
+							}
+						},
 					}
 				}
 			}

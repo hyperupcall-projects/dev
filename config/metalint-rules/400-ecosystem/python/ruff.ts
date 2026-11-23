@@ -1,61 +1,50 @@
 import * as fs from 'node:fs/promises'
+import * as os from 'node:os'
 import * as path from 'node:path'
+import { parse, type TomlTable } from 'smol-toml'
 import type { Issues } from '#types'
-import { fileExists } from '#utilities/util.ts'
+import { filesMustHaveContent, filesMustHaveName } from '#utilities/metalint-utils.ts'
+import { fileExists, mergeTOML, pkgRoot } from '#utilities/util.ts'
 
-import {
-	filesMustHaveContent,
-	filesMustHaveShape,
-	getNpmLatestVersion,
-	packageJsonMustNotHaveDependencies,
-} from '#utilities/metalint-utils.ts'
-import { pkgRoot } from '#utilities/util.ts'
-import detectIndent from 'detect-indent'
-
-export const issues: Issues = async function* issues({ project }) {
+export const issues: Issues = async function* issues() {
 	// Check that there is only one configuration file.
 	{
-		const configContent = `[lint]
-# Disable linting rules that conflict with the formatter.
-# See more: https://docs.astral.sh/ruff/formatter/#conflicting-metalint-rules.
-ignore = [
-	'W191',   # tab-indentation
-	'E111',   # indentation-with-invalid-multiple
-	'E114',   # indentation-with-invalid-multiple-comment
-	'E117',   # over-indented
-	'D206',   # docstring-tab-indentation
-	'D300',   # triple-single-quotes
-	'Q000',   # bad-quotes-inline-string
-	'Q001',   # bad-quotes-multiline-string
-	'Q002',   # bad-quotes-docstring
-	'Q003',   # avoidable-escaped-quote
-	'COM812', # missing-trailing-comma
-	'COM819', # prohibited-trailing-comma
-]
-
-[format]
-docstring-code-format = true
-docstring-code-line-length = 20
-quote-style = 'single'
-indent-style = 'tab'
-`
+		const configFile = '.config/ruff.toml'
+		const configContent = await fs.readFile(
+			path.join(pkgRoot(), 'config/ruff.toml'),
+			'utf-8',
+		)
 
 		// https://docs.astral.sh/ruff/configuration/#config-file-discovery
+		yield* filesMustHaveName({
+			[configFile]: ['ruff.toml'],
+		})
 		yield* filesMustHaveContent('ruff', {
-			'ruff.toml': configContent,
+			[configFile]: configContent,
 		})
 
-		// TODO: filesMustHaveShape TOML
-		// if (await fileExists('pyproject.toml')) {
-		// 	yield* filesMustHaveShape('pyproject-toml', {
-		// 		'pyproject.toml': {
-		// 			tool: {
-		// 				ruff: {
-		// 					__delete: null,
-		// 				},
-		// 			},
-		// 		},
-		// 	})
-		// }
+		if (await fileExists('pyproject.toml')) {
+			const pyproject = parse(await fs.readFile('pyproject.toml', 'utf-8'))
+			const tool = pyproject.tool as TomlTable | undefined
+			const ruff = tool?.ruff as TomlTable | undefined
+
+			if (ruff?.extend !== configFile) {
+				yield {
+					id: 'pyproject-toml-must-extend-ruff-config',
+					message: `Expected pyproject.toml [tool.ruff] to set extend = "${configFile}"`,
+					fix: async () => {
+						const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'dev-ruff-'))
+						try {
+							const overridePath = path.join(tmpDir, 'override.toml')
+							await fs.writeFile(overridePath, `[tool.ruff]\nextend = "${configFile}"\n`)
+							const output = await mergeTOML('pyproject.toml', overridePath)
+							await fs.writeFile('pyproject.toml', output)
+						} finally {
+							await fs.rm(tmpDir, { recursive: true, force: true })
+						}
+					},
+				}
+			}
+		}
 	}
 }

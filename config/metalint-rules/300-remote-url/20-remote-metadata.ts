@@ -95,7 +95,7 @@ export const issues: Issues = async function* issues({ project }) {
 
 	// Check the homepage URL.
 	{
-		// Keep the trailing slash for consistency; GitHub defaults to adding a trailing slash when
+		// Be consistent; GitHub defaults to adding a trailing slash when
 		// deriving the homepage URL from the repository name and owner.
 		let expectedURL = `https://${project.owner}.github.io/${project.name}/`
 		if (project.name.includes('.')) {
@@ -103,37 +103,35 @@ export const issues: Issues = async function* issues({ project }) {
 		}
 
 		if (!data.homepage) {
-			// TODO
-			// yield {
-			// 	message: [
-			// 		'Expected GitHub repository to have a homepage URL',
-			// 		'But, no homepage URL was found',
-			// 	],
-			// 	fix: () =>
-			// 		octokit.rest.repos.update({
-			// 			owner: project.owner,
-			// 			repo: project.name,
-			// 			homepage: expectedURL,
-			// 		}),
-			// }
+			yield {
+				id: 'must-have-homepage-url',
+				message: [
+					'Expected GitHub repository to have a homepage URL',
+					'But, no homepage URL was found',
+				],
+				fix: () =>
+					octokit.rest.repos.update({
+						owner: project.owner,
+						repo: project.name,
+						homepage: expectedURL,
+					}),
+			}
 		} else if (data.homepage !== expectedURL) {
-			// TODO: Permissions bug
-			// yield {
-			// 	message: [
-			// 		`Expected GitHub repository to have a homepage URL of "${expectedURL}"`,
-			// 		`But, homepage URL of "${data.homepage}" was found`,
-			// 	],
-			// 	fix: () =>
-			// 		octokit.rest.repos.update({
-			// 			owner: project.owner,
-			// 			repo: project.name,
-			// 			homepage: expectedURL,
-			// 		}),
-			// }
+			yield {
+				id: 'homepage-url-must-match',
+				message: [
+					`Expected GitHub repository to have a homepage URL of "${expectedURL}"`,
+					`But, homepage URL of "${data.homepage}" was found`,
+				],
+				fix: () =>
+					octokit.rest.repos.update({
+						owner: project.owner,
+						repo: project.name,
+						homepage: expectedURL,
+					}),
+			}
 		}
 	}
-
-	// TODO: Check that some topics exist; derive the topics that should exist from package.json, repo name, etc.
 
 	// Check that unnecessary features are disabled.
 	{
@@ -253,8 +251,6 @@ export const issues: Issues = async function* issues({ project }) {
 			}
 		}
 	}
-
-	// TODO: check that github pages is properly configured
 
 	if (data.default_branch !== 'main') {
 		yield {

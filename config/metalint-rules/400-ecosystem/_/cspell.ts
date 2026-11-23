@@ -1,9 +1,10 @@
+import * as fs from 'node:fs/promises'
+import * as YAML from 'yaml'
 import { filesMustHaveContent, filesMustHaveName } from '#utilities/metalint-utils.ts'
+import { fileExists } from '#utilities/util.ts'
 import type { Issues } from '#types'
 
 export const issues: Issues = async function* issues() {
-	// TODO: Ensure is enabled: enableGlobDot: true
-
 	// Check that there is only one configuration file.
 	{
 		// https://cspell.org/docs/Configuration
@@ -52,5 +53,19 @@ export const issues: Issues = async function* issues() {
 			'.vscode/cSpell.json': null,
 			'.vscode/.cspell.json': null,
 		})
+	}
+
+	if (await fileExists('.cspell.yaml')) {
+		const config = YAML.parseDocument(await fs.readFile('.cspell.yaml', 'utf-8'))
+		if (config.get('enableGlobDot') !== true) {
+			yield {
+				id: 'cspell-must-enable-glob-dot',
+				message: 'Expected .cspell.yaml to set enableGlobDot as true',
+				fix: async () => {
+					config.set('enableGlobDot', true)
+					await fs.writeFile('.cspell.yaml', config.toString())
+				},
+			}
+		}
 	}
 }
