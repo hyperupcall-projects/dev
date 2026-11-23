@@ -147,11 +147,9 @@ export async function getGitRemoteName(cwd = process.cwd()): Promise<string | un
 export function parseGitHubRepository(
 	remoteUrl: string,
 ): { owner: string; repo: string } | undefined {
-	// Match SCP-style SSH or URL remotes, validating both path components in full.
-	const url = remoteUrl.trim().replace(/\.git\/?$/u, '')
-	const match = url.match(
-		/^(?:[^/\s]+@[^:/\s]+:|[a-zA-Z][a-zA-Z0-9+.-]*:\/\/[^/\s]+\/)(?<owner>[\w-]+)\/(?<repo>[\w.-]+)\/?$/u,
-	)
+	// Extract the trailing owner/repo from SSH or URL remotes.
+	const url = remoteUrl.trim().replace(/\/$/u, '').replace(/\.git$/u, '')
+	const match = url.match(/[:/](?<owner>[\w-]+)\/(?<repo>[\w.-]+)$/u)
 	if (!match?.groups) {
 		return undefined
 	}
