@@ -1,11 +1,8 @@
 import * as fs from 'node:fs/promises'
-import path from 'node:path'
 import process from 'node:process'
 import spdxLicenseList from 'spdx-license-list/full.js'
 import * as clack from '@clack/prompts'
 import type { Issues } from '#types'
-import { styleText } from 'node:util'
-import { pkgRoot } from '#utilities/util.ts'
 import { globby } from 'globby'
 import { remark } from 'remark'
 
@@ -148,15 +145,13 @@ export const issues: Issues = async function* issues({ project }) {
 			const content = await fs.readFile(file, 'utf-8')
 			if (content.length === 0) {
 				yield {
-					id: 'must-have-correct-contents',
+					id: 'must-have-content',
 					message: [
 						'Expected to find all license files with content',
 						`But, found license file "${file}" with no content`,
 					],
 				}
 			}
-
-			// TODO: Check that the content of each license file has the EXACT text of some SPDX license (if not, user should opt-out of this check)
 		}
 	}
 }

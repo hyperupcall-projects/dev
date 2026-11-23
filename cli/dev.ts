@@ -7,6 +7,7 @@ import yargs from 'yargs'
 import { hideBin } from 'yargs/helpers'
 
 import { run as runNew } from './new.ts'
+import { run as runLicense } from './license.ts'
 import { run as runMetalint } from './metalint.ts'
 import { run as runFormat } from './format.ts'
 import { run as runLint } from './lint.ts'
@@ -87,6 +88,14 @@ const cli = yargs(hideBin(process.argv))
 				force: argv.force as boolean | undefined,
 				options: argv.options as string | undefined,
 			})
+		},
+	)
+	.command(
+		'license',
+		'Choose a license and write it to LICENSE',
+		() => {},
+		async () => {
+			await runLicense()
 		},
 	)
 	.command(

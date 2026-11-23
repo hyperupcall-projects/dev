@@ -3,6 +3,7 @@
 `dev` is a personal development tool. It can:
 
 - create new projects from templates (`dev new`)
+- choose a license and write its text to `LICENSE` (`dev license`)
 - lint a project and fix the configuration it finds wrong (`dev metalint`)
 - lint a project with the configured linters (`dev lint`)
 - format a project with the configured formatters (`dev format`)
@@ -73,6 +74,30 @@ Templates you can pick from `dev new`:
 | `go`      | `hello-world`, `cli`, `web-server`          |
 
 `config/templates/` also contains template directories for `c`, `html`, `java`, `php`, `python` and `webext`. Not every template listed above has a directory yet.
+
+### `dev license`
+
+First asks whether you want a **software license**, **content license**, **data license**, or **font license**, then offers the licenses in that category:
+
+- **Software:** first asks you to choose Public domain, Permissive, Weak copyleft, or Strong copyleft, then offers the licenses in that category (listed below).
+- **Content:** CC0-1.0; the six Creative Commons 4.0 International licenses (CC-BY-4.0, CC-BY-SA-4.0, CC-BY-ND-4.0, CC-BY-NC-4.0, CC-BY-NC-SA-4.0, and CC-BY-NC-ND-4.0); and GFDL-1.3.
+- **Data:** the Open Data Commons licenses PDDL-1.0, ODC-By-1.0, and ODbL-1.0, with notes in the license table.
+- **Font:** SIL Open Font License 1.1 (`OFL-1.1`), GNU GPL v2.0 with Font exception (`GPL-2.0-with-font-exception`), and IPA Font License (`IPA`).
+
+| Software category | Licenses |
+| --- | --- |
+| Public domain | Unlicense, CC0-1.0, 0BSD, MIT-0 |
+| Permissive | ISC, MIT, BSD-2-Clause, BSD-3-Clause, Zlib, Apache-2.0, BSL-1.0 |
+| Weak copyleft | MPL-2.0, EPL-2.0, LGPL-2.1-only, LGPL-3.0-only |
+| Strong copyleft | GPL-2.0-only, GPL-3.0-only, AGPL-3.0-only |
+
+The final license chooser uses a regular Clack select when no licenses have notes. If any license has a non-empty note, it uses a table with **Name** and **Note** columns. Use ↑/↓ to move between licenses and Enter to choose one. Long names and notes wrap inside their columns, and the table scrolls to keep the highlighted license visible.
+
+License names in both views are terminal hyperlinks to their SPDX license text pages. Open them with your terminal's link-opening shortcut, usually Ctrl+click or Cmd+click, in a terminal that supports hyperlinks.
+
+Each option in [`utilities/license.ts`](../utilities/license.ts) supports an optional `note: 'Your explanation here'`. License notes appear in the **Note** column; notes on license types and software categories appear beside the option. Both choosers start on the first option. Stars (★) in labels are displayed as part of the name.
+
+Writes the selected SPDX license text to `LICENSE` in the current directory (or the directory selected with `--dir`). An existing `LICENSE` file is replaced. Cancelling any prompt exits with code 1 without writing a file. The metalint license fix uses the same chooser.
 
 ### `dev metalint [dir] [--yes] [--strict]`
 
