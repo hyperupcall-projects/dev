@@ -59,13 +59,7 @@ export async function runCheckLicenseHeaders() {
 				path: repoDir,
 				ignoreFiles: ['.gitignore', '.ignore', '__custom_ignore__'],
 			})
-			walker.ignoreRules['__custom_ignore__'] = ['.git'].map(
-				(dirname) =>
-					new minimatch.Minimatch(`**/${dirname}/*`, {
-						dot: true,
-						flipNegate: true,
-					}),
-			)
+			walker.onReadIgnoreFile('__custom_ignore__', '**/.git/*', () => {})
 			walker.on('done', async (files) => {
 				for (const file of files) {
 					const filepath = path.join(repoDir, file)
@@ -135,20 +129,18 @@ export async function runCheckLicenseHeaders() {
 			// .\"
 		) {
 		} else if (
-			minimatch(
+			micromatch.isMatch(
 				filename,
 				[
-					[
-						'*.{json,sublime-snippet,webmanifest,code-snippets,map,gradlew,webp,bat,jar,woff,woff2,png,jpg,jpeg,ttf,eot,svg,ico,gif,lock,zip,7z,gz,content,bin,asc,gpg,snap,txt,sum,work,test,log,emu,parsed,patch,diff,flattened,pdf,csv}',
-						'*.a*',
-						'*.so*',
-						'*.env*',
-						'*.txt',
-						'*.test',
-						'1.*',
-						'CNAME',
-						'go.mod',
-					],
+					'*.{json,sublime-snippet,webmanifest,code-snippets,map,gradlew,webp,bat,jar,woff,woff2,png,jpg,jpeg,ttf,eot,svg,ico,gif,lock,zip,7z,gz,content,bin,asc,gpg,snap,txt,sum,work,test,log,emu,parsed,patch,diff,flattened,pdf,csv}',
+					'*.a*',
+					'*.so*',
+					'*.env*',
+					'*.txt',
+					'*.test',
+					'1.*',
+					'CNAME',
+					'go.mod',
 					'*LICENSE*',
 					'*COPYING*',
 					'bake',
@@ -168,6 +160,7 @@ export async function runSymlinkHiddenDirs() {
 	const config = await getTaskConfig()
 	await forEachRepository(
 		config.organizationsDir,
+		{},
 		async function run({ orgDir, orgEntry, repoDir, repoEntry }) {
 			const oldHiddenDir = path.join(repoDir, '.hidden')
 			const newHiddenDir = path.join(config.hiddenDirsRepositoryDir, repoEntry.name)
@@ -281,9 +274,18 @@ export async function runCreateVSCodeLaunchers() {
 			continue
 		}
 
+		const variantId = dirname.slice('pack-ecosystem-'.length)
+		const variantName =
+			typeof packageJson.displayName === 'string'
+				? packageJson.displayName.split(':')[1]?.trimStart()
+				: undefined
+		if (!variantId || !variantName) {
+			throw new Error(`Invalid ecosystem extension metadata: ${dirname}`)
+		}
+
 		await createVSCodeDesktopApplication({
-			variantId: dirname.split('-').at(-1),
-			variantName: (packageJson.displayName ?? '').split(':')[1].trimStart(),
+			variantId,
+			variantName,
 			extensions: [
 				'edwinkofler.vscode-hyperupcall-pack-base',
 				'edwinkofler.vscode-hyperupcall-pack-bundled-themes',

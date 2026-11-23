@@ -61,6 +61,10 @@ export const issues: Issues = async function* issues({ project }) {
 	}
 
 	async function fixSetDescription() {
+		if (project.type !== 'with-remote-url') {
+			throw new Error(`Expected project to be associated with a remote forge`)
+		}
+
 		const inputValue = await clack.text({
 			message: 'Choose a description',
 			defaultValue: data.description ?? '',

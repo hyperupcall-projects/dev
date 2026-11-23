@@ -24,13 +24,16 @@ export const issues: Issues = async function* issues({ project }) {
 			continue
 		}
 
-		const originalConfig: TsConfigJson = JSON.parse(configText)
-		const config: TsConfigJson = structuredClone(originalConfig)
+		type Config = TsConfigJson & {
+			compilerOptions?: TsConfigJson.CompilerOptions & { importsNotUsedAsValues?: string }
+		}
+		const originalConfig: Config = JSON.parse(configText)
+		const config: Config = structuredClone(originalConfig)
 
 		if (!config?.compilerOptions) {
 			continue
 		}
-		config.compilerOptions.jsx
+		const options = config.compilerOptions
 		for (const property of [
 			'jsx',
 			'module',
@@ -39,13 +42,16 @@ export const issues: Issues = async function* issues({ project }) {
 			'target',
 			'importsNotUsedAsValues',
 		] as const) {
-			if (typeof config.compilerOptions[property] === 'string') {
-				config.compilerOptions[property] = config.compilerOptions[property].toLowerCase()
+			if (typeof options[property] === 'string') {
+				;(options as Record<typeof property, string | undefined>)[property] =
+					options[property].toLowerCase()
 			}
 		}
 
-		for (let i = 0; i < (config.compilerOptions.lib ?? []).length; ++i) {
-			config.compilerOptions.lib[i] = config.compilerOptions.lib[i].toLowerCase()
+		if (options.lib) {
+			options.lib = options.lib.map(
+				(lib) => lib.toLowerCase() as TsConfigJson.CompilerOptions.Lib,
+			)
 		}
 
 		const oldStr = JSON.stringify(originalConfig, null, detectIndent(configText).indent)
