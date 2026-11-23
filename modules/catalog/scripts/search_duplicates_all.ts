@@ -138,9 +138,7 @@ function walkDirectory(directory: string, markdownFiles: Set<string>): void {
 	}
 }
 
-function buildGlobalLinks(
-	markdownFiles: string[],
-): Map<string, LinkLocation[]> {
+function buildGlobalLinks(markdownFiles: string[]): Map<string, LinkLocation[]> {
 	const globalLinks = new Map<string, LinkLocation[]>()
 
 	for (const markdownFile of markdownFiles) {
@@ -187,8 +185,7 @@ function printDuplicates(
 		)
 
 		for (const location of rest) {
-			const relativePath =
-				path.relative(cwd, location.file) || location.file
+			const relativePath = path.relative(cwd, location.file) || location.file
 			console.log(
 				`  ${terminalLink(relativePath, location.file, location)}:${location.line}:${location.column}`,
 			)
@@ -210,15 +207,11 @@ interface FixPlan {
 	removeOneLineFromTodo: Set<string>
 }
 
-function buildFixPlan(
-	duplicateUrls: Array<[string, LinkLocation[]]>,
-): FixPlan {
+function buildFixPlan(duplicateUrls: Array<[string, LinkLocation[]]>): FixPlan {
 	const removeOneLineFromTodo = new Set<string>()
 
 	for (const [url, locations] of duplicateUrls) {
-		const hasTodoLocation = locations.some((location) =>
-			isTodoFile(location.file),
-		)
+		const hasTodoLocation = locations.some((location) => isTodoFile(location.file))
 		if (hasTodoLocation) {
 			removeOneLineFromTodo.add(url)
 		}
@@ -227,10 +220,7 @@ function buildFixPlan(
 	return { removeOneLineFromTodo }
 }
 
-function getAffectedFiles(
-	plan: FixPlan,
-	markdownFiles: string[],
-): string[] {
+function getAffectedFiles(plan: FixPlan, markdownFiles: string[]): string[] {
 	if (plan.removeOneLineFromTodo.size === 0) {
 		return []
 	}
@@ -276,11 +266,7 @@ function applyFixToFile(filePath: string, plan: FixPlan): number {
 	return removedCount
 }
 
-function applyFix(
-	plan: FixPlan,
-	markdownFiles: string[],
-	cwd: string,
-): number {
+function applyFix(plan: FixPlan, markdownFiles: string[], cwd: string): number {
 	const affectedFiles = getAffectedFiles(plan, markdownFiles)
 	let totalRemoved = 0
 
@@ -307,9 +293,7 @@ function printUsage(): void {
 	)
 	console.error('')
 	console.error('Arguments:')
-	console.error(
-		'  paths  Optional files or directories to search (default: .)',
-	)
+	console.error('  paths  Optional files or directories to search (default: .)')
 }
 
 function parseArgs(args: string[]): { fix: boolean; searchPaths: string[] } {

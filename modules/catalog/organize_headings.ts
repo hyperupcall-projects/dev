@@ -38,12 +38,8 @@ const AFTER_PLACEHOLDER = CORRECT_HEADING_ORDER.slice(
 	CORRECT_HEADING_ORDER.indexOf(ORDER_PLACEHOLDER) + 1,
 )
 
-const BEFORE_ORDER = new Map(
-	BEFORE_PLACEHOLDER.map((heading, index) => [heading, index]),
-)
-const AFTER_ORDER = new Map(
-	AFTER_PLACEHOLDER.map((heading, index) => [heading, index]),
-)
+const BEFORE_ORDER = new Map(BEFORE_PLACEHOLDER.map((heading, index) => [heading, index]))
+const AFTER_ORDER = new Map(AFTER_PLACEHOLDER.map((heading, index) => [heading, index]))
 
 const ORDER_ALIASES: Record<string, string[]> = {
 	'Learning & Studying': ['learning & studying'],
@@ -57,10 +53,7 @@ const ORDER_ALIASES: Record<string, string[]> = {
 		'linters static analysis',
 		'linters and static analysis',
 	],
-	'Dynamic Code Analysis': [
-		'dynamic code analysis',
-		'dynamic analysis',
-	],
+	'Dynamic Code Analysis': ['dynamic code analysis', 'dynamic analysis'],
 	'Build Systems': ['build systems', 'build system'],
 	'Package Managers': ['package managers', 'package manager'],
 	Documentation: ['documentation', 'docs'],
@@ -71,9 +64,7 @@ const ORDER_ALIASES: Record<string, string[]> = {
 	Libraries: ['libraries', 'library'],
 	People: ['people'],
 	Conferences: ['conferences', 'conference'],
-	'Blogs & Opinions': [
-		'blogs & opinions',
-	],
+	'Blogs & Opinions': ['blogs & opinions'],
 	Fun: ['fun'],
 	Other: ['other', 'others'],
 }
@@ -181,10 +172,7 @@ function nodeStartOffset(node: MarkdownNode, lineStarts: number[]): number {
 
 function extractHeadingText(source: string, startOffset: number): string {
 	const lineEnd = source.indexOf('\n', startOffset)
-	const line = source.slice(
-		startOffset,
-		lineEnd === -1 ? source.length : lineEnd,
-	)
+	const line = source.slice(startOffset, lineEnd === -1 ? source.length : lineEnd)
 
 	return line
 		.replace(/^##\s+/, '')
@@ -386,10 +374,14 @@ function formatHeadingStats(headingCounts: Map<string, number>): string {
 }
 
 function printUsage(): void {
-	console.error('Usage: deno run --allow-read --allow-write ./organize_headings.ts [--dry-run] <file-or-directory>')
+	console.error(
+		'Usage: deno run --allow-read --allow-write ./organize_headings.ts [--dry-run] <file-or-directory>',
+	)
 	console.error('')
 	console.error('Reorders only root-level ## sections inside Markdown files.')
-	console.error('Other content and all nested headings move with their parent ## section.')
+	console.error(
+		'Other content and all nested headings move with their parent ## section.',
+	)
 }
 
 async function main(): Promise<void> {
@@ -440,10 +432,7 @@ async function main(): Promise<void> {
 			processedFiles += 1
 
 			for (const [heading, count] of result.headingCounts) {
-				globalHeadingCounts.set(
-					heading,
-					(globalHeadingCounts.get(heading) ?? 0) + count,
-				)
+				globalHeadingCounts.set(heading, (globalHeadingCounts.get(heading) ?? 0) + count)
 			}
 
 			if (result.changed) {
@@ -461,7 +450,9 @@ async function main(): Promise<void> {
 		} catch (error) {
 			hadErrors = true
 			const message = error instanceof Error ? error.message : String(error)
-			console.error(`Failed to process ${relative(cwd, filePath) || filePath}: ${message}`)
+			console.error(
+				`Failed to process ${relative(cwd, filePath) || filePath}: ${message}`,
+			)
 		}
 	}
 

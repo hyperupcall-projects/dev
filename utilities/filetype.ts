@@ -205,7 +205,7 @@ export async function detectFiletypes({
 		dot: true,
 		gitignore,
 		followSymbolicLinks,
-		ignore: ignoreDirectoriesGlob()
+		ignore: ignoreDirectoriesGlob(),
 	})
 
 	const detected: Record<string, string[]> = {}

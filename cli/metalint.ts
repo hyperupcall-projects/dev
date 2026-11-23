@@ -328,7 +328,12 @@ async function getProject(): Promise<Project> {
 			branchName,
 		}
 	}
-	const { stdout: remoteUrl } = await execa('git', ['remote', 'get-url', '--', remoteName])
+	const { stdout: remoteUrl } = await execa('git', [
+		'remote',
+		'get-url',
+		'--',
+		remoteName,
+	])
 	const repository = parseGitHubRepository(remoteUrl)
 	if (!repository) {
 		printWithTips(

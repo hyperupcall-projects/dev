@@ -44,7 +44,10 @@ const validateConfig = ajv.compile({
 	},
 })
 
-export async function loadConfigFile(filepath: string, validate = false): Promise<Config> {
+export async function loadConfigFile(
+	filepath: string,
+	validate = false,
+): Promise<Config> {
 	let text: string
 	try {
 		text = await fs.readFile(filepath, 'utf-8')
@@ -67,8 +70,14 @@ export async function loadConfigFile(filepath: string, validate = false): Promis
 	return config
 }
 
-export async function loadConfig(rootDir: string, validate: boolean = true): Promise<Config> {
-	const global = await loadConfigFile(path.join(pkgRoot(), 'config/dev-global.toml'), validate)
+export async function loadConfig(
+	rootDir: string,
+	validate: boolean = true,
+): Promise<Config> {
+	const global = await loadConfigFile(
+		path.join(pkgRoot(), 'config/dev-global.toml'),
+		validate,
+	)
 	const project = await loadConfigFile(path.resolve(rootDir, 'dev.toml'), validate)
 	return _.mergeWith({}, global, project, (_value, override) =>
 		Array.isArray(override) ? [...override] : undefined,
@@ -76,11 +85,37 @@ export async function loadConfig(rootDir: string, validate: boolean = true): Pro
 }
 
 export function ignoreDirectories() {
-	return ['node_modules', '__pycache__', 'target', '.data', '.git', '.hg', '.svn', '.venv', 'venv', '.ruff_cache', '.mypy_cache', '.pytest_cache', 'dist', 'build', '.next', '.nuxt', '.svelte-kit', '.astro', '.turbo', '.parcel-cache', '.cache', '.vite', 'dist', 'out', 'coverage']
+	return [
+		'node_modules',
+		'__pycache__',
+		'target',
+		'.data',
+		'.git',
+		'.hg',
+		'.svn',
+		'.venv',
+		'venv',
+		'.ruff_cache',
+		'.mypy_cache',
+		'.pytest_cache',
+		'dist',
+		'build',
+		'.next',
+		'.nuxt',
+		'.svelte-kit',
+		'.astro',
+		'.turbo',
+		'.parcel-cache',
+		'.cache',
+		'.vite',
+		'dist',
+		'out',
+		'coverage',
+	]
 }
 
 export function ignoreDirectoriesGlob() {
-	return ignoreDirectories().map(dir => `**/${dir}/**`)
+	return ignoreDirectories().map((dir) => `**/${dir}/**`)
 }
 
 async function getGitHubToken(): Promise<string | undefined> {
@@ -92,7 +127,6 @@ async function getGitHubToken(): Promise<string | undefined> {
 }
 
 export const octokit = new Octokit({ auth: await getGitHubToken() })
-
 
 export async function fileExists(filepath: string): Promise<boolean> {
 	return await fs
@@ -148,7 +182,10 @@ export function parseGitHubRepository(
 	remoteUrl: string,
 ): { owner: string; repo: string } | undefined {
 	// Extract the trailing owner/repo from SSH or URL remotes.
-	const url = remoteUrl.trim().replace(/\/$/u, '').replace(/\.git$/u, '')
+	const url = remoteUrl
+		.trim()
+		.replace(/\/$/u, '')
+		.replace(/\.git$/u, '')
 	const match = url.match(/[:/](?<owner>[\w-]+)\/(?<repo>[\w.-]+)$/u)
 	if (!match?.groups) {
 		return undefined

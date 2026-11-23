@@ -1,53 +1,38 @@
-{{- /* Home directory index — layout matches http://localhost:40000/catalog/ */ -}}
-{{- /* Order from data/directory_order.yaml (same idea as DIRECTORY_ORDER). */ -}}
-{{- $order := hugo.Data.directory_order | default (slice
-  "Root"
-  "Self"
-  "Areas"
-  "Crafts & Arts & Hobbies"
-  "Computing Areas"
-  "Computer Systems & Things"
-  "Software Development"
-  "Computing Languages & Environments"
-  "Computing Other"
-  "Computer Applications"
-  "Computer Programs"
-  "Other"
-) -}}
-
-{{- $rootPages := slice -}}
-{{- with site.GetPage "/other" -}}{{- $rootPages = $rootPages | append . -}}{{- end -}}
+{{- /* Home directory index — layout matches http://localhost:40000/catalog/ */ -}} {{- /*
+Order from data/directory_order.yaml (same idea as DIRECTORY_ORDER). */ -}} {{- $order :=
+hugo.Data.directory_order | default (slice "Root" "Self" "Areas" "Crafts & Arts & Hobbies"
+"Computing Areas" "Computer Systems & Things" "Software Development" "Computing Languages
+& Environments" "Computing Other" "Computer Applications" "Computer Programs" "Other" )
+-}} {{- $rootPages := slice -}} {{- with site.GetPage "/other" -}}{{- $rootPages =
+$rootPages | append . -}}{{- end -}}
 
 <div class="catalog-index">
-  <h1 class="catalog-index__title">📚 Edwin's Catalog</h1>
+	<h1 class="catalog-index__title">📚 Edwin's Catalog</h1>
 
-  <div class="catalog-index__grid">
-    {{- range $order -}}
-      {{- if eq . "Root" -}}
-        {{- if $rootPages -}}
-        <section class="catalog-index__section catalog-index__section--root">
-          <h2 class="catalog-index__heading">📄 Root Files</h2>
-          <div class="catalog-index__list">
-            {{- range $rootPages -}}
-            <a class="catalog-index__link" href="{{ .RelPermalink }}">{{ partial "catalog-index-label" . }}</a>
-            {{- end -}}
-          </div>
-        </section>
-        {{- end -}}
-      {{- else if eq . "Other" -}}
-        {{/* Listed under Root when present */}}
-      {{- else -}}
-        {{- with site.GetPage . -}}
-        <section class="catalog-index__section">
-          <h2 class="catalog-index__heading">📁 {{ partial "docs/title" . }}</h2>
-          <div class="catalog-index__list">
-            {{- range .RegularPages.ByTitle -}}
-            <a class="catalog-index__link" href="{{ .RelPermalink }}">{{ partial "catalog-index-label" . }}</a>
-            {{- end -}}
-          </div>
-        </section>
-        {{- end -}}
-      {{- end -}}
-    {{- end -}}
-  </div>
+	<div class="catalog-index__grid">
+		{{- range $order -}} {{- if eq . "Root" -}} {{- if $rootPages -}}
+		<section class="catalog-index__section catalog-index__section--root">
+			<h2 class="catalog-index__heading">📄 Root Files</h2>
+			<div class="catalog-index__list">
+				{{- range $rootPages -}}
+				<a class="catalog-index__link" href="{{ .RelPermalink }}"
+					>{{ partial "catalog-index-label" . }}</a
+				>
+				{{- end -}}
+			</div>
+		</section>
+		{{- end -}} {{- else if eq . "Other" -}} {{/* Listed under Root when present */}} {{-
+		else -}} {{- with site.GetPage . -}}
+		<section class="catalog-index__section">
+			<h2 class="catalog-index__heading">📁 {{ partial "docs/title" . }}</h2>
+			<div class="catalog-index__list">
+				{{- range .RegularPages.ByTitle -}}
+				<a class="catalog-index__link" href="{{ .RelPermalink }}"
+					>{{ partial "catalog-index-label" . }}</a
+				>
+				{{- end -}}
+			</div>
+		</section>
+		{{- end -}} {{- end -}} {{- end -}}
+	</div>
 </div>

@@ -1,3 +1,5 @@
 {{ with resources.Get "open-file.js" | resources.Minify }}
-  <script>{{ .Content | safeJS }}</script>
+<script>
+	{{ .Content | safeJS }}
+</script>
 {{ end }}

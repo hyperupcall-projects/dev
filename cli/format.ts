@@ -21,11 +21,7 @@ import { MultiSelectPrompt, SelectPrompt } from '@clack/core'
 
 import type { Config, FormatConfig } from '#types'
 
-export async function run(options: {
-	config: Config
-	formatter?: string
-	dir?: string
-}) {
+export async function run(options: { config: Config; formatter?: string; dir?: string }) {
 	await runFormatOrLint(Formatters, 'format', options.config, options.formatter)
 }
 
@@ -38,8 +34,7 @@ export async function runFormatOrLint(
 	const rootDir = process.cwd()
 	let format: Required<FormatConfig> | undefined
 	try {
-		format =
-			action === 'format' ? resolveFormatConfig(config.format, tools) : undefined
+		format = action === 'format' ? resolveFormatConfig(config.format, tools) : undefined
 	} catch (err) {
 		console.error(`Cannot load ${action} configuration: ${(err as Error).message}`)
 		process.exitCode = 1

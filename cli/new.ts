@@ -161,7 +161,7 @@ export async function createProject(ctx: Context) {
 					const template = await fs.readFile(inputFile, 'utf-8')
 					const outputContent = Handlebars.compile(template)(
 						{
-							Fullname
+							Fullname,
 						},
 						{
 							helpers: {

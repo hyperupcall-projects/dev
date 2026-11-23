@@ -21,9 +21,7 @@ import * as path from 'path'
 
 // Firefox bookmark types
 type BookmarkType =
-	| 'text/x-moz-place'
-	| 'text/x-moz-place-container'
-	| 'text/x-moz-place-separator'
+	'text/x-moz-place' | 'text/x-moz-place-container' | 'text/x-moz-place-separator'
 
 interface BookmarkItem {
 	guid?: string
@@ -85,10 +83,7 @@ function findAllBookmarks(item: BookmarkItem): ParsedBookmark[] {
 /**
  * Find a folder by name (case-insensitive, recursive search)
  */
-function findFolder(
-	item: BookmarkItem,
-	folderName: string,
-): BookmarkItem | null {
+function findFolder(item: BookmarkItem, folderName: string): BookmarkItem | null {
 	// Check if this item is the folder we're looking for
 	if (
 		item.type === 'text/x-moz-place-container' &&
@@ -139,9 +134,7 @@ function parseBookmarks(
  * Format bookmarks as Markdown
  */
 function formatAsMarkdown(bookmarks: ParsedBookmark[]): string {
-	return bookmarks
-		.map((bookmark) => `- [${bookmark.title}](${bookmark.url})`)
-		.join('\n')
+	return bookmarks.map((bookmark) => `- [${bookmark.title}](${bookmark.url})`).join('\n')
 }
 
 /**
@@ -151,17 +144,13 @@ function main() {
 	const args = process.argv.slice(2)
 
 	if (args.length < 1) {
-		console.error(
-			'Usage: node parse_bookmarks.js <bookmark_file.json> [filter_folder]',
-		)
+		console.error('Usage: node parse_bookmarks.js <bookmark_file.json> [filter_folder]')
 		console.error('')
 		console.error('Arguments:')
 		console.error(
 			'  bookmark_file.json - Path to the exported Firefox bookmark JSON file',
 		)
-		console.error(
-			'  filter_folder      - Optional folder name to filter by (recursive)',
-		)
+		console.error('  filter_folder      - Optional folder name to filter by (recursive)')
 		console.error('')
 		console.error('Example:')
 		console.error('  node parse_bookmarks.js bookmarks.json')

@@ -4,10 +4,6 @@ import { runFormatOrLint } from './format.ts'
 import { Linters } from '#utilities/config.ts'
 import type { Config } from '#types'
 
-export async function run(options: {
-	config: Config
-	linter?: string
-	dir?: string
-}) {
+export async function run(options: { config: Config; linter?: string; dir?: string }) {
 	await runFormatOrLint(Linters, 'lint', options.config, options.linter)
 }

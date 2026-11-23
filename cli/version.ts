@@ -7,17 +7,10 @@ import ansiEscapes from 'ansi-escapes'
 import { execa } from 'execa'
 import semver from 'semver'
 
-import {
-	detectEcosystem,
-	ecosystems,
-	type VersionUpdate,
-} from '#utilities/ecosystems.ts'
+import { detectEcosystem, ecosystems, type VersionUpdate } from '#utilities/ecosystems.ts'
 import type { Config } from '#types'
 
-export async function run(options: {
-	config: Config
-	force?: boolean
-}) {
+export async function run(options: { config: Config; force?: boolean }) {
 	const { stdout: statusOutput } = await execa('git', ['status', '--porcelain'])
 	if (statusOutput.trim() !== '' && !options.force) {
 		console.error(
@@ -33,7 +26,7 @@ export async function run(options: {
 			'v*',
 			'--sort=-version:refname',
 		])
-		const [latestTag,] = tagsOutput.split('\n').filter((tag) => tag.trim() !== '')
+		const [latestTag] = tagsOutput.split('\n').filter((tag) => tag.trim() !== '')
 		const currentVersion = latestTag?.replace(/^v/, '') ?? '0.0.0'
 		if (!semver.valid(currentVersion)) {
 			console.error(`Latest tag "${latestTag}" is not a valid semantic version`)
@@ -46,11 +39,9 @@ export async function run(options: {
 		for (const dir of rootDirs) {
 			const rootDir = path.resolve(process.cwd(), dir)
 			for (const ecosystemId of await detectEcosystem({ rootDir })) {
-				for (const { relativePath, oldVersion } of await ecosystems[ecosystemId].updateVersion(
-					rootDir,
-					'',
-					{ dryRun: true },
-				)) {
+				for (const { relativePath, oldVersion } of await ecosystems[
+					ecosystemId
+				].updateVersion(rootDir, '', { dryRun: true })) {
 					filesToUpdate.push({
 						relativePath: path.join(dir, relativePath),
 						oldVersion,
@@ -108,18 +99,27 @@ async function askForNewVersion(
 	}
 
 	const files = [
-		...new Map(updates.map((update) => [update.relativePath, update.oldVersion] as const)),
+		...new Map(
+			updates.map((update) => [update.relativePath, update.oldVersion] as const),
+		),
 	]
 	const mismatchedFiles = new Set(
 		latestTag
 			? files
-				.filter(([, oldVersion]) => !semver.valid(oldVersion) || !semver.eq(oldVersion, currentVersion))
-				.map(([relativePath]) => relativePath)
+					.filter(
+						([, oldVersion]) =>
+							!semver.valid(oldVersion) || !semver.eq(oldVersion, currentVersion),
+					)
+					.map(([relativePath]) => relativePath)
 			: [],
 	)
-	const warning = mismatchedFiles.size > 0
-		? styleText('yellow', `Manifest versions differ from latest Git tag of ${latestTag}`)
-		: undefined
+	const warning =
+		mismatchedFiles.size > 0
+			? styleText(
+					'yellow',
+					`Manifest versions differ from latest Git tag of ${latestTag}`,
+				)
+			: undefined
 	const pathWidth = Math.max(0, ...files.map(([relativePath]) => relativePath.length))
 	const versionWidth = Math.max(0, ...files.map(([, oldVersion]) => oldVersion.length))
 
@@ -150,7 +150,10 @@ async function askForNewVersion(
 		return getCustomError() ? undefined : semver.valid(customVersion)!
 	}
 
-	const formatFile = ([relativePath, oldVersion]: readonly [string, string], version?: string) => {
+	const formatFile = (
+		[relativePath, oldVersion]: readonly [string, string],
+		version?: string,
+	) => {
 		let newVersion = styleText('green', version ?? '?')
 		if (version === oldVersion) {
 			newVersion = styleText('dim', 'unchanged')
@@ -166,7 +169,8 @@ async function askForNewVersion(
 		const columns = process.stdout.columns || 80
 		const tabs = choices.map(({ label, version }, index) => {
 			const selected = index === choiceIndex
-			const value = index === customIndex ? `${customVersion}${selected ? '▏' : ''}` : version
+			const value =
+				index === customIndex ? `${customVersion}${selected ? '▏' : ''}` : version
 			return styleText(selected ? ['inverse', 'bold'] : 'dim', ` ${label} ${value} `)
 		})
 
@@ -174,20 +178,27 @@ async function askForNewVersion(
 		const tabLines: string[] = []
 		for (const tab of tabs) {
 			const line = tabLines.at(-1)
-			if (line !== undefined && stripVTControlCharacters(`${line} ${tab}`).length <= columns) {
+			if (
+				line !== undefined &&
+				stripVTControlCharacters(`${line} ${tab}`).length <= columns
+			) {
 				tabLines[tabLines.length - 1] = `${line} ${tab}`
 			} else {
 				tabLines.push(tab)
 			}
 		}
 
-		const customError = choiceIndex === customIndex && customVersion !== ''
-			? getCustomError()
-			: undefined
+		const customError =
+			choiceIndex === customIndex && customVersion !== '' ? getCustomError() : undefined
 		const message = customError ? styleText('yellow', customError) : warning
 		// Leaves room for the rest of the interface, so that redrawing never scrolls.
-		const messageRows = message ? Math.max(1, Math.ceil(stripVTControlCharacters(message).length / columns)) : 0
-		const maxFiles = Math.max(1, (process.stdout.rows ?? 24) - 5 - tabLines.length - messageRows)
+		const messageRows = message
+			? Math.max(1, Math.ceil(stripVTControlCharacters(message).length / columns))
+			: 0
+		const maxFiles = Math.max(
+			1,
+			(process.stdout.rows ?? 24) - 5 - tabLines.length - messageRows,
+		)
 		const shownFiles = files.length > maxFiles ? files.slice(0, maxFiles - 1) : files
 		const version = getSelectedVersion()
 		const fileLines = shownFiles.map((file) => formatFile(file, version))
@@ -204,16 +215,15 @@ async function askForNewVersion(
 			...fileLines,
 			...(message ? ['', message] : []),
 			'',
-			styleText(
-				'dim',
-				'alt+h/alt+l or ←/→ switch • enter confirm • esc/q quit',
-			),
+			styleText('dim', 'alt+h/alt+l or ←/→ switch • enter confirm • esc/q quit'),
 		]
 
 		const clear = renderedRows > 0 ? ansiEscapes.cursorUp(renderedRows) : ''
 		process.stdout.write(`${clear}${ansiEscapes.eraseDown}${lines.join('\n')}\n`)
 		renderedRows = lines.reduce((rows, line) => {
-			return rows + Math.max(1, Math.ceil(stripVTControlCharacters(line).length / columns))
+			return (
+				rows + Math.max(1, Math.ceil(stripVTControlCharacters(line).length / columns))
+			)
 		}, 0)
 	}
 

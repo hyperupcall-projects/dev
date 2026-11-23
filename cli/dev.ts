@@ -32,9 +32,10 @@ let config: Config
 
 const cli = yargs(hideBin(process.argv))
 	.scriptName('dev')
-	.version(JSON.parse(
-		readFileSync(new URL('../package.json', import.meta.url), 'utf-8')
-	).version)
+	.version(
+		JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf-8'))
+			.version,
+	)
 	.option('dir', {
 		type: 'string',
 		description: 'Run as if dev was started in this directory',

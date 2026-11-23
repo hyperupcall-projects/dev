@@ -8,7 +8,7 @@ import * as diff from 'diff'
 import {
 	filesMustHaveContent,
 	filesMustHaveShape,
-	getNpmLatestVersion
+	getNpmLatestVersion,
 } from '#utilities/metalint-utils.ts'
 import { pkgRoot } from '#utilities/util.ts'
 import detectIndent from 'detect-indent'

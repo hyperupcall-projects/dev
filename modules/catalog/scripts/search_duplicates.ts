@@ -75,26 +75,17 @@ function normalizeUrl(url: string): string {
 	return url.replace(/[.,;:!?)]+$/, '')
 }
 
-function fileUriWithLocation(
-	filePath: string,
-	location: LinkLocation,
-): string {
+function fileUriWithLocation(filePath: string, location: LinkLocation): string {
 	const href = pathToFileURL(path.resolve(filePath)).href.replace(/&/g, '%26')
 	return `${href}:${location.line}:${location.column}`
 }
 
-function terminalLink(
-	text: string,
-	filePath: string,
-	location: LinkLocation,
-): string {
+function terminalLink(text: string, filePath: string, location: LinkLocation): string {
 	const uri = fileUriWithLocation(filePath, location)
 	return `\x1b]8;;${uri}\x1b\\${text}\x1b]8;;\x1b\\`
 }
 
-function findHttpsLinksWithLines(
-	filePath: string,
-): Array<{ url: string; line: number }> {
+function findHttpsLinksWithLines(filePath: string): Array<{ url: string; line: number }> {
 	const content = fs.readFileSync(filePath, 'utf-8')
 	const results: Array<{ url: string; line: number }> = []
 	const lines = content.split('\n')
@@ -148,17 +139,11 @@ function walkDirectory(directory: string, markdownFiles: Set<string>): void {
 }
 
 function printUsage(): void {
-	console.error(
-		'Usage: ./scripts/search_duplicates.ts <original_file> [paths...]',
-	)
+	console.error('Usage: ./scripts/search_duplicates.ts <original_file> [paths...]')
 	console.error('')
 	console.error('Arguments:')
-	console.error(
-		'  original_file  Text file containing https:// links to check against',
-	)
-	console.error(
-		'  paths          Optional files or directories to search (default: .)',
-	)
+	console.error('  original_file  Text file containing https:// links to check against')
+	console.error('  paths          Optional files or directories to search (default: .)')
 }
 
 function main(): void {

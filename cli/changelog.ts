@@ -51,7 +51,10 @@ async function getRepositoryInfo(): Promise<{
 	return match
 }
 
-async function fetchReleases({ owner, repo }: {
+async function fetchReleases({
+	owner,
+	repo,
+}: {
 	owner: string
 	repo: string
 }): Promise<Release[]> {
@@ -89,10 +92,16 @@ async function fetchReleases({ owner, repo }: {
 	return releases
 }
 
-function generateChangelog(releases: Release[], { owner, repo }: {
-	owner: string
-	repo: string
-}): string {
+function generateChangelog(
+	releases: Release[],
+	{
+		owner,
+		repo,
+	}: {
+		owner: string
+		repo: string
+	},
+): string {
 	let out = '# Changelog\n\n'
 	if (releases.length === 0) {
 		out += '_No releases found._\n'
@@ -144,9 +153,7 @@ export async function runPull(options: Record<PropertyKey, never>) {
 	console.info(`Wrote ${targetPath}`)
 }
 
-export async function runValidate(options: {
-	diff?: boolean
-}) {
+export async function runValidate(options: { diff?: boolean }) {
 	const repositoryInfo = await getRepositoryInfo()
 	const releases = await fetchReleases(repositoryInfo)
 	const generated = generateChangelog(releases, repositoryInfo)

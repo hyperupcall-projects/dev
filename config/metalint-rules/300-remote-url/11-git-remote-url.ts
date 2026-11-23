@@ -40,9 +40,8 @@ export const issues: Issues = async function* issues({ project }) {
 		const response = await fetch(`https://github.com/${project.owner}/${project.name}`, {
 			method: 'HEAD',
 		})
-		const [, redirectOwner, redirectName] = response.url.match(
-			/github.com\/([^/]+)\/([^/]+)/,
-		) ?? []
+		const [, redirectOwner, redirectName] =
+			response.url.match(/github.com\/([^/]+)\/([^/]+)/) ?? []
 		if (!redirectOwner || !redirectName) {
 			throw new Error(`Failed to extract repository owner or name`)
 		}

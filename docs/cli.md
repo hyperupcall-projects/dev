@@ -26,8 +26,8 @@ dev <command> [args]                 # if `dev` is on your PATH
 
 All commands accept this global option:
 
-| Option         | Description                                                                 |
-| -------------- | --------------------------------------------------------------------------- |
+| Option         | Description                                                                           |
+| -------------- | ------------------------------------------------------------------------------------- |
 | `--dir <path>` | Run as if `dev` had been started in `<path>`. It changes the working directory first. |
 
 `dev new` and `dev metalint` also take the target directory as their first positional argument, which is not the same as `--dir`: `dev metalint ./project` lints `./project`, while `dev metalint --dir ./project` changes into `./project` first.
@@ -36,13 +36,13 @@ All commands accept this global option:
 
 ### Other package scripts
 
-| Script                | Purpose                                         |
-| --------------------- | ----------------------------------------------- |
-| `node --run dev`      | Run the dev server in watch mode                |
-| `node --run start`    | Run the dev server                              |
-| `node --run lint`     | Lint this repository                            |
-| `node --run format`   | Format this repository                          |
-| `node --run typecheck`| Run `tsc` type checking                         |
+| Script                 | Purpose                          |
+| ---------------------- | -------------------------------- |
+| `node --run dev`       | Run the dev server in watch mode |
+| `node --run start`     | Run the dev server               |
+| `node --run lint`      | Lint this repository             |
+| `node --run format`    | Format this repository           |
+| `node --run typecheck` | Run `tsc` type checking          |
 
 ---
 
@@ -65,13 +65,13 @@ Options:
 
 Templates you can pick from `dev new`:
 
-| Ecosystem | Templates                                   |
-| --------- | ------------------------------------------- |
-| `nodejs`  | `hello-world`, `cli`, `web-server-express`  |
-| `deno`    | `webframework`                              |
-| `cpp`     | `cmake`, `hello-world`, `playground`        |
-| `rust`    | `hello-world`, `cli`, `gui`                 |
-| `go`      | `hello-world`, `cli`, `web-server`          |
+| Ecosystem | Templates                                  |
+| --------- | ------------------------------------------ |
+| `nodejs`  | `hello-world`, `cli`, `web-server-express` |
+| `deno`    | `webframework`                             |
+| `cpp`     | `cmake`, `hello-world`, `playground`       |
+| `rust`    | `hello-world`, `cli`, `gui`                |
+| `go`      | `hello-world`, `cli`, `web-server`         |
 
 `config/templates/` also contains template directories for `c`, `html`, `java`, `php`, `python` and `webext`. Not every template listed above has a directory yet.
 
@@ -84,12 +84,12 @@ First asks whether you want a **software license**, **content license**, **data 
 - **Data:** the Open Data Commons licenses PDDL-1.0, ODC-By-1.0, and ODbL-1.0, with notes in the license table.
 - **Font:** SIL Open Font License 1.1 (`OFL-1.1`), GNU GPL v2.0 with Font exception (`GPL-2.0-with-font-exception`), and IPA Font License (`IPA`).
 
-| Software category | Licenses |
-| --- | --- |
-| Public domain | Unlicense, CC0-1.0, 0BSD, MIT-0 |
-| Permissive | ISC, MIT, BSD-2-Clause, BSD-3-Clause, Zlib, Apache-2.0, BSL-1.0 |
-| Weak copyleft | MPL-2.0, EPL-2.0, LGPL-2.1-only, LGPL-3.0-only |
-| Strong copyleft | GPL-2.0-only, GPL-3.0-only, AGPL-3.0-only |
+| Software category | Licenses                                                        |
+| ----------------- | --------------------------------------------------------------- |
+| Public domain     | Unlicense, CC0-1.0, 0BSD, MIT-0                                 |
+| Permissive        | ISC, MIT, BSD-2-Clause, BSD-3-Clause, Zlib, Apache-2.0, BSL-1.0 |
+| Weak copyleft     | MPL-2.0, EPL-2.0, LGPL-2.1-only, LGPL-3.0-only                  |
+| Strong copyleft   | GPL-2.0-only, GPL-3.0-only, AGPL-3.0-only                       |
 
 The final license chooser uses a regular Clack select when no licenses have notes. If any license has a non-empty note, it uses a table with **Name** and **Note** columns. Use ↑/↓ to move between licenses and Enter to choose one. Long names and notes wrap inside their columns, and the table scrolls to keep the highlighted license visible.
 
@@ -106,7 +106,7 @@ Checks the current project (or `dir`) against a set of **lint rules**. For each 
 | Option      | Description                                                       |
 | ----------- | ----------------------------------------------------------------- |
 | `--yes`     | Apply every fix without asking                                    |
-| `--strict`  | Also run checks marked as *strict*. These are skipped by default. |
+| `--strict`  | Also run checks marked as _strict_. These are skipped by default. |
 | `--match`   | Parsed but has no effect yet.                                     |
 | `--only`    | Parsed but has no effect yet.                                     |
 | `--exclude` | Parsed but has no effect yet.                                     |
@@ -130,6 +130,7 @@ What `dev metalint` does:
    - `500-name/<owner>/_/*` and `500-name/<owner>/<name>/*`: if the project has a remote.
 
    If two rule files have the same base name (ignoring the numeric prefix), only the one collected later is kept. More specific rules therefore replace general ones.
+
 5. **Runs each rule file** and prints `PASS`, `SKIP`, `FAIL` or `QUES` (a problem was found and it asks whether to fix it). A problem with no fix function counts as `FAIL`. Any `FAIL` makes the command exit with code 1.
 
 ### `dev lint [linter]`
@@ -144,9 +145,9 @@ dev lint yamllint
 
 Right now there is one linter:
 
-| Linter     | Files              | Command                                        |
-| ---------- | ------------------ | ---------------------------------------------- |
-| `yamllint` | Detected as `yaml` | `yamllint -c <dev's config/.yamllint.yaml>`    |
+| Linter     | Files              | Command                                     |
+| ---------- | ------------------ | ------------------------------------------- |
+| `yamllint` | Detected as `yaml` | `yamllint -c <dev's config/.yamllint.yaml>` |
 
 The files are detected once, before any linter runs, and their absolute paths are appended to the command. Everything on disk counts, including files and directories excluded by `.gitignore` and symlinked files; only `node_modules/` and `.data/` (and `.git/`, `target/`) are skipped. A linter with no matching files prints `SKIP`. A non-zero exit code from a linter makes `dev lint` exit with code 1.
 
@@ -158,16 +159,16 @@ Formats the project with the configured formatters.
 
 With no `formatter`, it lists every detected filetype with its file count and configured formatter. Types such as `binary`, `plaintext`, and `_other` appear even when their formatter is `none`. Configured types are selected initially; use the keyboard to choose what to run or change a formatter:
 
-| Key | Action |
-| --- | ------ |
-| ↑ / ↓ | Move between filetypes |
-| Space | Toggle the highlighted type for this run |
-| `a` | Select or deselect all types with a configured formatter |
-| `p` | Save a formatter for this type in the project's `dev.toml` |
-| `g` | Save a global formatter for this type in `config/dev-global.toml` |
-| `f` | Show all file paths for the highlighted type |
-| Enter | Run the selected, configured formatters |
-| Esc / Ctrl+C | Cancel |
+| Key          | Action                                                            |
+| ------------ | ----------------------------------------------------------------- |
+| ↑ / ↓        | Move between filetypes                                            |
+| Space        | Toggle the highlighted type for this run                          |
+| `a`          | Select or deselect all types with a configured formatter          |
+| `p`          | Save a formatter for this type in the project's `dev.toml`        |
+| `g`          | Save a global formatter for this type in `config/dev-global.toml` |
+| `f`          | Show all file paths for the highlighted type                      |
+| Enter        | Run the selected, configured formatters                           |
+| Esc / Ctrl+C | Cancel                                                            |
 
 Navigation stops at the first and last rows in both the filetype picker and file view. The file view scrolls with ↑ / ↓. Enter or Esc returns to the filetype picker; Ctrl+C cancels formatting.
 
@@ -183,25 +184,25 @@ Shared defaults come from [`config/dev-global.toml`](../config/dev-global.toml),
 
 Available formatters:
 
-| Formatter | Detected filetypes | Command |
-| --------- | ------------------ | --------------- |
-| `yamlfmt` | `yaml` | `yamlfmt -conf <dev's config/.yamlfmt.yaml>` |
-| `prettier` | `javascript`, `typescript`, `json`, `jsonc`, `css`, `html`, `markdown`, `yaml` | `prettier --write` |
-| `rustfmt` | `rust` | `rustfmt` |
-| `biome` | `javascript`, `typescript`, `json`, `jsonc`, `css` | `biome format --write` |
-| `dprint` | `javascript`, `typescript`, `json`, `jsonc`, `markdown`, `toml` | `dprint fmt` |
-| `clang-format` | `c`, `cpp` | `clang-format -i` |
-| `gofmt` | `go` | `gofmt -w` |
-| `zig` | `zig` (`.zig`, `.zon`) | `zig fmt` |
-| `shfmt` | `shell` | `shfmt -w` |
-| `taplo` | `toml` | `taplo fmt` |
-| `perltidy` | `perl` | `perltidy -b -bext=/` |
-| `rubyfmt` | `ruby` | `rubyfmt -i` |
-| `latexindent` | `latex` | `latexindent -w` |
-| `markdownlint-cli2` | `markdown` | `markdownlint-cli2 --fix` |
-| `mdformat` | `markdown` | `mdformat` |
-| `gersemi` | `cmake` (`CMakeLists.txt`, `.cmake`) | `gersemi --in-place` |
-| `ruff` | `python` | `ruff format` |
+| Formatter           | Detected filetypes                                                             | Command                                      |
+| ------------------- | ------------------------------------------------------------------------------ | -------------------------------------------- |
+| `yamlfmt`           | `yaml`                                                                         | `yamlfmt -conf <dev's config/.yamlfmt.yaml>` |
+| `prettier`          | `javascript`, `typescript`, `json`, `jsonc`, `css`, `html`, `markdown`, `yaml` | `prettier --write`                           |
+| `rustfmt`           | `rust`                                                                         | `rustfmt`                                    |
+| `biome`             | `javascript`, `typescript`, `json`, `jsonc`, `css`                             | `biome format --write`                       |
+| `dprint`            | `javascript`, `typescript`, `json`, `jsonc`, `markdown`, `toml`                | `dprint fmt`                                 |
+| `clang-format`      | `c`, `cpp`                                                                     | `clang-format -i`                            |
+| `gofmt`             | `go`                                                                           | `gofmt -w`                                   |
+| `zig`               | `zig` (`.zig`, `.zon`)                                                         | `zig fmt`                                    |
+| `shfmt`             | `shell`                                                                        | `shfmt -w`                                   |
+| `taplo`             | `toml`                                                                         | `taplo fmt`                                  |
+| `perltidy`          | `perl`                                                                         | `perltidy -b -bext=/`                        |
+| `rubyfmt`           | `ruby`                                                                         | `rubyfmt -i`                                 |
+| `latexindent`       | `latex`                                                                        | `latexindent -w`                             |
+| `markdownlint-cli2` | `markdown`                                                                     | `markdownlint-cli2 --fix`                    |
+| `mdformat`          | `markdown`                                                                     | `mdformat`                                   |
+| `gersemi`           | `cmake` (`CMakeLists.txt`, `.cmake`)                                           | `gersemi --in-place`                         |
+| `ruff`              | `python`                                                                       | `ruff format`                                |
 
 The formatter executables must be installed and available on `PATH`. dprint also needs a project configuration with plugins for the filetypes you want to format. Tools use their own project configuration by default, except for the shared `yamlfmt` config shown above. `latexindent -w` also creates backup and log files.
 
@@ -229,12 +230,12 @@ It only changes versions that are already written in a file. If a file has no ve
 
 Manages repositories across GitHub accounts and organizations. Requires the private config described below.
 
-| Subcommand                | Description                                  |
-| ------------------------- | -------------------------------------------- |
-| `fetch-repository-data`   | Fetches the list of repositories from GitHub. |
-| `tui`                     | Opens a repository interactively.            |
-| `sync`                    | Synchronizes the managed repositories.        |
-| `run -- <command> [args...]` | Runs a command in every managed repository. |
+| Subcommand                   | Description                                   |
+| ---------------------------- | --------------------------------------------- |
+| `fetch-repository-data`      | Fetches the list of repositories from GitHub. |
+| `tui`                        | Opens a repository interactively.             |
+| `sync`                       | Synchronizes the managed repositories.        |
+| `run -- <command> [args...]` | Runs a command in every managed repository.   |
 
 `dev repos run` forwards everything after `--` to it verbatim, so `dev repos run -- npm test --watch` runs `npm test --watch` in each repository.
 
@@ -277,21 +278,21 @@ Prints the IDs of the ecosystems detected in a directory, one per line.
 
 Code: `utilities/ecosystems.ts`. An ecosystem defines four things: how to detect it, which lint rule files apply to it, how to update its version, and (optionally) its templates. A project can match more than one ecosystem.
 
-| ID                 | Detected when                                              | Version updated in                                                        |
-| ------------------ | ---------------------------------------------------------- | ------------------------------------------------------------------------- |
-| `nodejs`           | `package.json` exists                                      | `package.json`                                                            |
-| `vscode-extension` | `package.json` has a `displayName` field                   | `package.json`                                                            |
-| `deno`             | `deno.json` or `deno.jsonc` exists                         | `deno.json` / `deno.jsonc`                                                |
-| `c`                | `*.c` files exist, or `CMakeLists.txt` declares `C`        | First matching file: `CMakeLists.txt`, `configure.ac`/`.in`, `meson.build`, `GNUmakefile`/`Makefile`/`makefile` |
-| `cpp`              | `CMakeLists.txt` declares `CXX`                            | Same as `c`                                                               |
-| `python`           | `pyproject.toml` or top-level `*.py` files exist           | `pyproject.toml`, `setup.cfg` or `setup.py`                               |
-| `bash`             | `basalt.toml` exists                                       | `basalt.toml` (`[package].version`)                                       |
-| `woof-plugin`      | `manifest.ini` and `tools` both exist                      | `manifest.ini`                                                            |
-| `zed-extension`    | `extension.toml` exists                                    | `extension.toml` (top-level `version`)                                    |
-| `java`             | `gradlew`, `build.gradle` or `build.gradle.kts` exists     | `gradle.properties`, `build.gradle{,.kts}`, `pom.xml`                     |
-| `rust`             | `Cargo.toml` exists                                        | `Cargo.toml` (`[package].version`), plus the root package's entry in `Cargo.lock` |
-| `webext`           | `manifest.json` has a `manifest_version` key               | `manifest.json`                                                           |
-| `go`               | `go.mod` or `*.go` files exist                             | `VERSION` file, if it exists (Go module versions come from git tags)      |
+| ID                 | Detected when                                          | Version updated in                                                                                              |
+| ------------------ | ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| `nodejs`           | `package.json` exists                                  | `package.json`                                                                                                  |
+| `vscode-extension` | `package.json` has a `displayName` field               | `package.json`                                                                                                  |
+| `deno`             | `deno.json` or `deno.jsonc` exists                     | `deno.json` / `deno.jsonc`                                                                                      |
+| `c`                | `*.c` files exist, or `CMakeLists.txt` declares `C`    | First matching file: `CMakeLists.txt`, `configure.ac`/`.in`, `meson.build`, `GNUmakefile`/`Makefile`/`makefile` |
+| `cpp`              | `CMakeLists.txt` declares `CXX`                        | Same as `c`                                                                                                     |
+| `python`           | `pyproject.toml` or top-level `*.py` files exist       | `pyproject.toml`, `setup.cfg` or `setup.py`                                                                     |
+| `bash`             | `basalt.toml` exists                                   | `basalt.toml` (`[package].version`)                                                                             |
+| `woof-plugin`      | `manifest.ini` and `tools` both exist                  | `manifest.ini`                                                                                                  |
+| `zed-extension`    | `extension.toml` exists                                | `extension.toml` (top-level `version`)                                                                          |
+| `java`             | `gradlew`, `build.gradle` or `build.gradle.kts` exists | `gradle.properties`, `build.gradle{,.kts}`, `pom.xml`                                                           |
+| `rust`             | `Cargo.toml` exists                                    | `Cargo.toml` (`[package].version`), plus the root package's entry in `Cargo.lock`                               |
+| `webext`           | `manifest.json` has a `manifest_version` key           | `manifest.json`                                                                                                 |
+| `go`               | `go.mod` or `*.go` files exist                         | `VERSION` file, if it exists (Go module versions come from git tags)                                            |
 
 ---
 
@@ -346,11 +347,11 @@ For a rule file at `config/metalint-rules/<…>/<parent-dir>/<NN-file>.ts` that 
 
 All `NN-` numeric prefixes are removed. Examples:
 
-| Rule file                                           | Issue ID                       | `dev.toml` key                                                      |
-| --------------------------------------------------- | ------------------------------ | ------------------------------------------------------------------- |
-| `200-version-control/10-project-name.ts`            | `local-remote-name-mismatch`   | `version-control/project-name/local-remote-name-mismatch`           |
-| `300-remote-url/30-license.ts`                      | `must-have-license-file`       | `remote-url/license/must-have-license-file`                         |
-| `400-ecosystem/woof-plugin/woof.ts`                 | `name-mismatch`                | `woof-plugin/woof/name-mismatch`                                    |
+| Rule file                                | Issue ID                     | `dev.toml` key                                            |
+| ---------------------------------------- | ---------------------------- | --------------------------------------------------------- |
+| `200-version-control/10-project-name.ts` | `local-remote-name-mismatch` | `version-control/project-name/local-remote-name-mismatch` |
+| `300-remote-url/30-license.ts`           | `must-have-license-file`     | `remote-url/license/must-have-license-file`               |
+| `400-ecosystem/woof-plugin/woof.ts`      | `name-mismatch`              | `woof-plugin/woof/name-mismatch`                          |
 
 Only the **direct parent directory** is part of the ID. For example, rules in `400-ecosystem/_/` get IDs starting with `_/`, and `500-name/_/.github/readme.ts` gets IDs starting with `.github/readme`.
 
@@ -358,19 +359,19 @@ Every issue has a required `id`, so every lint check can be turned off from `dev
 
 #### Examples of rule IDs you can turn off
 
-| Key                                                                  | What it checks                                         |
-| -------------------------------------------------------------------- | ------------------------------------------------------ |
-| `version-control/project-name/local-remote-name-mismatch`            | Local directory name matches the remote repository name |
-| `version-control/readme/must-exist`                                  | Exactly one readme file exists                         |
-| `version-control/readme/must-be-uppercase`                           | Readme file name is uppercase (`README.md`)            |
-| `version-control/readme/must-have-matching-title`                    | Readme title matches the expected title                |
-| `version-control/readme/must-have-title-that-includes-project-name`  | Readme title includes the project name                 |
-| `remote-url/remote-metadata/disable-projects-tab`                    | GitHub "Projects" tab is turned off                    |
-| `remote-url/remote-metadata/default-branch-main`                     | Default branch is `main`                               |
-| `remote-url/license/must-have-license-file`                          | A license file exists                                  |
-| `remote-url/license/must-have-correct-contents`                      | License file has the expected contents                 |
-| `woof-plugin/woof/name-mismatch`                                     | Woof plugin name is consistent                         |
-| `woof-plugin/woof/description-mismatch`                              | Woof plugin description is consistent                  |
+| Key                                                                 | What it checks                                          |
+| ------------------------------------------------------------------- | ------------------------------------------------------- |
+| `version-control/project-name/local-remote-name-mismatch`           | Local directory name matches the remote repository name |
+| `version-control/readme/must-exist`                                 | Exactly one readme file exists                          |
+| `version-control/readme/must-be-uppercase`                          | Readme file name is uppercase (`README.md`)             |
+| `version-control/readme/must-have-matching-title`                   | Readme title matches the expected title                 |
+| `version-control/readme/must-have-title-that-includes-project-name` | Readme title includes the project name                  |
+| `remote-url/remote-metadata/disable-projects-tab`                   | GitHub "Projects" tab is turned off                     |
+| `remote-url/remote-metadata/default-branch-main`                    | Default branch is `main`                                |
+| `remote-url/license/must-have-license-file`                         | A license file exists                                   |
+| `remote-url/license/must-have-correct-contents`                     | License file has the expected contents                  |
+| `woof-plugin/woof/name-mismatch`                                    | Woof plugin name is consistent                          |
+| `woof-plugin/woof/description-mismatch`                             | Woof plugin description is consistent                   |
 
 To find more IDs, search `config/metalint-rules/` for `id:`.
 
@@ -438,11 +439,11 @@ The full type is `DevConfig` in `utilities/dev-config.ts`. `paths.hiddenDirsRepo
 
 ### Environment variables
 
-| Variable            | Purpose                                                                 |
-| ------------------- | ----------------------------------------------------------------------- |
+| Variable            | Purpose                                                                                             |
+| ------------------- | --------------------------------------------------------------------------------------------------- |
 | `GITHUB_AUTH_TOKEN` | GitHub token, usually set in `.env` (see `.env.example`). `githubTokenFile` takes priority over it. |
-| `DEV_CONFIG`        | Another path for the private config                                     |
-| `PORT`              | Dev server port (default `3000`)                                        |
+| `DEV_CONFIG`        | Another path for the private config                                                                 |
+| `PORT`              | Dev server port (default `3000`)                                                                    |
 
 ---
 
@@ -457,10 +458,12 @@ import type { Issues } from '#types'
 
 export const issues: Issues = async function* issues({ project }) {
 	yield {
-		id: 'some-check',            // required; used to identify the rule when troubleshooting and in the config file
+		id: 'some-check', // required; used to identify the rule when troubleshooting and in the config file
 		message: ['What is wrong', 'Why'],
-		fix: async () => { /* ... */ }, // optional; without it the check counts as FAIL
-		strict: false,               // if true, it only runs with --strict
+		fix: async () => {
+			/* ... */
+		}, // optional; without it the check counts as FAIL
+		strict: false, // if true, it only runs with --strict
 		// skip: 'reason',           // yield this to skip the rest of the file
 	}
 }
@@ -476,14 +479,14 @@ Add an entry to `ecosystems` in `utilities/ecosystems.ts` with `label`, `ecosyst
 
 ## Repository layout
 
-| Path                     | Contents                                                   |
-| ------------------------ | ---------------------------------------------------------- |
-| `cli/dev.ts`             | CLI entry point and command definitions                    |
-| `commands/`              | Code for each command                                      |
+| Path                     | Contents                                                                                                                 |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| `cli/dev.ts`             | CLI entry point and command definitions                                                                                  |
+| `commands/`              | Code for each command                                                                                                    |
 | `utilities/`             | Ecosystem definitions, filetype detection, private config loader, TOML merge helper (`mergetoml.py`), repository helpers |
-| `config/metalint-rules/`     | Lint rule files, grouped by category                       |
-| `config/templates/`      | Project templates for `dev new`                            |
-| `config/*`               | Shared config files that rules copy into projects (EditorConfig, clang-format, yamllint, …) |
-| `devserver/`             | Web dashboard (Hono)                                       |
-| `types.d.ts`             | Shared types, including `Config` (the `dev.toml` schema)   |
-| `dev.toml`               | This repository's own `dev.toml`                           |
+| `config/metalint-rules/` | Lint rule files, grouped by category                                                                                     |
+| `config/templates/`      | Project templates for `dev new`                                                                                          |
+| `config/*`               | Shared config files that rules copy into projects (EditorConfig, clang-format, yamllint, …)                              |
+| `devserver/`             | Web dashboard (Hono)                                                                                                     |
+| `types.d.ts`             | Shared types, including `Config` (the `dev.toml` schema)                                                                 |
+| `dev.toml`               | This repository's own `dev.toml`                                                                                         |
