@@ -1,6 +1,7 @@
 import * as fs from 'node:fs/promises'
+import path from 'node:path'
 import { filesMustHaveContent } from '#utilities/metalint-utils.ts'
-import { fileExists } from '#utilities/util.ts'
+import { fileExists, pkgRoot } from '#utilities/util.ts'
 import type { PackageJson } from 'type-fest'
 import type { Issues } from '#types'
 import { execa } from 'execa'
@@ -26,7 +27,10 @@ export const issues: Issues = async function* issues() {
 
 	if (!(await fileExists('pnpm-workspace.yaml'))) {
 		yield* filesMustHaveContent('pnpm-workspace', {
-			'pnpm-workspace.yaml': `publicHoistPattern:\n  - 'prettier'\n`,
+			'pnpm-workspace.yaml': await fs.readFile(
+				path.join(pkgRoot(), 'config/pnpm-workspace.yaml'),
+				'utf-8',
+			),
 		})
 	}
 

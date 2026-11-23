@@ -1,4 +1,5 @@
 import * as fs from 'node:fs/promises'
+import * as os from 'node:os'
 import * as path from 'node:path'
 import util, { styleText } from 'node:util'
 import { execa } from 'execa'
@@ -263,22 +264,59 @@ export async function writeTrees(trees: Record<string, string>[]) {
 	}
 }
 
-export async function getNpmLatestVersion(packages: string[]) {
-	const latestVersionsObjects = await Promise.all(
-		packages.map((packageName) =>
-			execa('npm', ['view', '--json', '--force', packageName]),
-		),
-	)
-	const latestVersions = latestVersionsObjects.map((result) => {
-		if (result.exitCode !== 0) {
-			console.error(result.stderr)
-			throw new Error(result.all)
-		}
+export async function getNpmLatestVersion(packages: string[]): Promise<string[]> {
+	if (packages.length === 0) return []
 
-		const obj = JSON.parse(result.stdout)
-		return obj['dist-tags'].latest
+	const { stdout: workspaceDir } = await execa('pnpm', ['prefix', '--workspace-root'], {
+		reject: false,
 	})
-	return latestVersions
+	const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'dev-npm-versions-'))
+	try {
+		// Unlike `view`, `outdated` resolves versions using minimumReleaseAge.
+		// A temporary project lets it check dependencies that are not installed yet.
+		await fs.writeFile(
+			path.join(tmpDir, 'package.json'),
+			JSON.stringify({
+				private: true,
+				dependencies: Object.fromEntries(packages.map((name) => [name, 'latest'])),
+			}),
+		)
+		await fs.writeFile(
+			path.join(tmpDir, 'pnpm-lock.yaml'),
+			JSON.stringify({
+				lockfileVersion: '9.0',
+				importers: {
+					'.': {
+						dependencies: Object.fromEntries(
+							packages.map((name) => [name, { specifier: 'latest', version: '0.0.0-0' }]),
+						),
+					},
+				},
+			}),
+		)
+
+		// pnpm exits with code 1 when it finds outdated dependencies.
+		const result = await execa('pnpm', ['outdated', '--json'], {
+			cwd: tmpDir,
+			// Read the original workspace settings with an isolated lockfile.
+			env: {
+				PNPM_CONFIG_WORKSPACE_DIR: workspaceDir || process.cwd(),
+				PNPM_CONFIG_LOCKFILE_DIR: tmpDir,
+			},
+			reject: false,
+		})
+		if ((result.exitCode !== 0 && result.exitCode !== 1) || !result.stdout) {
+			throw new Error(result.stderr || result.stdout || 'pnpm version lookup failed')
+		}
+		const latestVersions: Record<string, { latest?: string }> = JSON.parse(result.stdout)
+		return packages.map((name) => {
+			const version = latestVersions[name]?.latest
+			if (!version) throw new Error(`No eligible version found for "${name}"`)
+			return version
+		})
+	} finally {
+		await fs.rm(tmpDir, { recursive: true, force: true })
+	}
 }
 
 export async function findCodeOfConductFiles() {

@@ -259,12 +259,22 @@ toggle-tools
 		'version',
 		'Manage project versioning',
 		(y) =>
-			y.option('force', {
-				type: 'boolean',
-				description: 'Continue even if the working tree has changes',
-			}),
+			y
+				.parserConfiguration({ 'boolean-negation': false })
+				.option('force', {
+					type: 'boolean',
+					description: 'Continue even if the working tree has changes',
+				})
+				.option('no-verify', {
+					type: 'boolean',
+					description: 'Pass --no-verify to git commit',
+				}),
 		async (argv) => {
-			await runVersion({ config, force: argv.force as boolean | undefined })
+			await runVersion({
+				config,
+				force: argv.force as boolean | undefined,
+				noVerify: argv.noVerify as boolean | undefined,
+			})
 		},
 	)
 	.command(

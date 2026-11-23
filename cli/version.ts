@@ -10,7 +10,11 @@ import semver from 'semver'
 import { detectEcosystem, ecosystems, type VersionUpdate } from '#utilities/ecosystems.ts'
 import type { Config } from '#types'
 
-export async function run(options: { config: Config; force?: boolean }) {
+export async function run(options: {
+	config: Config
+	force?: boolean
+	noVerify?: boolean
+}) {
 	const { stdout: statusOutput } = await execa('git', ['status', '--porcelain'])
 	if (statusOutput.trim() !== '' && !options.force) {
 		console.error(
@@ -71,9 +75,17 @@ export async function run(options: { config: Config; force?: boolean }) {
 		}
 
 		newVersion = `v${newVersion}`
-		await execa('git', ['commit', '--allow-empty', '-m', newVersion], {
-			stdio: 'inherit',
-		})
+		await execa(
+			'git',
+			[
+				'commit',
+				'--allow-empty',
+				...(options.noVerify ? ['--no-verify'] : []),
+				'-m',
+				newVersion,
+			],
+			{ stdio: 'inherit' },
+		)
 		console.log(`✓ Created commit with message: ${newVersion}`)
 		await execa('git', ['tag', '-a', newVersion, '-m', newVersion], {
 			stdio: 'inherit',

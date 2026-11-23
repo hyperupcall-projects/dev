@@ -133,6 +133,8 @@ What `dev metalint` does:
 
 5. **Runs each rule file** and prints `PASS`, `SKIP`, `FAIL` or `QUES` (a problem was found and it asks whether to fix it). A problem with no fix function counts as `FAIL`. Any `FAIL` makes the command exit with code 1.
 
+For Node.js projects with `"private": false` in `package.json`, metalint offers to create or update `.github/workflows/publish.yaml` from [`config/gh-actions-publish.yaml`](../config/gh-actions-publish.yaml).
+
 ### `dev lint [linter]`
 
 Lints the project with the configured linters.
@@ -212,7 +214,7 @@ Formatter assignments can be overridden in `dev.toml` (see [`[format]`](#format)
 
 Formatters and linters are defined in `utilities/config.ts`. Each has `filetypes: string[]` and `run: string[]`, containing the executable and its arguments. A tool receives the matching files from all its filetypes in one invocation, with duplicate paths removed. Config paths belong directly in `run`.
 
-### `dev version [--force]`
+### `dev version [--force] [--no-verify]`
 
 Bumps the project's version, then creates a release commit and tag.
 
@@ -221,7 +223,7 @@ Bumps the project's version, then creates a release commit and tag.
 3. Lists every file with a version to update, and asks for the new version. Press `Alt+h`/`Alt+l` or the left and right arrow keys to switch between patch, minor, major, and a custom semver. Press `Esc` or `q` to quit. The list shows each file's current and final version as you switch or type. If a version tag exists, it warns below the file list when manifest versions differ from that tag and highlights those versions in yellow. A custom version must be higher than the current one.
 4. Writes the new version into the version files of every ecosystem detected at the root (see the table below).
 5. Does the same for every directory listed in `updateVersionDirectories` in `dev.toml`.
-6. Runs `git add` on the changed files, commits with message `vX.Y.Z` (an empty commit if nothing changed), and creates an annotated tag `vX.Y.Z`.
+6. Runs `git add` on the changed files, commits with message `vX.Y.Z` (an empty commit if nothing changed), and creates an annotated tag `vX.Y.Z`. Pass `--no-verify` to forward it to `git commit` and skip its pre-commit and commit-msg hooks.
 7. Shows the push command (`git push && git push --tags`) but doesn't run it.
 
 It only changes versions that are already written in a file. If a file has no version field, or the version isn't a literal value, the file is left as it is. TOML files are edited with `utilities/mergetoml.py`, which keeps comments and formatting.
@@ -432,18 +434,20 @@ This is separate from `dev.toml`. Commands that work across many repositories (`
 - Path: `~/.devhidden/configs/dev.config.js`, or the path in the `DEV_CONFIG` environment variable.
 - It must be an ES module with `export default { ... }`.
 - Any string that starts with `~/` is expanded to an absolute path.
-- Required keys: `paths` (object), `pinnedProjects` (array), `knowledgeFolders` (array of `{ id, name, path }`), `binaries` (object with `obsidian` and `clion` command arrays). Optional: `githubTokenFile`.
+- Required keys: `paths` (object), `pinnedProjects` (array), `knowledgeFolders` (array of `{ id, name, path }`), `binaries` (object with `obsidian` and `clion` command arrays).
 - Print one resolved value: `node utilities/print-dev-config.mjs paths.nodeBinary`.
 
 The full type is `DevConfig` in `utilities/dev-config.ts`. `paths.hiddenDirsRepositoryDir` is optional: `dev task symlink-hidden-dirs` defaults it to a `hidden-dirs` directory next to `paths.managedRepositories`.
 
 ### Environment variables
 
-| Variable            | Purpose                                                                                             |
-| ------------------- | --------------------------------------------------------------------------------------------------- |
-| `GITHUB_AUTH_TOKEN` | GitHub token, usually set in `.env` (see `.env.example`). `githubTokenFile` takes priority over it. |
-| `DEV_CONFIG`        | Another path for the private config                                                                 |
-| `PORT`              | Dev server port (default `3000`)                                                                    |
+The CLI and dev server load the repository's `.env` with Node's built-in `loadEnvFile()`, regardless of the current directory. The file is optional, and existing environment variables take precedence.
+
+| Variable            | Purpose                                                   |
+| ------------------- | --------------------------------------------------------- |
+| `GITHUB_AUTH_TOKEN` | GitHub token, usually set in `.env` (see `.env.example`). |
+| `DEV_CONFIG`        | Another path for the private config                       |
+| `PORT`              | Dev server port (default `3000`)                          |
 
 ---
 

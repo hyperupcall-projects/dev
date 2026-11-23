@@ -2,6 +2,7 @@ import { execFile, spawn } from 'node:child_process'
 import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
+import { loadEnvFile } from 'node:process'
 import * as readline from 'node:readline/promises'
 import type { Dirent } from 'node:fs'
 import { promisify, styleText } from 'node:util'
@@ -13,6 +14,12 @@ import type { Config } from '#types'
 import { getDevConfig } from '#utilities/dev-config.ts'
 import { fileURLToPath } from 'node:url'
 import _ from 'lodash'
+
+try {
+	loadEnvFile(new URL('../.env', import.meta.url))
+} catch (error) {
+	if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
+}
 
 const execFileAsync = promisify(execFile)
 
@@ -118,15 +125,7 @@ export function ignoreDirectoriesGlob() {
 	return ignoreDirectories().map((dir) => `**/${dir}/**`)
 }
 
-async function getGitHubToken(): Promise<string | undefined> {
-	const config = await getDevConfig().catch(() => undefined)
-	if (config?.githubTokenFile) {
-		return (await fs.readFile(config.githubTokenFile, 'utf-8')).trim()
-	}
-	return undefined
-}
-
-export const octokit = new Octokit({ auth: await getGitHubToken() })
+export const octokit = new Octokit({ auth: process.env.GITHUB_AUTH_TOKEN })
 
 export async function fileExists(filepath: string): Promise<boolean> {
 	return await fs

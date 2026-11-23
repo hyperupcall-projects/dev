@@ -1,17 +1,22 @@
-import { filesMustHaveContent, filesMustHaveName } from '#utilities/metalint-utils.ts'
-import { pkgRoot } from '#utilities/util.ts'
+import {
+	filesMustHaveContent,
+	filesMustHaveName,
+	filesMustHaveShape,
+	getNpmLatestVersion,
+} from '#utilities/metalint-utils.ts'
+import { fileExists, pkgRoot } from '#utilities/util.ts'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import type { Issues } from '#types'
 
-export const skip = true
-
 export const issues: Issues = async function* issues() {
-	// Check that there is only one configuration file.
+	if (!(await fileExists('package.json'))) return
+
+	// Check that there is only one configuration location.
 	{
 		// https://commitlint.js.org/reference/configuration.html#config-via-file
 		yield* filesMustHaveName({
-			'.commitlintrc.yaml': ['.commitlintrc.yml'],
+			'.config/commitlintrc.yaml': ['.commitlintrc.yaml', '.commitlintrc.yml'],
 		})
 		yield* filesMustHaveContent('commitlint', {
 			'.commitlintrc': null,
@@ -32,7 +37,7 @@ export const issues: Issues = async function* issues() {
 	}
 
 	yield* filesMustHaveContent('commitlint', {
-		'.commitlintrc.yaml': await fs.readFile(
+		'.config/commitlintrc.yaml': await fs.readFile(
 			path.join(pkgRoot(), 'config/.commitlintrc.yaml'),
 			'utf-8',
 		),

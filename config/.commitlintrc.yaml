@@ -1,2 +1,1 @@
-rules:
-  header-trim: [2, 'always']
+extends: ['@hyperupcall/scripts-nodejs/config-commitlint.js']

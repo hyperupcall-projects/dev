@@ -4,8 +4,6 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import type { Issues } from '#types'
 
-export const skip = true
-
 export const issues: Issues = async function* issues() {
 	// Check that there is only one configuration file.
 	{
@@ -22,6 +20,6 @@ export const issues: Issues = async function* issues() {
 	}
 
 	yield* filesMustHaveContent('commitizen', {
-		'.cz.toml': await fs.readFile(path.join(pkgRoot(), 'config/.cz.toml'), 'utf-8'),
+		'.cz.toml': null,
 	})
 }

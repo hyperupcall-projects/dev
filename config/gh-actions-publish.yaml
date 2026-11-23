@@ -1,0 +1,84 @@
+name: Publish
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  pack:
+    if: ${{ !github.event.repository.fork }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    outputs:
+      dist-tag: ${{ steps.release.outputs.dist-tag }}
+
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '26'
+          package-manager-cache: false
+
+      - name: Verify release tag
+        run: node -e "require('node:assert/strict').equal(process.env.GITHUB_REF_NAME, 'v' + require('./package.json').version)"
+
+      - name: Select release channel
+        id: release
+        run: |
+          tag=$(node -p "require('./package.json').version.includes('-') ? 'next' : 'latest'")
+          echo "dist-tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Pack package
+        run: npm pack --ignore-scripts --pack-destination "$RUNNER_TEMP"
+
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: npm-package
+          path: ${{ runner.temp }}/*.tgz
+          retention-days: 7
+
+  publish:
+    needs: pack
+    runs-on: ubuntu-latest
+    environment: Publish
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '26'
+          package-manager-cache: false
+
+      - name: Install npm with staged publishing support
+        run: npm install --global npm@11.19.1 --ignore-scripts --no-audit --no-fund
+
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: npm-package
+          path: ${{ runner.temp }}/npm-release
+
+      - name: Stage package
+        env:
+          DIST_TAG: ${{ needs.pack.outputs.dist-tag }}
+        run: npm stage publish "$RUNNER_TEMP"/npm-release/*.tgz --access public --tag "$DIST_TAG" --ignore-scripts

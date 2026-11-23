@@ -9,13 +9,11 @@ import {
 import type { Issues } from '#types'
 
 export const issues: Issues = async function* issues({ project }) {
-	const markdownlintConfig = {
-		extends: './node_modules/@hyperupcall/markdownlint-config/.markdownlint.json',
-	}
-
 	yield* filesMustHaveShape('package-json', {
 		'package.json': {
-			'markdownlint-cli2': markdownlintConfig,
+			'markdownlint-cli2': {
+				extends: './node_modules/@hyperupcall/scripts-nodejs/.markdownlint.mjs',
+			},
 		},
 	})
 

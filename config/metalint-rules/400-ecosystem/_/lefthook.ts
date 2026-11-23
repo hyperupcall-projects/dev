@@ -64,7 +64,7 @@ export const issues: Issues = async function* issues() {
 		if (await fileExists(checksumPath)) {
 			yield {
 				id: 'lefthook-must-not-be-activated',
-				message: ['Expected lefthook to not be activated for current project'],
+				message: ['Expected lefthook to not be activated'],
 				fix: async () => {
 					await removeLefthookHooks(hooksPath)
 					await fs.rm(checksumPath, { force: true })
