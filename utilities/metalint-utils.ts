@@ -34,16 +34,18 @@ export async function* filesMustHaveName(
 				if (correctFileExists) {
 					yield {
 						id: `${goodFile}-must-have-name`,
-						message: dedent`
-							-> Expected file "${badFile}" to not exist because "${goodFile}" already exists
-							-> But, found both files exist`,
+						message: [
+							`Expected file "${badFile}" to not exist because "${goodFile}" already exists`,
+							`But, found both files exist`,
+						],
 					}
 				} else {
 					yield {
 						id: `${goodFile}-must-have-name`,
-						message: dedent`
-							-> Expected file to be named "${goodFile}"
-							-> But, found file named "${badFile}"`,
+						message: [
+							`-> Expected file to be named "${goodFile}"`,
+							`-> But, found file named "${badFile}"`,
+						],
 						fix: async () => {
 							await fs.mkdir(path.dirname(goodFile), { recursive: true })
 							await fs.rename(badFile, goodFile)

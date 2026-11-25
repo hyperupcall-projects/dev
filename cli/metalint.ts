@@ -15,14 +15,13 @@ import toml from 'smol-toml'
 import { execa } from 'execa'
 import { globby } from 'globby'
 import ansiEscapes from 'ansi-escapes'
-import * as jsonc from 'jsonc-parser'
-import { parseJSON } from 'jsonc-eslint-parser'
 import { detectEcosystem, ecosystems } from '#utilities/ecosystems.ts'
 import { detectFiletypes } from '#utilities/filetype.ts'
 
 import type { Config, Issue, Project } from '#types'
 import process from 'node:process'
-import { mergeJSONWithComments, mergeTOML } from '#utilities/util.ts'
+import { mergeTOML } from '#utilities/util.ts'
+import { fixEditorSettings } from '#utilities/ide.ts'
 
 type CommandFixOptions = {
 	config: Config
@@ -37,46 +36,7 @@ export async function run(options: CommandFixOptions) {
 	const project = await getProject()
 	const config: Config = options.config
 
-	// Fix editor settings.
-	if (await fileExists('.vscode/settings.json')) {
-		const configDir = (process.env.XDG_CONFIG_HOME ?? '').startsWith('/')
-			? (process.env.XDG_CONFIG_HOME ?? '')
-			: path.join(os.homedir(), '.config')
-		const userSettingsJsonFile = path.join(configDir, 'Code/User/settings.json')
-		const defaultTitle = jsonc.parse(await fs.readFile(userSettingsJsonFile, 'utf-8'))[
-			'window.title'
-		]
-
-		const settingsText = await fs.readFile('.vscode/settings.json', 'utf-8')
-		const settingsJson = jsonc.parse(settingsText)
-		const ecosystem = (await detectEcosystem({ rootDir: process.cwd() }))[0]
-		if (settingsJson['window.title']) {
-			const output = settingsText.replace(
-				/"window\.title"[ \t]*:[ \t]*".*?"/m,
-				`"window.title": "${defaultTitle} (${ecosystem})"`,
-			)
-			await fs.writeFile('.vscode/settings.json', output)
-		} else if (Object.keys(settingsJson).length === 0) {
-			const output = `{
-	"window.title": "${defaultTitle} (${ecosystem})"
-}`
-			await fs.writeFile('.vscode/settings.json', output)
-		} else {
-			const output = settingsText.replace(
-				/[ \t]*{/m,
-				`{\n\t"window.title": "${defaultTitle} (${ecosystem})",`,
-			)
-			await fs.writeFile('.vscode/settings.json', output)
-		}
-
-		// Merge ESLint config settings from antfu/eslint-config
-		await mergeVSCodeESLintSettings('.vscode/settings.json')
-	}
-
-	// Fix Zed editor settings
-	if (await fileExists('.zed/settings.json')) {
-		await mergeZedESLintSettings('.zed/settings.json')
-	}
+	await fixEditorSettings()
 
 	const ruleFiles: string[] = []
 	const collect = async (pattern: string) => {
@@ -357,27 +317,4 @@ function printWithTips(str: string, tips: string[]) {
 	for (const tip of tips) {
 		console.info(` -> ${tip}`)
 	}
-}
-
-// TODO: revisit and duplication with task.ts toggletools
-async function mergeVSCodeESLintSettings(settingsPath: string) {
-	const settingsText = await fs.readFile(settingsPath, 'utf-8')
-	const ast = parseJSON(settingsText)
-
-	const vscodeConfigPath = path.join(pkgRoot(), 'config/vscode-config.jsonc')
-	const settingsToAdd = jsonc.parse(await fs.readFile(vscodeConfigPath, 'utf-8'))
-
-	const output = mergeJSONWithComments(settingsText, ast, settingsToAdd)
-	await fs.writeFile(settingsPath, output)
-}
-
-async function mergeZedESLintSettings(settingsPath: string) {
-	const settingsText = await fs.readFile(settingsPath, 'utf-8')
-	const ast = parseJSON(settingsText)
-
-	const zedConfigPath = path.join(pkgRoot(), 'config/zed-config.jsonc')
-	const settingsToMerge = jsonc.parse(await fs.readFile(zedConfigPath, 'utf-8'))
-
-	const output = mergeJSONWithComments(settingsText, ast, settingsToMerge)
-	await fs.writeFile(settingsPath, output)
 }

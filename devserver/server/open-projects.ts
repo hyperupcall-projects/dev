@@ -1,10 +1,11 @@
 import { execFile, spawn } from 'node:child_process'
-import { access, mkdir, symlink, writeFile } from 'node:fs/promises'
+import { access, mkdir, symlink } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { promisify } from 'node:util'
 import { getDevConfig } from '#utilities/dev-config.ts'
+import { createCodeWorkspace } from '#utilities/ide.ts'
 import { resolveProjectsByIds, type GardenProject } from './garden-projects.ts'
 
 const execFileAsync = promisify(execFile)
@@ -88,20 +89,6 @@ async function createSymlinkWorkspace(projects: GardenProject[]): Promise<string
 		await symlink(project.path, path.join(dir, unique))
 	}
 	return dir
-}
-
-async function createCodeWorkspace(projects: GardenProject[]): Promise<string> {
-	const dir = path.join(os.tmpdir(), `dev-project-manager-${randomUUID()}`)
-	await mkdir(dir, { recursive: true })
-	const workspacePath = path.join(dir, 'workspace.code-workspace')
-	const workspace = {
-		folders: projects.map((p) => ({
-			name: p.name,
-			path: p.path,
-		})),
-	}
-	await writeFile(workspacePath, JSON.stringify(workspace, null, '\t') + '\n', 'utf8')
-	return workspacePath
 }
 
 export async function openProjects(options: {
