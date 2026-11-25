@@ -43,10 +43,12 @@ export type Issues = (arg0: {
 	}
 }) => AsyncGenerator<Issue>
 
-export type Issue = {
-	id: string
-	message: string | string[]
-	fix?: (() => void) | (() => Promise<void>)
-	strict?: boolean
-	skip?: string
-}
+export type Issue =
+	| {
+			id: string
+			message: string | string[]
+			fix?: (() => void) | (() => Promise<void>)
+			strict?: boolean
+			skip?: false
+	  }
+	| { skip: true; message: string }

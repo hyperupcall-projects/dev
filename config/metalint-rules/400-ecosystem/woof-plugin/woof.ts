@@ -8,9 +8,8 @@ import type { Issues, Project } from '#types'
 export const issues: Issues = async function* issues({ project }: { project: Project }) {
 	if (project.type !== 'with-remote-url') {
 		yield {
-			id: 'must-have-remote-url',
+			skip: true,
 			message: 'Project does not have remote URL',
-			skip: 'Project does not have remote URL',
 		}
 		return
 	}

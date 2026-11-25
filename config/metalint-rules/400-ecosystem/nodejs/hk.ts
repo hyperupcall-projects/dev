@@ -1,16 +1,24 @@
 import { filesMustHaveContent, filesMustHaveName } from '#utilities/metalint-utils.ts'
 import { pkgRoot } from '#utilities/util.ts'
 import { execa } from 'execa'
+import Handlebars from 'handlebars'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import type { Issues } from '#types'
+import type { PackageJson } from 'type-fest'
 
 export const issues: Issues = async function* issues({ project }) {
+	const packageJson: PackageJson = JSON.parse(await fs.readFile('package.json', 'utf-8'))
+
 	yield* filesMustHaveName({
 		'.config/hk.pkl': ['hk.pkl'],
 	})
 	yield* filesMustHaveContent('hk', {
-		'.config/hk.pkl': await fs.readFile(path.join(pkgRoot(), 'config/hk.pkl'), 'utf-8'),
+		'.config/hk.pkl': Handlebars.compile(
+			await fs.readFile(path.join(pkgRoot(), 'config/hk.pkl.hbs'), 'utf-8'),
+		)({
+			publicPackage: packageJson.private === false,
+		}),
 	})
 
 	if (project.type !== 'only-directory' && !(await hasHkPreCommitHook())) {
