@@ -21,11 +21,9 @@ export function workspacesView() {
 
 				<div class="content">
 					<p>
-						<a href="/projects">SW Projects</a>
-						calls
 						<code>POST /api/projects/open</code>
-						with a list of garden or pinned project ids. One id opens that folder directly
-						(see
+						accepts a list of garden or pinned project ids. One id opens that folder
+						directly (see
 						<a href="/docs/open-directory">Open directory</a>). Two or more ids open a
 						<strong>workspace</strong> so every folder appears in the same editor window.
 						To jump to a file inside that window, see

@@ -107,8 +107,6 @@ Content-Type: application/json
 
 					<h2 class="title is-5 mt-5">Computing folders</h2>
 					<p>
-						Used by
-						<a href="/projects">SW Projects</a>.
 						<code>POST /api/computing-folders/open</code>
 						opens a folder under
 						<code>~/Documents/Computing</code>, or one of its subdirectories.
