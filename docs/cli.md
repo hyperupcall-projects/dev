@@ -115,8 +115,8 @@ What `dev metalint` does:
 
 1. **Finds the project type**:
    - `only-directory`: there is no `.git`.
-   - `under-version-control`: there is a `.git`, but the current branch has no remote.
-   - `with-remote-url`: there is a remote. The owner and name are read from the remote URL.
+   - `with-vcs`: there is a `.git`, but the current branch has no remote.
+   - `with-remotevcs`: there is a remote. The owner and name are read from the remote URL.
 2. **Uses the config loaded at startup**, merging `config/dev-global.toml` with the target project's `dev.toml` (see below).
 3. **Updates editor settings**:
    - If `.vscode/settings.json` exists, it sets `window.title` to your default title with the ecosystem name added, then merges in `config/vscode-config.jsonc`.

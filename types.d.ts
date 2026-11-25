@@ -20,13 +20,13 @@ export type Project =
 			name: string
 	  }
 	| {
-			type: 'under-version-control'
+			type: 'with-vcs'
 			rootDir: string
 			name: string
 			branchName: string
 	  }
 	| {
-			type: 'with-remote-url'
+			type: 'with-remotevcs'
 			rootDir: string
 			name: string
 			branchName: string

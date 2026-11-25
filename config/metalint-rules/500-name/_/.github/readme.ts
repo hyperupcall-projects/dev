@@ -10,7 +10,7 @@ import type { Issues } from '#types'
  * Check that README.md links to every repository owned by this account.
  **/
 export const issues: Issues = async function* issues({ project }) {
-	if (project.type !== 'with-remote-url') {
+	if (project.type !== 'with-remotevcs') {
 		throw new Error('Expected project to be associated with a remote forge')
 	}
 

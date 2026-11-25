@@ -28,7 +28,7 @@ export const issues: Issues = async function* issues({ project }) {
 	}
 
 	packageJson = JSON.parse(await fs.readFile('package.json', 'utf-8'))
-	if (project.type === 'with-remote-url') {
+	if (project.type === 'with-remotevcs') {
 		if (packageJson.private) {
 			yield* filesMustHaveShape('package-json', {
 				'package.json': {

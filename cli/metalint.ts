@@ -93,13 +93,13 @@ export async function run(options: CommandFixOptions) {
 	{
 		await collect(`100-dir/*`)
 
-		if (project.type === 'under-version-control' || project.type === 'with-remote-url') {
+		if (project.type === 'with-vcs' || project.type === 'with-remotevcs') {
 			if (await fileExists('.git')) {
 				await collect(`200-vcs/*`)
 			}
 		}
 
-		if (project.type === 'with-remote-url') {
+		if (project.type === 'with-remotevcs') {
 			await collect(`300-remotevcs/*`)
 		}
 	}
@@ -117,7 +117,7 @@ export async function run(options: CommandFixOptions) {
 
 	// Collect rule files that match the name.
 	{
-		if (project.type === 'with-remote-url') {
+		if (project.type === 'with-remotevcs') {
 			await collect(`500-name/${project.owner}/_/*`)
 			await collect(`500-name/${project.owner}/${project.name}/*`)
 		}
@@ -150,7 +150,7 @@ export async function run(options: CommandFixOptions) {
 			: project.rootDir
 		let str = ''
 		str += `${styleText(['blue', 'bold'], 'Directory:')}  ${homedirPretty}\n`
-		if (project.type === 'with-remote-url') {
+		if (project.type === 'with-remotevcs') {
 			str += `${styleText(['blue', 'bold'], 'Project:')}    ${ansiEscapes.link(
 				`${project.owner}/${project.name}`,
 				`https://github.com/${project.owner}/${project.name}`,
@@ -320,7 +320,7 @@ async function getProject(): Promise<Project> {
 	const remoteName = await getGitRemoteName()
 	if (!remoteName) {
 		return {
-			type: 'under-version-control',
+			type: 'with-vcs',
 			rootDir: process.cwd(),
 			name: path.basename(process.cwd()),
 			branchName,
@@ -342,7 +342,7 @@ async function getProject(): Promise<Project> {
 	}
 
 	return {
-		type: 'with-remote-url',
+		type: 'with-remotevcs',
 		rootDir: process.cwd(),
 		name: repository.repo,
 		branchName,

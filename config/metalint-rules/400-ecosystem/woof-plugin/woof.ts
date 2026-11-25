@@ -6,7 +6,7 @@ import { fileExists, octokit } from '#utilities/util.ts'
 import type { Issues, Project } from '#types'
 
 export const issues: Issues = async function* issues({ project }: { project: Project }) {
-	if (project.type !== 'with-remote-url') {
+	if (project.type !== 'with-remotevcs') {
 		yield {
 			skip: true,
 			message: 'Project does not have remote URL',
@@ -91,7 +91,7 @@ export const issues: Issues = async function* issues({ project }: { project: Pro
 }
 
 async function getGitHubDescription(
-	project: Project & { type: 'with-remote-url' },
+	project: Project & { type: 'with-remotevcs' },
 ): Promise<string | null> {
 	try {
 		const { data } = await octokit.rest.repos.get({
