@@ -122,9 +122,9 @@ What `dev metalint` does:
    - If `.vscode/settings.json` exists, it sets `window.title` to your default title with the ecosystem name added, then merges in `config/vscode-config.jsonc`.
    - If `.zed/settings.json` exists, it merges in `config/zed-config.jsonc`.
 4. **Collects rule files** from `config/metalint-rules/`:
-   - `100-directory/*`: always.
-   - `200-version-control/*`: if the project uses git.
-   - `300-remote-url/*`: if the project has a remote.
+   - `100-dir/*`: always.
+   - `200-vcs/*`: if the project uses git.
+   - `300-remotevcs/*`: if the project has a remote.
    - `400-ecosystem/_/*`: always.
    - `400-ecosystem/<ecosystem>/*`: for each detected ecosystem.
    - `500-name/<owner>/_/*` and `500-name/<owner>/<name>/*`: if the project has a remote.
@@ -349,11 +349,11 @@ For a rule file at `config/metalint-rules/<…>/<parent-dir>/<NN-file>.ts` that 
 
 All `NN-` numeric prefixes are removed. Examples:
 
-| Rule file                                | Issue ID                     | `dev.toml` key                                            |
-| ---------------------------------------- | ---------------------------- | --------------------------------------------------------- |
-| `200-version-control/10-project-name.ts` | `local-remote-name-mismatch` | `version-control/project-name/local-remote-name-mismatch` |
-| `300-remote-url/30-license.ts`           | `must-have-license-file`     | `remote-url/license/must-have-license-file`               |
-| `400-ecosystem/woof-plugin/woof.ts`      | `name-mismatch`              | `woof-plugin/woof/name-mismatch`                          |
+| Rule file                           | Issue ID                     | `dev.toml` key                                            |
+| ----------------------------------- | ---------------------------- | --------------------------------------------------------- |
+| `200-vcs/10-project-name.ts`        | `local-remote-name-mismatch` | `version-control/project-name/local-remote-name-mismatch` |
+| `300-remotevcs/30-license.ts`       | `must-have-license-file`     | `remote-url/license/must-have-license-file`               |
+| `400-ecosystem/woof-plugin/woof.ts` | `name-mismatch`              | `woof-plugin/woof/name-mismatch`                          |
 
 Only the **direct parent directory** is part of the ID. For example, rules in `400-ecosystem/_/` get IDs starting with `_/`, and `500-name/_/.github/readme.ts` gets IDs starting with `.github/readme`.
 

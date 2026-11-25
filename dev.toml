@@ -1,4 +1,4 @@
 [rules]
-"version-control/project-name/local-remote-name-mismatch" = "off"
+"vcs/project-name/local-remote-name-mismatch" = "off"
 
 [format.filetypes]

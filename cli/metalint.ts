@@ -91,16 +91,16 @@ export async function run(options: CommandFixOptions) {
 
 	// Collect rule files that match the version control system type.
 	{
-		await collect(`100-directory/*`)
+		await collect(`100-dir/*`)
 
 		if (project.type === 'under-version-control' || project.type === 'with-remote-url') {
 			if (await fileExists('.git')) {
-				await collect(`200-version-control/*`)
+				await collect(`200-vcs/*`)
 			}
 		}
 
 		if (project.type === 'with-remote-url') {
-			await collect(`300-remote-url/*`)
+			await collect(`300-remotevcs/*`)
 		}
 	}
 
