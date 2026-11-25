@@ -10,7 +10,7 @@ import { Octokit } from 'octokit'
 import * as jsonc from 'jsonc-parser'
 import Ajv from 'ajv'
 import toml from 'smol-toml'
-import type { Config } from '#types'
+import type { Config, ConfigFile, ManifestConfig } from '#types'
 import { getDevConfig } from '#utilities/dev-config.ts'
 import { fileURLToPath } from 'node:url'
 import _ from 'lodash'
@@ -41,11 +41,23 @@ const toolSchema = {
 		},
 	},
 }
+const manifestSchema = {
+	type: 'object',
+	additionalProperties: false,
+	properties: {
+		package_json_author: { type: 'string', minLength: 1 },
+		package_json_publisher: { type: 'string', minLength: 1 },
+		funding_yml_github: { type: 'string', minLength: 1 },
+	},
+}
 const configSchema = {
 	type: 'object',
-	definitions: { tool: toolSchema },
+	definitions: { tool: toolSchema, manifest: manifestSchema },
 	properties: {
 		fullname: { type: 'string', minLength: 1 },
+		public_email: { type: 'string', minLength: 1 },
+		website: { type: 'string', minLength: 1 },
+		manifest: { $ref: '#/definitions/manifest' },
 		formatters: {
 			type: 'object',
 			additionalProperties: { $ref: '#/definitions/tool' },
@@ -81,15 +93,20 @@ const configSchema = {
 const validateConfig = ajv.compile(configSchema)
 const validateMergedConfig = ajv.compile({
 	...configSchema,
+	required: ['fullname', 'public_email', 'website', 'manifest', 'formatters', 'linters'],
 	definitions: {
 		tool: { ...toolSchema, required: ['filetypes', 'run'] },
+		manifest: {
+			...manifestSchema,
+			required: ['package_json_author', 'package_json_publisher', 'funding_yml_github'],
+		},
 	},
 })
 
 export async function loadConfigFile(
 	filepath: string,
 	validate = false,
-): Promise<Config> {
+): Promise<ConfigFile> {
 	let text: string
 	try {
 		text = await fs.readFile(filepath, 'utf-8')
@@ -98,9 +115,9 @@ export async function loadConfigFile(
 		throw error
 	}
 
-	let config: Config
+	let config: ConfigFile
 	try {
-		config = toml.parse(text) as Config
+		config = toml.parse(text) as ConfigFile
 	} catch (error) {
 		throw new Error(`${filepath}: ${error.message}`, { cause: error })
 	}
@@ -112,21 +129,35 @@ export async function loadConfigFile(
 	return config
 }
 
-export async function loadConfig(
-	rootDir: string,
-	validate: boolean = true,
-): Promise<Config> {
+export async function loadConfig(rootDir: string): Promise<Config> {
 	const global = await loadConfigFile(
 		path.join(pkgRoot(), 'config/dev-global.toml'),
-		validate,
+		true,
 	)
-	const project = await loadConfigFile(path.resolve(rootDir, 'dev.toml'), validate)
-	const config: Config = _.mergeWith({}, global, project, (_value, override) =>
+	const project = await loadConfigFile(path.resolve(rootDir, 'dev.toml'), true)
+	const merged = _.mergeWith({}, global, project, (_value, override) =>
 		Array.isArray(override) ? [...override] : undefined,
 	)
-	if (validate && !validateMergedConfig(config)) {
+	if (!validateMergedConfig(merged)) {
 		throw new Error(
 			`Merged configuration for ${rootDir}: ${ajv.errorsText(validateMergedConfig.errors, { dataVar: 'config' })}`,
+		)
+	}
+	const config = merged as Config
+	const variables = {
+		fullname: config.fullname,
+		public_email: config.public_email,
+		website: config.website,
+	}
+	for (const key of Object.keys(config.manifest) as (keyof ManifestConfig)[]) {
+		config.manifest[key] = config.manifest[key].replace(
+			/\{(\w+)\}/gu,
+			(_, name: string) => {
+				if (!Object.hasOwn(variables, name)) {
+					throw new Error(`manifest.${key}: unknown variable {${name}}`)
+				}
+				return variables[name as keyof typeof variables]
+			},
 		)
 	}
 	return config

@@ -12,15 +12,32 @@ export type ToolConfig = {
 	run: string[]
 }
 
+export type ManifestConfig = {
+	package_json_author: string
+	package_json_publisher: string
+	funding_yml_github: string
+}
+
 // Fix.
 export type Config = {
-	fullname?: string
-	formatters?: Record<string, ToolConfig>
-	linters?: Record<string, ToolConfig>
+	fullname: string
+	public_email: string
+	website: string
+	manifest: ManifestConfig
+	formatters: Record<string, ToolConfig>
+	linters: Record<string, ToolConfig>
 	rules?: Record<string, 'off'>
 	updateVersionDirectories?: string[]
 	format?: FormatConfig
 }
+
+// Individual files contain partial overrides; loadConfig returns a complete Config.
+export type ConfigFile = Partial<Omit<Config, 'manifest' | 'formatters' | 'linters'>> & {
+	manifest?: Partial<ManifestConfig>
+	formatters?: Record<string, Partial<ToolConfig>>
+	linters?: Record<string, Partial<ToolConfig>>
+}
+
 export type Project =
 	| {
 			type: 'only-directory'
@@ -43,13 +60,7 @@ export type Project =
 			owner: string
 	  }
 
-export type Issues = (arg0: {
-	project: Project
-	config: {
-		projectSize: 'small' | 'large'
-		ignoredChecks: string[]
-	}
-}) => AsyncGenerator<Issue>
+export type Issues = (arg0: { project: Project; config: Config }) => AsyncGenerator<Issue>
 
 export type Issue =
 	| {

@@ -204,7 +204,7 @@ async function fixFromFile(
 
 	try {
 		let failed = false
-		const issues: AsyncGenerator<Issue> = module.issues({ project })
+		const issues: AsyncGenerator<Issue> = module.issues({ project, config })
 		for await (const issue of issues) {
 			if (issue.skip) {
 				console.info(`[${styleText('yellow', 'SKIP')}] ${fixId}: ${issue.message}`)

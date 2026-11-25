@@ -165,6 +165,10 @@ export async function createProject(ctx: Context) {
 					const outputContent = Handlebars.compile(template)(
 						{
 							Fullname: ctx.config.fullname,
+							fullname: ctx.config.fullname,
+							public_email: ctx.config.public_email,
+							website: ctx.config.website,
+							manifest: ctx.config.manifest,
 						},
 						{
 							helpers: {

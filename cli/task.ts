@@ -18,6 +18,7 @@ import walk from 'ignore-walk'
 import * as jsonc from 'jsonc-parser'
 import { parseJSON } from 'jsonc-eslint-parser'
 import { getDevConfig } from '#utilities/dev-config.ts'
+import type { Config } from '#types'
 
 type TaskConfig = {
 	organizationsDir: string
@@ -258,7 +259,8 @@ export async function runValidateHyperupcallArchives() {
 	}
 }
 
-export async function runCreateVSCodeLaunchers() {
+export async function runCreateVSCodeLaunchers({ config }: { config: Config }) {
+	const publisher = config.manifest.package_json_publisher
 	const extensions: { dirname: string; packageJson: PackageJson }[] = await (
 		await fetch(
 			`https://raw.githubusercontent.com/hyperupcall-projects/vscode-hyperupcall-packs/refs/heads/main/extension-list.json`,
@@ -287,11 +289,11 @@ export async function runCreateVSCodeLaunchers() {
 			variantId,
 			variantName,
 			extensions: [
-				'edwinkofler.vscode-hyperupcall-pack-base',
-				'edwinkofler.vscode-hyperupcall-pack-bundled-themes',
-				'edwinkofler.vscode-hyperupcall-pack-icons',
-				'edwinkofler.vscode-hyperupcall-pack-markdown',
-				`edwinkofler.${packageJson.name}`,
+				`${publisher}.vscode-hyperupcall-pack-base`,
+				`${publisher}.vscode-hyperupcall-pack-bundled-themes`,
+				`${publisher}.vscode-hyperupcall-pack-icons`,
+				`${publisher}.vscode-hyperupcall-pack-markdown`,
+				`${publisher}.${packageJson.name}`,
 			],
 		})
 	}
@@ -300,14 +302,14 @@ export async function runCreateVSCodeLaunchers() {
 		variantId: 'devdotfiles',
 		variantName: 'devdotfiles',
 		extensions: [
-			'edwinkofler.vscode-hyperupcall-pack-base',
-			'edwinkofler.vscode-hyperupcall-pack-bundled-themes',
-			'edwinkofler.vscode-hyperupcall-pack-icons',
-			'edwinkofler.vscode-hyperupcall-pack-markdown',
-			'edwinkofler.vscode-hyperupcall-pack-unix',
-			'edwinkofler.vscode-hyperupcall-pack-python',
-			'edwinkofler.vscode-hyperupcall-pack-rust',
-			'edwinkofler.vscode-hyperupcall-pack-web',
+			`${publisher}.vscode-hyperupcall-pack-base`,
+			`${publisher}.vscode-hyperupcall-pack-bundled-themes`,
+			`${publisher}.vscode-hyperupcall-pack-icons`,
+			`${publisher}.vscode-hyperupcall-pack-markdown`,
+			`${publisher}.vscode-hyperupcall-pack-unix`,
+			`${publisher}.vscode-hyperupcall-pack-python`,
+			`${publisher}.vscode-hyperupcall-pack-rust`,
+			`${publisher}.vscode-hyperupcall-pack-web`,
 		],
 	})
 
@@ -323,16 +325,16 @@ export async function runCreateVSCodeLaunchers() {
 			extdir: path.join(os.homedir(), '.vscode/extensions'),
 		},
 		extensions: [
-			'edwinkofler.vscode-hyperupcall-pack-base',
-			'edwinkofler.vscode-hyperupcall-pack-bundled-themes',
-			'edwinkofler.vscode-hyperupcall-pack-icons',
-			'edwinkofler.vscode-hyperupcall-pack-markdown',
-			'edwinkofler.vscode-hyperupcall-pack-unix',
-			'edwinkofler.vscode-hyperupcall-pack-python',
-			'edwinkofler.vscode-hyperupcall-pack-rust',
-			'edwinkofler.vscode-hyperupcall-pack-web',
-			'edwinkofler.vscode-hyperupcall-pack-cpp',
-			'edwinkofler.vscode-hyperupcall-pack-go',
+			`${publisher}.vscode-hyperupcall-pack-base`,
+			`${publisher}.vscode-hyperupcall-pack-bundled-themes`,
+			`${publisher}.vscode-hyperupcall-pack-icons`,
+			`${publisher}.vscode-hyperupcall-pack-markdown`,
+			`${publisher}.vscode-hyperupcall-pack-unix`,
+			`${publisher}.vscode-hyperupcall-pack-python`,
+			`${publisher}.vscode-hyperupcall-pack-rust`,
+			`${publisher}.vscode-hyperupcall-pack-web`,
+			`${publisher}.vscode-hyperupcall-pack-cpp`,
+			`${publisher}.vscode-hyperupcall-pack-go`,
 		],
 	})
 

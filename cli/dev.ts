@@ -220,7 +220,7 @@ const cli = yargs(hideBin(process.argv))
 					'Create the VSCode launchers of the ecosystem packs',
 					() => {},
 					async (argv) => {
-						await runCreateVSCodeLaunchers()
+						await runCreateVSCodeLaunchers({ config })
 					},
 				)
 				.command(

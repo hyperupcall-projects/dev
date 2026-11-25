@@ -1,11 +1,10 @@
 import * as fs from 'node:fs/promises'
-import { octokit } from '#utilities/util.ts'
 import detectIndent from 'detect-indent'
 import { filesMustHaveShape } from '#utilities/metalint-utils.ts'
 import type { PackageJson } from 'type-fest'
 
 import type { Issues } from '#types'
-export const issues: Issues = async function* issues({ project }) {
+export const issues: Issues = async function* issues({ project, config }) {
 	let packageJsonText = await fs.readFile('package.json', 'utf-8')
 	let packageJson: PackageJson = JSON.parse(packageJsonText)
 	if (typeof packageJson?.private !== 'boolean') {
@@ -40,7 +39,7 @@ export const issues: Issues = async function* issues({ project }) {
 		} else {
 			yield* filesMustHaveShape('package-json', {
 				'package.json': {
-					author: 'Edwin Kofler <edwin@kofler.dev> (https://edwinkofler.com)',
+					author: config.manifest.package_json_author,
 					bugs: {
 						url: `https://github.com/${project.owner}/${project.name}/issues`,
 					},

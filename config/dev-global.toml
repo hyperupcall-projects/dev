@@ -1,4 +1,11 @@
 fullname = "Edwin Kofler"
+public_email = "edwin@kofler.dev"
+website = "https://edwinkofler.com"
+
+[manifest]
+package_json_author = "{fullname} <{public_email}> ({website})"
+package_json_publisher = "edwinkofler"
+funding_yml_github = "hyperupcall"
 
 # Can use {files}, {dev_dir}, and {root_dir}.
 [formatters.yamlfmt]

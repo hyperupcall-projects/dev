@@ -303,7 +303,7 @@ Code: `utilities/ecosystems.ts`. An ecosystem defines four things: how to detect
 - The file is parsed as TOML with [`smol-toml`](https://github.com/squirrelchat/smol-toml).
 - Before running a command, [`loadConfig`](../utilities/util.ts) loads `config/dev-global.toml` in the dev repository and the project's `dev.toml`, after applying `--dir`. For `dev metalint`, the positional target directory selects the project config.
 - Missing files contribute an empty object. Project tables override individual global keys, including `false` values; project arrays such as `updateVersionDirectories` replace global arrays, including when empty.
-- Both files are validated before merging; merged tool definitions must include both `filetypes` and `run`. Invalid TOML or schema errors stop the command and identify the file or merged configuration. The resolved object is passed to **`dev new`**, **`dev metalint`**, **`dev version`**, **`dev format`**, and **`dev lint`**.
+- Both files are validated before merging. The merged config must include the identity fields, complete manifest defaults, and formatter/linter tables; merged tool definitions must include both `filetypes` and `run`. Invalid TOML or schema errors stop the command and identify the file or merged configuration. The resolved object is passed to **`dev new`**, **`dev metalint`**, **`dev version`**, **`dev format`**, and **`dev lint`**.
 - The shared parser, `loadConfigFile(filepath, validate = false)` in [`utilities/util.ts`](../utilities/util.ts), can also parse a file without schema validation. Startup loading enables validation.
 - The name must be `dev.toml`. The `directory/no-files` lint rule reports the old name `project.toml` and offers to rename it to `dev.toml`.
 
@@ -313,9 +313,16 @@ The type is `Config` in `types.d.ts`:
 
 ```ts
 type Config = {
-	fullname?: string
-	formatters?: Record<string, { filetypes: string[]; run: string[] }>
-	linters?: Record<string, { filetypes: string[]; run: string[] }>
+	fullname: string
+	public_email: string
+	website: string
+	manifest: {
+		package_json_author: string
+		package_json_publisher: string
+		funding_yml_github: string
+	}
+	formatters: Record<string, { filetypes: string[]; run: string[] }>
+	linters: Record<string, { filetypes: string[]; run: string[] }>
 	rules?: Record<string, 'off'>
 	updateVersionDirectories?: string[]
 	format?: {
@@ -324,17 +331,36 @@ type Config = {
 }
 ```
 
-All keys are optional. Unknown top-level keys are ignored by commands. All commands validate the config shape with JSON Schema at startup.
+This is the complete config returned by `loadConfig`, which always validates the merged result. `loadConfigFile` returns a `ConfigFile` containing partial overrides, so project files can omit values supplied by `config/dev-global.toml`. Unknown top-level keys are ignored by commands.
 
-### `fullname`
+### `fullname`, `public_email`, and `website`
 
-The name used for `{{Fullname}}` in `dev new` templates. The shared default is set in `config/dev-global.toml`.
+Public identity defaults are set at the top level of `config/dev-global.toml`. Projects can override individual values in `dev.toml`.
 
 ```toml
-fullname = "Edwin Kofler"
+fullname = "Your Name"
+public_email = "you@example.com"
+website = "https://example.com"
 ```
 
-Put this key before any `[table]` header.
+Put these keys before any `[table]` header. `dev new` templates receive `{{fullname}}`, `{{public_email}}`, `{{website}}`, and the resolved `manifest` object. `{{Fullname}}` remains available for existing templates.
+
+### `[manifest]`
+
+Shared defaults for generated metadata:
+
+```toml
+[manifest]
+package_json_author = "{fullname} <{public_email}> ({website})"
+package_json_publisher = "your-publisher"
+funding_yml_github = "your-github-account"
+```
+
+- `package_json_author` is the author enforced by metalint for public Node.js packages with a remote repository. Private packages and projects without a remote still have the author removed.
+- `package_json_publisher` is the VS Code publisher used in extension IDs by `dev task create-vscode-launchers`.
+- `funding_yml_github` is the GitHub account written by the funding rule to `FUNDING.yml`.
+
+Manifest strings support `{fullname}`, `{public_email}`, and `{website}`. `loadConfig` expands them after merging global and project config, so overriding an identity field also updates inherited templates. Unknown variables are errors; required values are checked during config loading. `loadConfigFile` returns raw templates so saving formatter assignments preserves the placeholders. Individual metalint rules receive the resolved config alongside `project`.
 
 ### `[rules]`
 

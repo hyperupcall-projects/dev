@@ -57,7 +57,7 @@ export function groupFilesByFormatter(
 }
 
 export async function runFormatOrLint(
-	tools: Record<string, ToolConfig> = {},
+	tools: Record<string, ToolConfig>,
 	toolId?: string,
 	formatConfig?: Config,
 ) {
