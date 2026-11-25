@@ -24,9 +24,36 @@ try {
 const execFileAsync = promisify(execFile)
 
 const ajv = new Ajv({ allErrors: true })
-const validateConfig = ajv.compile({
+const toolSchema = {
 	type: 'object',
+	additionalProperties: false,
 	properties: {
+		filetypes: {
+			type: 'array',
+			minItems: 1,
+			items: { type: 'string', minLength: 1 },
+		},
+		run: {
+			type: 'array',
+			minItems: 1,
+			items: [{ type: 'string', minLength: 1 }],
+			additionalItems: { type: 'string' },
+		},
+	},
+}
+const configSchema = {
+	type: 'object',
+	definitions: { tool: toolSchema },
+	properties: {
+		fullname: { type: 'string', minLength: 1 },
+		formatters: {
+			type: 'object',
+			additionalProperties: { $ref: '#/definitions/tool' },
+		},
+		linters: {
+			type: 'object',
+			additionalProperties: { $ref: '#/definitions/tool' },
+		},
 		rules: {
 			type: 'object',
 			additionalProperties: { enum: ['off'] },
@@ -48,6 +75,14 @@ const validateConfig = ajv.compile({
 			},
 		},
 		lint: false,
+	},
+}
+// Project tool definitions can override individual fields of global tools.
+const validateConfig = ajv.compile(configSchema)
+const validateMergedConfig = ajv.compile({
+	...configSchema,
+	definitions: {
+		tool: { ...toolSchema, required: ['filetypes', 'run'] },
 	},
 })
 
@@ -86,9 +121,15 @@ export async function loadConfig(
 		validate,
 	)
 	const project = await loadConfigFile(path.resolve(rootDir, 'dev.toml'), validate)
-	return _.mergeWith({}, global, project, (_value, override) =>
+	const config: Config = _.mergeWith({}, global, project, (_value, override) =>
 		Array.isArray(override) ? [...override] : undefined,
 	)
+	if (validate && !validateMergedConfig(config)) {
+		throw new Error(
+			`Merged configuration for ${rootDir}: ${ajv.errorsText(validateMergedConfig.errors, { dataVar: 'config' })}`,
+		)
+	}
+	return config
 }
 
 export function ignoreDirectories() {

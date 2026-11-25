@@ -7,8 +7,16 @@ export type FormatConfig = {
 	filetypes?: Record<string, string | false>
 }
 
+export type ToolConfig = {
+	filetypes: string[]
+	run: string[]
+}
+
 // Fix.
 export type Config = {
+	fullname?: string
+	formatters?: Record<string, ToolConfig>
+	linters?: Record<string, ToolConfig>
 	rules?: Record<string, 'off'>
 	updateVersionDirectories?: string[]
 	format?: FormatConfig

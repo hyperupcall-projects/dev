@@ -3,8 +3,8 @@ import * as path from 'node:path'
 import process from 'node:process'
 
 import Handlebars from 'handlebars'
+import type { Config } from '#types'
 import { fileExists, ignoreDirectories } from '#utilities/util.ts'
-import { Fullname } from '#utilities/config.ts'
 import * as clack from '@clack/prompts'
 
 import { existsSync } from 'node:fs'
@@ -15,6 +15,7 @@ import {
 } from '#utilities/ecosystems.ts'
 
 export async function run(options: {
+	config: Config
 	dir?: string
 	ecosystem?: string
 	templateName?: string
@@ -104,6 +105,7 @@ export async function run(options: {
 	}
 
 	await createProject({
+		config: options.config,
 		dir: options.dir,
 		ecosystem: options.ecosystem,
 		templateName: options.templateName,
@@ -114,6 +116,7 @@ export async function run(options: {
 }
 
 type Context = Readonly<{
+	config: Config
 	dir: string
 	ecosystem: string
 	templateName: string
@@ -161,7 +164,7 @@ export async function createProject(ctx: Context) {
 					const template = await fs.readFile(inputFile, 'utf-8')
 					const outputContent = Handlebars.compile(template)(
 						{
-							Fullname,
+							Fullname: ctx.config.fullname,
 						},
 						{
 							helpers: {

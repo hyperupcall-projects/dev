@@ -1,3 +1,78 @@
+fullname = "Edwin Kofler"
+
+# Can use {files}, {dev_dir}, and {root_dir}.
+[formatters.yamlfmt]
+filetypes = ["yaml"]
+run = ["yamlfmt", "-conf", "{dev_dir}/config/.yamlfmt.yaml", "{files}"]
+
+[formatters.prettier]
+filetypes = ["javascript", "typescript", "json", "jsonc", "css", "html", "markdown", "yaml"]
+run = ["prettier", "--write", "{files}"]
+
+[formatters.rustfmt]
+filetypes = ["rust"]
+run = ["rustfmt", "{files}"]
+
+[formatters.biome]
+filetypes = ["javascript", "typescript", "json", "jsonc", "css"]
+run = ["biome", "format", "--write", "{files}"]
+
+[formatters.dprint]
+filetypes = ["javascript", "typescript", "json", "jsonc", "markdown", "toml"]
+run = ["dprint", "fmt", "{files}"]
+
+[formatters.clang-format]
+filetypes = ["c", "cpp"]
+run = ["clang-format", "-i", "{files}"]
+
+[formatters.gofmt]
+filetypes = ["go"]
+run = ["gofmt", "-w", "{files}"]
+
+[formatters.zig]
+filetypes = ["zig"]
+run = ["zig", "fmt", "{files}"]
+
+[formatters.shfmt]
+filetypes = ["shell"]
+run = ["shfmt", "-w", "{files}"]
+
+[formatters.taplo]
+filetypes = ["toml"]
+run = ["taplo", "fmt", "{files}"]
+
+[formatters.perltidy]
+filetypes = ["perl"]
+run = ["perltidy", "-b", "-bext=/", "{files}"]
+
+[formatters.rubyfmt]
+filetypes = ["ruby"]
+run = ["rubyfmt", "-i", "{files}"]
+
+[formatters.latexindent]
+filetypes = ["latex"]
+run = ["latexindent", "-w", "{files}"]
+
+[formatters.markdownlint-cli2]
+filetypes = ["markdown"]
+run = ["markdownlint-cli2", "--fix", "{files}"]
+
+[formatters.mdformat]
+filetypes = ["markdown"]
+run = ["mdformat", "{files}"]
+
+[formatters.gersemi]
+filetypes = ["cmake"]
+run = ["gersemi", "--in-place", "{files}"]
+
+[formatters.ruff]
+filetypes = ["python"]
+run = ["ruff", "format", "{files}"]
+
+[linters.yamllint]
+filetypes = ["yaml"]
+run = ["yamllint", "-c", "{dev_dir}/config/.yamllint.yaml", "{files}"]
+
 # Set a filetype to false to skip it.
 [format.filetypes]
 c = "clang-format"

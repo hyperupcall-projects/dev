@@ -82,6 +82,7 @@ const cli = yargs(hideBin(process.argv))
 				}),
 		async (argv) => {
 			await runNew({
+				config,
 				dir: argv.targetDir as string | undefined,
 				ecosystem: argv.ecosystem as string | undefined,
 				templateName: argv.templateName as string | undefined,

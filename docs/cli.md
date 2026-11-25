@@ -151,9 +151,9 @@ Right now there is one linter:
 | ---------- | ------------------ | ------------------------------------------- |
 | `yamllint` | Detected as `yaml` | `yamllint -c <dev's config/.yamllint.yaml>` |
 
-The files are detected once, before any linter runs, and their absolute paths are appended to the command. Everything on disk counts, including files and directories excluded by `.gitignore` and symlinked files; only `node_modules/` and `.data/` (and `.git/`, `target/`) are skipped. A linter with no matching files prints `SKIP`. A non-zero exit code from a linter makes `dev lint` exit with code 1.
+The files are detected once, before any linter runs, and their absolute paths replace `{files}` in the command. Everything on disk counts, including files and directories excluded by `.gitignore` and symlinked files; only `node_modules/` and `.data/` (and `.git/`, `target/`) are skipped. A linter with no matching files prints `SKIP`. A non-zero exit code from a linter makes `dev lint` exit with code 1.
 
-Linter commands are defined in `utilities/config.ts`.
+Linter commands are defined under `[linters.<name>]` in [`config/dev-global.toml`](../config/dev-global.toml), with project overrides in `dev.toml`.
 
 ### `dev format [formatter]`
 
@@ -208,11 +208,9 @@ Available formatters:
 
 The formatter executables must be installed and available on `PATH`. dprint also needs a project configuration with plugins for the filetypes you want to format. Tools use their own project configuration by default, except for the shared `yamlfmt` config shown above. `latexindent -w` also creates backup and log files.
 
-The files are detected once, before any formatter runs, and their absolute paths are appended to the command. Everything on disk counts, including files and directories excluded by `.gitignore` and symlinked files; only `node_modules/` and `.data/` (and `.git/`, `target/`) are skipped. A formatter with no matching files prints `SKIP`.
+The files are detected once, before any formatter runs, and their absolute paths replace `{files}` in the command. Everything on disk counts, including files and directories excluded by `.gitignore` and symlinked files; only `node_modules/` and `.data/` (and `.git/`, `target/`) are skipped. A formatter with no matching files prints `SKIP`.
 
-Formatter assignments can be overridden in `dev.toml` (see [`[format]`](#format)). Formatter and linter commands always come from `utilities/config.ts`.
-
-Formatters and linters are defined in `utilities/config.ts`. Each has `filetypes: string[]` and `run: string[]`, containing the executable and its arguments. A tool receives the matching files from all its filetypes in one invocation, with duplicate paths removed. Config paths belong directly in `run`.
+Formatter assignments and tool definitions can be overridden in `dev.toml` (see [`[format]`](#format) and [tool definitions](#formattersname-and-lintersname)). A tool receives the matching files from all its filetypes in one invocation, with duplicate paths removed.
 
 ### `dev version [--force] [--no-verify]`
 
@@ -303,9 +301,9 @@ Code: `utilities/ecosystems.ts`. An ecosystem defines four things: how to detect
 `dev.toml` is an **optional, per-project** config file. It goes in the project's **root directory**, which is the directory `dev` runs in, set by `--dir` or by the positional `dir` argument of `dev metalint`.
 
 - The file is parsed as TOML with [`smol-toml`](https://github.com/squirrelchat/smol-toml).
-- Before running a command, [`loadConfig`](../utilities/loadConfig.ts) loads `config/dev-global.toml` in the dev repository and the project's `dev.toml`, after applying `--dir`. For `dev metalint`, the positional target directory selects the project config.
+- Before running a command, [`loadConfig`](../utilities/util.ts) loads `config/dev-global.toml` in the dev repository and the project's `dev.toml`, after applying `--dir`. For `dev metalint`, the positional target directory selects the project config.
 - Missing files contribute an empty object. Project tables override individual global keys, including `false` values; project arrays such as `updateVersionDirectories` replace global arrays, including when empty.
-- Both files are validated before merging. Invalid TOML or schema errors stop the command and identify the file. The resolved object is passed to **`dev metalint`**, **`dev version`**, **`dev format`**, and **`dev lint`**.
+- Both files are validated before merging; merged tool definitions must include both `filetypes` and `run`. Invalid TOML or schema errors stop the command and identify the file or merged configuration. The resolved object is passed to **`dev new`**, **`dev metalint`**, **`dev version`**, **`dev format`**, and **`dev lint`**.
 - The shared parser, `loadConfigFile(filepath, validate = false)` in [`utilities/util.ts`](../utilities/util.ts), can also parse a file without schema validation. Startup loading enables validation.
 - The name must be `dev.toml`. The `directory/no-files` lint rule reports the old name `project.toml` and offers to rename it to `dev.toml`.
 
@@ -315,6 +313,9 @@ The type is `Config` in `types.d.ts`:
 
 ```ts
 type Config = {
+	fullname?: string
+	formatters?: Record<string, { filetypes: string[]; run: string[] }>
+	linters?: Record<string, { filetypes: string[]; run: string[] }>
 	rules?: Record<string, 'off'>
 	updateVersionDirectories?: string[]
 	format?: {
@@ -324,6 +325,16 @@ type Config = {
 ```
 
 All keys are optional. Unknown top-level keys are ignored by commands. All commands validate the config shape with JSON Schema at startup.
+
+### `fullname`
+
+The name used for `{{Fullname}}` in `dev new` templates. The shared default is set in `config/dev-global.toml`.
+
+```toml
+fullname = "Edwin Kofler"
+```
+
+Put this key before any `[table]` header.
 
 ### `[rules]`
 
@@ -408,7 +419,28 @@ toml = false
 
 Keys are filetype IDs from `utilities/filetype.ts`, such as `typescript`, `python`, and `cmake`. They are not extensions: `.ts` and `.tsx` both use `typescript`. Values must name a registered formatter that supports that filetype, or be `false`.
 
-Formatter and linter commands are hardcoded in `utilities/config.ts`. Command overrides such as `[format.commands]` and `[lint]` are rejected.
+### `[formatters.<name>]` and `[linters.<name>]`
+
+Define tools in `config/dev-global.toml` or a project's `dev.toml`. Each tool has a non-empty `filetypes` array and a non-empty `run` array containing the executable followed by its arguments. Project definitions override individual fields; arrays replace the global array in full. New tools must supply both fields after merging.
+
+```toml
+[formatters.prettier]
+run = ["prettier", "--config", "{root_dir}/.prettierrc.json", "--write", "{files}"]
+
+[linters.yamllint]
+filetypes = ["yaml"]
+run = ["yamllint", "-c", "{dev_dir}/config/.yamllint.yaml", "{files}"]
+```
+
+Variables are expanded in `run` when the tool executes:
+
+| Variable     | Value                                                                 |
+| ------------ | --------------------------------------------------------------------- |
+| `{dev_dir}`  | Absolute path to the dev repository                                   |
+| `{root_dir}` | Absolute path to the target project directory, after applying `--dir` |
+| `{files}`    | Matching absolute file paths, each passed as a separate argument      |
+
+`{dev_dir}` and `{root_dir}` can appear anywhere in an argument, including the executable. `{files}` must occupy an entire argument after the executable and can appear anywhere among the arguments. File paths are inserted literally, so spaces and braces in filenames are preserved. Commands run in the project directory without shell interpretation. Files are only passed where `{files}` appears; omit it for tools that discover their own inputs. Tools with no matching files are skipped.
 
 ### Full example
 

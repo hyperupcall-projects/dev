@@ -10,14 +10,13 @@ import { Table } from 'console-table-printer'
 import { execa } from 'execa'
 import toml from 'smol-toml'
 
-import type { Config, FormatConfig } from '#types'
-import type { Formatter, Linter } from '#utilities/config.ts'
+import type { Config, FormatConfig, ToolConfig } from '#types'
 import { detectFiletypes } from '#utilities/filetype.ts'
 import { loadConfig, loadConfigFile, pkgRoot } from '#utilities/util.ts'
 
 export function resolveFormatConfig(
 	format: FormatConfig | undefined,
-	tools: Record<string, Formatter>,
+	tools: Record<string, ToolConfig>,
 ): Required<FormatConfig> {
 	const config = {
 		filetypes: { ...format?.filetypes },
@@ -58,17 +57,16 @@ export function groupFilesByFormatter(
 }
 
 export async function runFormatOrLint(
-	tools: Record<string, Formatter | Linter>,
-	action: 'format' | 'lint',
-	config: Config,
+	tools: Record<string, ToolConfig> = {},
 	toolId?: string,
+	formatConfig?: Config,
 ) {
 	const rootDir = process.cwd()
 	let format: Required<FormatConfig> | undefined
 	try {
-		format = action === 'format' ? resolveFormatConfig(config.format, tools) : undefined
+		format = formatConfig ? resolveFormatConfig(formatConfig.format, tools) : undefined
 	} catch (err) {
-		console.error(`Cannot load ${action} configuration: ${(err as Error).message}`)
+		console.error(`Cannot load format configuration: ${(err as Error).message}`)
 		process.exitCode = 1
 		return
 	}
@@ -93,7 +91,7 @@ export async function runFormatOrLint(
 		}
 		toolIds = [toolId]
 	} else {
-		if (format) {
+		if (format && formatConfig) {
 			let selected: string[] | undefined
 			try {
 				selected = await pickFormatFiletypes(
@@ -101,7 +99,7 @@ export async function runFormatOrLint(
 					tools,
 					filesByFiletype,
 					format,
-					config,
+					formatConfig,
 				)
 			} catch (err) {
 				console.error((err as Error).message)
@@ -161,21 +159,37 @@ export async function runFormatOrLint(
 			continue
 		}
 
-		const run = tool.run
-		if (!run[0]) {
-			console.error(`Tool "${id}" has an empty command`)
-			process.exitCode = 1
-			continue
-		}
-
 		console.info(`[${styleText('blue', 'RUN')}] ${id}: ${files.length} file(s)`)
 		try {
-			await execa({ cwd: rootDir, stdio: 'inherit' })`${run} ${files}`
+			const [command, ...args] = expandToolCommand(tool.run, rootDir, files)
+			await execa(command, args, { cwd: rootDir, stdio: 'inherit' })
 		} catch (err) {
 			console.error(`[${styleText('red', 'FAIL')}] ${id}: ${(err as Error).message}`)
 			process.exitCode = 1
 		}
 	}
+}
+
+export function expandToolCommand(
+	run: string[],
+	rootDir: string,
+	files: string[],
+): string[] {
+	const variables = { dev_dir: pkgRoot(), root_dir: path.resolve(rootDir) }
+	const command = run.flatMap((arg, index) => {
+		if (arg.includes('{files}')) {
+			if (arg !== '{files}' || index === 0) {
+				throw new Error('{files} must be a separate argument after the executable')
+			}
+			return files
+		}
+		return arg.replace(
+			/\{(dev_dir|root_dir)\}/gu,
+			(_, name: keyof typeof variables) => variables[name],
+		)
+	})
+	if (!command[0]) throw new Error('Tool has an empty command')
+	return command
 }
 
 function stopCursorWrapping(
@@ -196,7 +210,7 @@ function stopCursorWrapping(
 
 export async function pickFormatFiletypes(
 	rootDir: string,
-	tools: Record<string, Formatter>,
+	tools: Record<string, ToolConfig>,
 	files: Record<string, string[]>,
 	format: Required<FormatConfig>,
 	config: Config,
