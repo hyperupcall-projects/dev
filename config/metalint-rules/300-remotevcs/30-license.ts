@@ -1,8 +1,7 @@
 import * as fs from 'node:fs/promises'
-import process from 'node:process'
 import spdxLicenseList from 'spdx-license-list/full.js'
-import * as clack from '@clack/prompts'
 import type { Issues } from '#types'
+import { writeLicense } from '#utilities/license.ts'
 import { globby } from 'globby'
 import { remark } from 'remark'
 
@@ -27,54 +26,7 @@ export const issues: Issues = async function* issues({ project }) {
 					'Expected to find a license file',
 					'But, found no license file was found',
 				],
-				fix: async () => {
-					const selectedLicenseId = await clack.select({
-						message: 'Choose file:',
-						options: [
-							{ label: 'ISC License', value: 'ISC' },
-							{
-								label: 'BSD 3-Clause "New" or "Revised" License',
-								value: 'BSD-3-Clause',
-							},
-							{
-								label: 'Mozilla Public License 2.0',
-								value: 'MPL-2.0',
-							},
-							{ label: 'Apache License 2.0', value: 'Apache-2.0' },
-							{
-								label: 'GNU General Public License v2.0',
-								value: 'GPL-2.0-only',
-							},
-							{
-								label: 'GNU General Public License v3.0',
-								value: 'GPL-3.0-only',
-							},
-							{
-								label: 'GNU Lesser General Public License v2.1',
-								value: 'LGPL-2.1-only',
-							},
-							{
-								label: 'GNU Lesser General Public License v3.0',
-								value: 'LGPL-3.0-only',
-							},
-							{
-								label: 'GNU Affero General Public License v3.0',
-								value: 'AGPL-3.0-only',
-							},
-						],
-					})
-
-					if (clack.isCancel(selectedLicenseId)) {
-						process.exit(1)
-					}
-
-					const licenseData = spdxLicenseList[selectedLicenseId as string]
-					if (!licenseData) {
-						throw new Error(`License "${selectedLicenseId}" is not an SPDX license`)
-					}
-
-					await fs.writeFile('LICENSE', licenseData.licenseText, 'utf-8')
-				},
+				fix: writeLicense,
 			}
 		} else if (files.length === 1) {
 			if (files[0] !== 'LICENSE') {

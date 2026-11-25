@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 // SPDX-FileCopyrightText: Copyright 2023 Edwin Kofler
-import { runFormatOrLint } from './format.ts'
+import { runFormatOrLint } from '#utilities/format.ts'
 import { Linters } from '#utilities/config.ts'
 import type { Config } from '#types'
 
